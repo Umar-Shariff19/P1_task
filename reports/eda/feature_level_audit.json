@@ -1,0 +1,285 @@
+[
+  {
+    "name": "duration_seconds",
+    "level": "instant",
+    "source_datasets": [
+      "CICIDS2017",
+      "Edge-IIoTset",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Current flow duration normalized to seconds.",
+    "causality_leakage": "SAFE_FEATURE; NaN when no defensible duration field exists."
+  },
+  {
+    "name": "protocol_family",
+    "level": "instant",
+    "source_datasets": [
+      "Edge-IIoTset",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Transport/protocol family.",
+    "causality_leakage": "CONDITIONAL_FEATURE; Excluded from universal flow profile; usable for dataset/pair profiles."
+  },
+  {
+    "name": "connection_state",
+    "level": "instant",
+    "source_datasets": [
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Connection state/flags summary.",
+    "causality_leakage": "SAFE_FEATURE; Dataset-specific only."
+  },
+  {
+    "name": "src_port",
+    "level": "instant",
+    "source_datasets": [
+      "Edge-IIoTset",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Source transport port.",
+    "causality_leakage": "CONDITIONAL_FEATURE; Dataset/pair profile only."
+  },
+  {
+    "name": "dst_port",
+    "level": "instant",
+    "source_datasets": [
+      "CICIDS2017",
+      "Edge-IIoTset",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Destination transport/service port.",
+    "causality_leakage": "CONDITIONAL_FEATURE; NaN when unavailable."
+  },
+  {
+    "name": "total_packets",
+    "level": "instant",
+    "source_datasets": [
+      "CICIDS2017",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Total packet count in current flow.",
+    "causality_leakage": "SAFE_FEATURE; NaN for Edge prepared CSV and N-BaIoT."
+  },
+  {
+    "name": "fwd_packets",
+    "level": "instant",
+    "source_datasets": [
+      "CICIDS2017",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Forward/source packet count in current flow.",
+    "causality_leakage": "SAFE_FEATURE; NaN when unavailable."
+  },
+  {
+    "name": "bwd_packets",
+    "level": "instant",
+    "source_datasets": [
+      "CICIDS2017",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Backward/destination packet count in current flow.",
+    "causality_leakage": "SAFE_FEATURE; NaN when unavailable."
+  },
+  {
+    "name": "total_bytes",
+    "level": "instant",
+    "source_datasets": [
+      "CICIDS2017",
+      "Edge-IIoTset",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Total bytes/length observed for current record.",
+    "causality_leakage": "SAFE_FEATURE; NaN when no length field exists."
+  },
+  {
+    "name": "fwd_bytes",
+    "level": "instant",
+    "source_datasets": [
+      "CICIDS2017",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Forward/source bytes.",
+    "causality_leakage": "SAFE_FEATURE; NaN when unavailable."
+  },
+  {
+    "name": "bwd_bytes",
+    "level": "instant",
+    "source_datasets": [
+      "CICIDS2017",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Backward/destination bytes.",
+    "causality_leakage": "SAFE_FEATURE; NaN when unavailable."
+  },
+  {
+    "name": "bytes_per_second",
+    "level": "instant",
+    "source_datasets": [
+      "CICIDS2017",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Current flow byte rate.",
+    "causality_leakage": "SAFE_FEATURE; NaN when unavailable."
+  },
+  {
+    "name": "packets_per_second",
+    "level": "instant",
+    "source_datasets": [
+      "CICIDS2017"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Current flow packet rate.",
+    "causality_leakage": "SAFE_FEATURE; Dataset-specific only."
+  },
+  {
+    "name": "packet_length_mean",
+    "level": "instant",
+    "source_datasets": [
+      "CICIDS2017",
+      "Edge-IIoTset",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Mean/current packet length statistic.",
+    "causality_leakage": "CONDITIONAL_FEATURE; NaN when unavailable; Edge proxy documented."
+  },
+  {
+    "name": "packet_length_std",
+    "level": "instant",
+    "source_datasets": [
+      "CICIDS2017",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Packet length standard deviation within current flow.",
+    "causality_leakage": "SAFE_FEATURE; NaN when unavailable."
+  },
+  {
+    "name": "packet_length_min",
+    "level": "instant",
+    "source_datasets": [
+      "CICIDS2017",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Minimum packet length in current flow.",
+    "causality_leakage": "SAFE_FEATURE; NaN when unavailable."
+  },
+  {
+    "name": "packet_length_max",
+    "level": "instant",
+    "source_datasets": [
+      "CICIDS2017",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Maximum packet length in current flow.",
+    "causality_leakage": "SAFE_FEATURE; NaN when unavailable."
+  },
+  {
+    "name": "flow_iat_mean",
+    "level": "temporal",
+    "source_datasets": [
+      "CICIDS2017"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Source-provided mean inter-arrival time within flow.",
+    "causality_leakage": "SAFE_FEATURE; Dataset-specific only."
+  },
+  {
+    "name": "flow_iat_std",
+    "level": "temporal",
+    "source_datasets": [
+      "CICIDS2017"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Source-provided inter-arrival variability within flow.",
+    "causality_leakage": "SAFE_FEATURE; Dataset-specific only."
+  },
+  {
+    "name": "source_provided_delta_seconds",
+    "level": "temporal",
+    "source_datasets": [
+      "Edge-IIoTset"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Source-provided packet/UDP delta time when available.",
+    "causality_leakage": "SAFE_FEATURE; Dataset-specific only."
+  },
+  {
+    "name": "timestamp_start",
+    "level": "temporal",
+    "source_datasets": [
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Start timestamp for ordering/causal feature generation.",
+    "causality_leakage": "USED_FOR_GROUPING_FEATURE_GENERATION; Metadata only."
+  },
+  {
+    "name": "source_host",
+    "level": "behavioral",
+    "source_datasets": [
+      "Edge-IIoTset",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Source entity key for causal behavioral feature generation.",
+    "causality_leakage": "USED_FOR_GROUPING_FEATURE_GENERATION; Metadata only, never direct model input."
+  },
+  {
+    "name": "destination_host",
+    "level": "behavioral",
+    "source_datasets": [
+      "Edge-IIoTset",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "Destination entity key for causal behavioral feature generation.",
+    "causality_leakage": "USED_FOR_GROUPING_FEATURE_GENERATION; Metadata only, never direct model input."
+  },
+  {
+    "name": "traffic_asymmetry",
+    "level": "behavioral",
+    "source_datasets": [
+      "CICIDS2017",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "derived",
+    "definition": "Directional byte imbalance for current flow: (forward - backward) / total bytes.",
+    "causality_leakage": "SAFE_FEATURE; NaN when directional bytes unavailable."
+  },
+  {
+    "name": "packet_direction_ratio",
+    "level": "behavioral",
+    "source_datasets": [
+      "CICIDS2017",
+      "BoT-IoT"
+    ],
+    "raw_or_derived": "derived",
+    "definition": "Forward/backward packet count ratio for current flow.",
+    "causality_leakage": "SAFE_FEATURE; NaN when unavailable."
+  },
+  {
+    "name": "source_agg_*",
+    "level": "behavioral",
+    "source_datasets": [
+      "N-BaIoT"
+    ],
+    "raw_or_derived": "raw/source-provided",
+    "definition": "N-BaIoT source-provided KitNET damped-window host/host-pair traffic behavior statistics over historical decay windows.",
+    "causality_leakage": "SAFE_FEATURE; N-BaIoT profile only."
+  }
+]

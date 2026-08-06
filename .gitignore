@@ -1,0 +1,36 @@
+# Local environments
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Immutable source data and generated heavy artifacts
+data/raw/**
+data/interim/**
+data/processed/**
+data/cache/**
+artifacts/**
+
+# Local authoritative/private project inputs. Required locally, not staged by default.
+project_context/**
+references/**
+
+# Keep directory placeholders
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+!data/cache/.gitkeep
+!artifacts/.gitkeep
+
+# Generated reports can be reproduced by scripts.
+reports/**/*.png
+reports/**/*.parquet
+
+# Local secrets/config
+.env
+.env.*
+!.env.example

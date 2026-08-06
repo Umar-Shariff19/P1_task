@@ -1,0 +1,17 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.13",
+  "logical_cpus": 12,
+  "physical_cpus": 8,
+  "ram_total_bytes": 16857817088,
+  "dependencies": {
+    "pandas": "3.0.5",
+    "numpy": "2.5.1",
+    "pyarrow": "25.0.0",
+    "sklearn": "1.9.0",
+    "scipy": "1.18.0",
+    "joblib": "1.5.3",
+    "yaml": "6.0.3",
+    "pytest": "8.4.2"
+  }
+}

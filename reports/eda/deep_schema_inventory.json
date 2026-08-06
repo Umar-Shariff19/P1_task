@@ -1,0 +1,1599 @@
+{
+  "version": "deep-schema-v1",
+  "datasets": {
+    "CICIDS2017": {
+      "row_count": 2830743,
+      "candidate_files": 8,
+      "source_files": 8,
+      "columns": [
+        {
+          "name": "ACK Flag Count",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Active Max",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Active Mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Active Min",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Active Std",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Average Packet Size",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Avg Bwd Segment Size",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Avg Fwd Segment Size",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Bwd Avg Bulk Rate",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Bwd Avg Bytes/Bulk",
+          "semantic_category": "byte statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Bwd Avg Packets/Bulk",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Bwd Header Length",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Bwd IAT Max",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Bwd IAT Mean",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Bwd IAT Min",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Bwd IAT Std",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Bwd IAT Total",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Bwd PSH Flags",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Bwd Packet Length Max",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Bwd Packet Length Mean",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Bwd Packet Length Min",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Bwd Packet Length Std",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Bwd Packets/s",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Bwd URG Flags",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "CWE Flag Count",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Destination Port",
+          "semantic_category": "protocol/service",
+          "leakage_role": "CONDITIONAL_FEATURE"
+        },
+        {
+          "name": "Down/Up Ratio",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "ECE Flag Count",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "FIN Flag Count",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Flow Bytes/s",
+          "semantic_category": "byte statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Flow Duration",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Flow IAT Max",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Flow IAT Mean",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Flow IAT Min",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Flow IAT Std",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Flow Packets/s",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Fwd Avg Bulk Rate",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Fwd Avg Bytes/Bulk",
+          "semantic_category": "byte statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Fwd Avg Packets/Bulk",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Fwd Header Length",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Fwd Header Length.1",
+          "semantic_category": "unknown",
+          "leakage_role": "EXCLUDED"
+        },
+        {
+          "name": "Fwd IAT Max",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Fwd IAT Mean",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Fwd IAT Min",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Fwd IAT Std",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Fwd IAT Total",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Fwd PSH Flags",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Fwd Packet Length Max",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Fwd Packet Length Mean",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Fwd Packet Length Min",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Fwd Packet Length Std",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Fwd Packets/s",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Fwd URG Flags",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Idle Max",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Idle Mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Idle Min",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Idle Std",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Init_Win_bytes_backward",
+          "semantic_category": "byte statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Init_Win_bytes_forward",
+          "semantic_category": "byte statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Label",
+          "semantic_category": "label/taxonomy",
+          "leakage_role": "LABEL"
+        },
+        {
+          "name": "Max Packet Length",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Min Packet Length",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "PSH Flag Count",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Packet Length Mean",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Packet Length Std",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Packet Length Variance",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "RST Flag Count",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "SYN Flag Count",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Subflow Bwd Bytes",
+          "semantic_category": "byte statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Subflow Bwd Packets",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Subflow Fwd Bytes",
+          "semantic_category": "byte statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Subflow Fwd Packets",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Total Backward Packets",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Total Fwd Packets",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Total Length of Bwd Packets",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "Total Length of Fwd Packets",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "URG Flag Count",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "act_data_pkt_fwd",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "min_seg_size_forward",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        }
+      ],
+      "label_columns": [
+        "Label"
+      ],
+      "temporal_columns": [],
+      "entity_columns": [],
+      "label_distribution": {
+        "Label": {
+          "DDoS": 128027,
+          "BENIGN": 2273097,
+          "PortScan": 158930,
+          "Bot": 1966,
+          "Infiltration": 36,
+          "Web Attack \ufffd Brute Force": 1507,
+          "Web Attack \ufffd XSS": 652,
+          "Web Attack \ufffd Sql Injection": 21,
+          "FTP-Patator": 7938,
+          "SSH-Patator": 5897,
+          "DoS Hulk": 231073,
+          "DoS GoldenEye": 10293,
+          "DoS slowloris": 5796,
+          "DoS Slowhttptest": 5499,
+          "Heartbleed": 11
+        }
+      }
+    },
+    "Edge-IIoTset": {
+      "row_count": 157800,
+      "candidate_files": 1,
+      "source_files": 52,
+      "columns": [
+        {
+          "name": "Attack_label",
+          "semantic_category": "label/taxonomy",
+          "leakage_role": "LABEL"
+        },
+        {
+          "name": "Attack_type",
+          "semantic_category": "label/taxonomy",
+          "leakage_role": "LABEL"
+        },
+        {
+          "name": "arp.dst.proto_ipv4",
+          "semantic_category": "protocol/service",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "arp.hw.size",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "arp.opcode",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "arp.src.proto_ipv4",
+          "semantic_category": "protocol/service",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "dns.qry.name",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "dns.qry.name.len",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "dns.qry.qu",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "dns.qry.type",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "dns.retransmission",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "dns.retransmit_request",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "dns.retransmit_request_in",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "frame.time",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "USED_FOR_GROUPING_FEATURE_GENERATION"
+        },
+        {
+          "name": "http.content_length",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "http.file_data",
+          "semantic_category": "unknown",
+          "leakage_role": "LEAKAGE_RISK"
+        },
+        {
+          "name": "http.referer",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "http.request.full_uri",
+          "semantic_category": "unknown",
+          "leakage_role": "LEAKAGE_RISK"
+        },
+        {
+          "name": "http.request.method",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "http.request.uri.query",
+          "semantic_category": "unknown",
+          "leakage_role": "LEAKAGE_RISK"
+        },
+        {
+          "name": "http.request.version",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "http.response",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "http.tls_port",
+          "semantic_category": "protocol/service",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "icmp.checksum",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "icmp.seq_le",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "icmp.transmit_timestamp",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "icmp.unused",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "ip.dst_host",
+          "semantic_category": "entity/address metadata",
+          "leakage_role": "USED_FOR_GROUPING_FEATURE_GENERATION"
+        },
+        {
+          "name": "ip.src_host",
+          "semantic_category": "entity/address metadata",
+          "leakage_role": "USED_FOR_GROUPING_FEATURE_GENERATION"
+        },
+        {
+          "name": "mbtcp.len",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "mbtcp.trans_id",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "mbtcp.unit_id",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "mqtt.conack.flags",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "mqtt.conflag.cleansess",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "mqtt.conflags",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "mqtt.hdrflags",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "mqtt.len",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "mqtt.msg",
+          "semantic_category": "unknown",
+          "leakage_role": "LEAKAGE_RISK"
+        },
+        {
+          "name": "mqtt.msg_decoded_as",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "mqtt.msgtype",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "mqtt.proto_len",
+          "semantic_category": "protocol/service",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "mqtt.protoname",
+          "semantic_category": "protocol/service",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "mqtt.topic",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "mqtt.topic_len",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "mqtt.ver",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "tcp.ack",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "tcp.ack_raw",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "tcp.checksum",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "tcp.connection.fin",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "tcp.connection.rst",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "tcp.connection.syn",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "tcp.connection.synack",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "tcp.dstport",
+          "semantic_category": "protocol/service",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "tcp.flags",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "tcp.flags.ack",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "tcp.len",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "tcp.options",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "tcp.payload",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "tcp.seq",
+          "semantic_category": "unknown",
+          "leakage_role": "METADATA_ONLY"
+        },
+        {
+          "name": "tcp.srcport",
+          "semantic_category": "protocol/service",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "udp.port",
+          "semantic_category": "protocol/service",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "udp.stream",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "udp.time_delta",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        }
+      ],
+      "label_columns": [
+        "Attack_label",
+        "Attack_type"
+      ],
+      "temporal_columns": [
+        "frame.time",
+        "icmp.transmit_timestamp",
+        "udp.time_delta"
+      ],
+      "entity_columns": [
+        "ip.dst_host",
+        "ip.src_host"
+      ],
+      "label_distribution": {
+        "Attack_label": {
+          "1": 133499,
+          "0": 24301
+        },
+        "Attack_type": {
+          "Normal": 24301,
+          "DDoS_UDP": 14498,
+          "DDoS_ICMP": 14090,
+          "Ransomware": 10925,
+          "DDoS_HTTP": 10561,
+          "SQL_injection": 10311,
+          "Uploading": 10269,
+          "DDoS_TCP": 10247,
+          "Backdoor": 10195,
+          "Vulnerability_scanner": 10076,
+          "Port_Scanning": 10071,
+          "XSS": 10052,
+          "Password": 9989,
+          "MITM": 1214,
+          "Fingerprinting": 1001
+        }
+      }
+    },
+    "BoT-IoT": {
+      "row_count": 73370443,
+      "candidate_files": 74,
+      "source_files": 75,
+      "columns": [
+        {
+          "name": "attack",
+          "semantic_category": "label/taxonomy",
+          "leakage_role": "LABEL"
+        },
+        {
+          "name": "bytes",
+          "semantic_category": "byte statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "category",
+          "semantic_category": "label/taxonomy",
+          "leakage_role": "LABEL"
+        },
+        {
+          "name": "daddr",
+          "semantic_category": "entity/address metadata",
+          "leakage_role": "USED_FOR_GROUPING_FEATURE_GENERATION"
+        },
+        {
+          "name": "dbytes",
+          "semantic_category": "byte statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "dco",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "dmac",
+          "semantic_category": "entity/address metadata",
+          "leakage_role": "LEAKAGE_RISK"
+        },
+        {
+          "name": "doui",
+          "semantic_category": "unknown",
+          "leakage_role": "LEAKAGE_RISK"
+        },
+        {
+          "name": "dpkts",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "dport",
+          "semantic_category": "protocol/service",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "drate",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "dur",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "flgs",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "ltime",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "USED_FOR_GROUPING_FEATURE_GENERATION"
+        },
+        {
+          "name": "max",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "min",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "pkSeqID",
+          "semantic_category": "unknown",
+          "leakage_role": "LEAKAGE_RISK"
+        },
+        {
+          "name": "pkts",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "proto",
+          "semantic_category": "protocol/service",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "rate",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "saddr",
+          "semantic_category": "entity/address metadata",
+          "leakage_role": "USED_FOR_GROUPING_FEATURE_GENERATION"
+        },
+        {
+          "name": "sbytes",
+          "semantic_category": "byte statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "sco",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "seq",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "smac",
+          "semantic_category": "entity/address metadata",
+          "leakage_role": "LEAKAGE_RISK"
+        },
+        {
+          "name": "soui",
+          "semantic_category": "unknown",
+          "leakage_role": "LEAKAGE_RISK"
+        },
+        {
+          "name": "spkts",
+          "semantic_category": "packet statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "sport",
+          "semantic_category": "protocol/service",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "srate",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "state",
+          "semantic_category": "protocol/service",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "stddev",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "stime",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "USED_FOR_GROUPING_FEATURE_GENERATION"
+        },
+        {
+          "name": "subcategory",
+          "semantic_category": "label/taxonomy",
+          "leakage_role": "LABEL"
+        },
+        {
+          "name": "sum",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        }
+      ],
+      "label_columns": [
+        "attack",
+        "category",
+        "subcategory"
+      ],
+      "temporal_columns": [
+        "ltime",
+        "stime"
+      ],
+      "entity_columns": [
+        "dmac",
+        "smac"
+      ],
+      "label_distribution": {
+        "attack": {
+          "1": 73360900,
+          "0": 9543
+        },
+        "category": {
+          "Reconnaissance": 1821639,
+          "Normal": 9543,
+          "DoS": 33005194,
+          "Theft": 1587,
+          "DDoS": 38532480
+        }
+      }
+    },
+    "N-BaIoT": {
+      "row_count": 7062606,
+      "candidate_files": 89,
+      "source_files": 93,
+      "columns": [
+        {
+          "name": "HH_L0.01_covariance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L0.01_magnitude",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L0.01_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L0.01_pcc",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L0.01_radius",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L0.01_std",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L0.01_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L0.1_covariance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L0.1_magnitude",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L0.1_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L0.1_pcc",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L0.1_radius",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L0.1_std",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L0.1_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L1_covariance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L1_magnitude",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L1_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L1_pcc",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L1_radius",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L1_std",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L1_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L3_covariance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L3_magnitude",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L3_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L3_pcc",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L3_radius",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L3_std",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L3_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L5_covariance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L5_magnitude",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L5_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L5_pcc",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L5_radius",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L5_std",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_L5_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_jit_L0.01_mean",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_jit_L0.01_variance",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_jit_L0.01_weight",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_jit_L0.1_mean",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_jit_L0.1_variance",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_jit_L0.1_weight",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_jit_L1_mean",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_jit_L1_variance",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_jit_L1_weight",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_jit_L3_mean",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_jit_L3_variance",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_jit_L3_weight",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_jit_L5_mean",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_jit_L5_variance",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HH_jit_L5_weight",
+          "semantic_category": "time/order statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "H_L0.01_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "H_L0.01_variance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "H_L0.01_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "H_L0.1_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "H_L0.1_variance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "H_L0.1_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "H_L1_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "H_L1_variance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "H_L1_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "H_L3_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "H_L3_variance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "H_L3_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "H_L5_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "H_L5_variance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "H_L5_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L0.01_covariance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L0.01_magnitude",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L0.01_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L0.01_pcc",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L0.01_radius",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L0.01_std",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L0.01_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L0.1_covariance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L0.1_magnitude",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L0.1_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L0.1_pcc",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L0.1_radius",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L0.1_std",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L0.1_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L1_covariance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L1_magnitude",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L1_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L1_pcc",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L1_radius",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L1_std",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L1_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L3_covariance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L3_magnitude",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L3_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L3_pcc",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L3_radius",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L3_std",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L3_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L5_covariance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L5_magnitude",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L5_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L5_pcc",
+          "semantic_category": "unknown",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L5_radius",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L5_std",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "HpHp_L5_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "MI_dir_L0.01_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "MI_dir_L0.01_variance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "MI_dir_L0.01_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "MI_dir_L0.1_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "MI_dir_L0.1_variance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "MI_dir_L0.1_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "MI_dir_L1_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "MI_dir_L1_variance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "MI_dir_L1_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "MI_dir_L3_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "MI_dir_L3_variance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "MI_dir_L3_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "MI_dir_L5_mean",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "MI_dir_L5_variance",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        },
+        {
+          "name": "MI_dir_L5_weight",
+          "semantic_category": "source-provided aggregate statistic",
+          "leakage_role": "SAFE_FEATURE"
+        }
+      ],
+      "label_columns": [
+        "__filename_label__"
+      ],
+      "temporal_columns": [],
+      "entity_columns": [],
+      "label_distribution": {
+        "__filename_label__": {
+          "benign": 555932,
+          "gafgyt.combo": 515156,
+          "gafgyt.junk": 261789,
+          "gafgyt.scan": 255111,
+          "gafgyt.tcp": 859850,
+          "gafgyt.udp": 946366,
+          "mirai.ack": 643821,
+          "mirai.scan": 537979,
+          "mirai.syn": 733299,
+          "mirai.udp": 1229999,
+          "mirai.udpplain": 523304
+        }
+      }
+    }
+  }
+}

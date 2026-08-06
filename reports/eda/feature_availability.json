@@ -1,0 +1,262 @@
+[
+  {
+    "canonical_name": "duration_seconds",
+    "level": "instant",
+    "valid_for": "both",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "Flow Duration",
+    "Edge-IIoTset": "udp.time_delta",
+    "BoT-IoT": "dur",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "protocol_family",
+    "level": "instant",
+    "valid_for": "in_domain",
+    "leakage_role": "CONDITIONAL_FEATURE",
+    "CICIDS2017": "",
+    "Edge-IIoTset": "tcp.len; udp.port; icmp.checksum",
+    "BoT-IoT": "proto",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "connection_state",
+    "level": "instant",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "state",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "src_port",
+    "level": "instant",
+    "valid_for": "in_domain",
+    "leakage_role": "CONDITIONAL_FEATURE",
+    "CICIDS2017": "",
+    "Edge-IIoTset": "tcp.srcport",
+    "BoT-IoT": "sport",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "dst_port",
+    "level": "instant",
+    "valid_for": "both",
+    "leakage_role": "CONDITIONAL_FEATURE",
+    "CICIDS2017": "Destination Port",
+    "Edge-IIoTset": "tcp.dstport; udp.port",
+    "BoT-IoT": "dport",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "total_packets",
+    "level": "instant",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "Total Fwd Packets; Total Backward Packets",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "pkts",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "fwd_packets",
+    "level": "instant",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "Total Fwd Packets",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "spkts",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "bwd_packets",
+    "level": "instant",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "Total Backward Packets",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "dpkts",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "total_bytes",
+    "level": "instant",
+    "valid_for": "both",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "Total Length of Fwd Packets; Total Length of Bwd Packets",
+    "Edge-IIoTset": "tcp.len; mqtt.len; http.content_length",
+    "BoT-IoT": "bytes",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "fwd_bytes",
+    "level": "instant",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "Total Length of Fwd Packets",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "sbytes",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "bwd_bytes",
+    "level": "instant",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "Total Length of Bwd Packets",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "dbytes",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "bytes_per_second",
+    "level": "instant",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "Flow Bytes/s",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "rate",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "packets_per_second",
+    "level": "instant",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "Flow Packets/s",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "packet_length_mean",
+    "level": "instant",
+    "valid_for": "both",
+    "leakage_role": "CONDITIONAL_FEATURE",
+    "CICIDS2017": "Packet Length Mean",
+    "Edge-IIoTset": "tcp.len; mqtt.len; http.content_length",
+    "BoT-IoT": "mean",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "packet_length_std",
+    "level": "instant",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "Packet Length Std",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "stddev",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "packet_length_min",
+    "level": "instant",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "Min Packet Length",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "min",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "packet_length_max",
+    "level": "instant",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "Max Packet Length",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "max",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "flow_iat_mean",
+    "level": "temporal",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "Flow IAT Mean",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "flow_iat_std",
+    "level": "temporal",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "Flow IAT Std",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "source_provided_delta_seconds",
+    "level": "temporal",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "",
+    "Edge-IIoTset": "udp.time_delta",
+    "BoT-IoT": "",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "timestamp_start",
+    "level": "temporal",
+    "valid_for": "in_domain",
+    "leakage_role": "USED_FOR_GROUPING_FEATURE_GENERATION",
+    "CICIDS2017": "",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "stime",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "source_host",
+    "level": "behavioral",
+    "valid_for": "in_domain",
+    "leakage_role": "USED_FOR_GROUPING_FEATURE_GENERATION",
+    "CICIDS2017": "",
+    "Edge-IIoTset": "ip.src_host",
+    "BoT-IoT": "saddr",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "destination_host",
+    "level": "behavioral",
+    "valid_for": "in_domain",
+    "leakage_role": "USED_FOR_GROUPING_FEATURE_GENERATION",
+    "CICIDS2017": "",
+    "Edge-IIoTset": "ip.dst_host",
+    "BoT-IoT": "daddr",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "traffic_asymmetry",
+    "level": "behavioral",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "Total Length of Fwd Packets; Total Length of Bwd Packets",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "sbytes; dbytes",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "packet_direction_ratio",
+    "level": "behavioral",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "Total Fwd Packets; Total Backward Packets",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "spkts; dpkts",
+    "N-BaIoT": ""
+  },
+  {
+    "canonical_name": "source_agg_*",
+    "level": "behavioral",
+    "valid_for": "in_domain",
+    "leakage_role": "SAFE_FEATURE",
+    "CICIDS2017": "",
+    "Edge-IIoTset": "",
+    "BoT-IoT": "",
+    "N-BaIoT": "MI_dir_*; H_*; HH_*; HH_jit_*; HpHp_*"
+  }
+]

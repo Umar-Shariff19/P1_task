@@ -1,0 +1,132 @@
+[
+  {
+    "canonical_candidate": "duration_seconds",
+    "CICIDS2017_source": "Flow Duration",
+    "Edge-IIoTset_source": "udp.time_delta",
+    "BoT-IoT_source": "dur",
+    "units": "seconds after normalization",
+    "semantic_equivalence": "Partial but defensible as current-record elapsed duration/delta.",
+    "decision": "ACCEPTED",
+    "reason": "All three expose a current flow/record duration-like measurement; units are normalizable."
+  },
+  {
+    "canonical_candidate": "protocol_family",
+    "CICIDS2017_source": "not present",
+    "Edge-IIoTset_source": "tcp/udp/icmp field presence",
+    "BoT-IoT_source": "proto",
+    "units": "categorical",
+    "semantic_equivalence": "Not universally available.",
+    "decision": "REJECTED",
+    "reason": "CICIDS MachineLearningCSV schema lacks protocol field."
+  },
+  {
+    "canonical_candidate": "src_port",
+    "CICIDS2017_source": "not present",
+    "Edge-IIoTset_source": "tcp.srcport",
+    "BoT-IoT_source": "sport",
+    "units": "port number",
+    "semantic_equivalence": "Equivalent where present.",
+    "decision": "REJECTED",
+    "reason": "CICIDS schema lacks source port."
+  },
+  {
+    "canonical_candidate": "dst_port",
+    "CICIDS2017_source": "Destination Port",
+    "Edge-IIoTset_source": "tcp.dstport / udp.port",
+    "BoT-IoT_source": "dport",
+    "units": "port number",
+    "semantic_equivalence": "Defensible service/destination-port semantics.",
+    "decision": "ACCEPTED",
+    "reason": "All three expose destination/service port. Conditional leakage risk is documented."
+  },
+  {
+    "canonical_candidate": "total_packets",
+    "CICIDS2017_source": "Total Fwd Packets + Total Backward Packets",
+    "Edge-IIoTset_source": "not present in prepared ML CSV",
+    "BoT-IoT_source": "pkts",
+    "units": "packets",
+    "semantic_equivalence": "Equivalent for CICIDS/BoT only.",
+    "decision": "REJECTED",
+    "reason": "Edge prepared ML CSV lacks packet count."
+  },
+  {
+    "canonical_candidate": "directional_packet_counts",
+    "CICIDS2017_source": "Total Fwd Packets / Total Backward Packets",
+    "Edge-IIoTset_source": "not present",
+    "BoT-IoT_source": "spkts / dpkts",
+    "units": "packets",
+    "semantic_equivalence": "Equivalent for CICIDS/BoT only.",
+    "decision": "REJECTED",
+    "reason": "Edge prepared ML CSV lacks directional packet counts."
+  },
+  {
+    "canonical_candidate": "total_bytes",
+    "CICIDS2017_source": "Total Length of Fwd Packets + Total Length of Bwd Packets",
+    "Edge-IIoTset_source": "tcp.len + mqtt.len + http.content_length",
+    "BoT-IoT_source": "bytes",
+    "units": "bytes",
+    "semantic_equivalence": "Partial but defensible as record/flow byte-length magnitude.",
+    "decision": "ACCEPTED",
+    "reason": "All three expose byte/length magnitude; Edge is protocol-field composite and documented as weaker."
+  },
+  {
+    "canonical_candidate": "directional_byte_counts",
+    "CICIDS2017_source": "Total Length of Fwd/Bwd Packets",
+    "Edge-IIoTset_source": "not present",
+    "BoT-IoT_source": "sbytes / dbytes",
+    "units": "bytes",
+    "semantic_equivalence": "Equivalent for CICIDS/BoT only.",
+    "decision": "REJECTED",
+    "reason": "Edge prepared ML CSV lacks directional byte counts."
+  },
+  {
+    "canonical_candidate": "packet_length_mean",
+    "CICIDS2017_source": "Packet Length Mean",
+    "Edge-IIoTset_source": "tcp.len / mqtt.len / http.content_length proxy",
+    "BoT-IoT_source": "mean",
+    "units": "bytes",
+    "semantic_equivalence": "Partial; Edge has current protocol payload length, not flow mean.",
+    "decision": "ACCEPTED_CONDITIONAL",
+    "reason": "Kept as a weak current-size statistic; documented as conditional rather than exact mean equivalence."
+  },
+  {
+    "canonical_candidate": "packet_length_std_min_max",
+    "CICIDS2017_source": "Packet Length Std/Min/Max",
+    "Edge-IIoTset_source": "not present",
+    "BoT-IoT_source": "stddev/min/max",
+    "units": "bytes",
+    "semantic_equivalence": "Equivalent for CICIDS/BoT only.",
+    "decision": "REJECTED",
+    "reason": "Edge prepared ML CSV lacks packet-length distribution statistics."
+  },
+  {
+    "canonical_candidate": "rates",
+    "CICIDS2017_source": "Flow Bytes/s, Flow Packets/s",
+    "Edge-IIoTset_source": "not present as flow rate",
+    "BoT-IoT_source": "rate/srate/drate",
+    "units": "bytes/sec or packets/sec depending source",
+    "semantic_equivalence": "Not universal and units differ.",
+    "decision": "REJECTED",
+    "reason": "Edge lacks equivalent flow-rate fields; BoT rate semantics are not safely interchangeable with all CICIDS rate fields."
+  },
+  {
+    "canonical_candidate": "tcp_syn_ack_rst",
+    "CICIDS2017_source": "SYN/ACK/RST Flag Count",
+    "Edge-IIoTset_source": "tcp.connection.syn / tcp.flags.ack / tcp.connection.rst",
+    "BoT-IoT_source": "flgs/state only",
+    "units": "count/indicator",
+    "semantic_equivalence": "Not audited as equivalent for BoT-IoT.",
+    "decision": "REJECTED",
+    "reason": "BoT-IoT exposes compact flags/state, not decomposed per-record SYN/ACK/RST counts. Removed from C/E/B profile."
+  },
+  {
+    "canonical_candidate": "inter_arrival_statistics",
+    "CICIDS2017_source": "Flow IAT Mean/Std",
+    "Edge-IIoTset_source": "udp.time_delta only",
+    "BoT-IoT_source": "stime/ltime/dur but no IAT distribution",
+    "units": "time",
+    "semantic_equivalence": "Not universal.",
+    "decision": "REJECTED",
+    "reason": "The fields represent different timing concepts."
+  }
+]

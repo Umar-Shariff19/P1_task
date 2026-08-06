@@ -1,0 +1,8 @@
+{
+  "first_status": "built",
+  "second_status": "reused",
+  "same_fingerprint_reused": true,
+  "changed_feature_version_invalidated": true,
+  "incomplete_cache_rejected": true,
+  "raw_data_untouched_policy": "Materializer writes only under data/cache output_root and reads data/raw."
+}

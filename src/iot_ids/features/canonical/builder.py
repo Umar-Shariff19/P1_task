@@ -16,16 +16,20 @@ def safe_divide(numerator: pd.Series, denominator: pd.Series | float) -> pd.Seri
 def build_canonical_features(dataset: str, frame: pd.DataFrame, source_path: str | Path | None = None) -> pd.DataFrame:
     dataset_key = dataset.lower()
     if dataset_key == "cicids2017":
-        return _cicids_features(frame)
+        out = _cicids_features(frame)
     if dataset_key == "edge-iiotset":
-        return _edge_features(frame)
+        out = _edge_features(frame)
     if dataset_key == "bot-iot":
-        return _bot_features(frame)
+        out = _bot_features(frame)
     if dataset_key == "n-baiot":
         if source_path is None:
             raise ValueError("N-BaIoT canonicalization requires source_path for filename labels.")
-        return _nbaiot_features(frame, source_path)
-    raise ValueError(f"Unsupported dataset: {dataset}")
+        out = _nbaiot_features(frame, source_path)
+    if "out" not in locals():
+        raise ValueError(f"Unsupported dataset: {dataset}")
+    if source_path is not None:
+        out["source_file"] = str(source_path)
+    return out
 
 
 def _base_output(frame: pd.DataFrame) -> pd.DataFrame:

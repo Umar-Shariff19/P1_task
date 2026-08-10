@@ -26,12 +26,17 @@ import sys
 sys.path.append(str(ROOT))
 DATASETS = ["CICIDS2017", "Edge-IIoTset", "N-BaIoT", "BoT-IoT"]
 if os.environ.get("SMOKE_TEST") == "1":
-    DATASETS = ["N-BaIoT"]
+    DATASETS = [os.environ.get("SMOKE_DATASET", "N-BaIoT")]
 
 # Training scale policy
 MAX_TRAIN_ROWS_PER_EPOCH = 5_000_000
 if os.environ.get("SMOKE_TEST") == "1":
     MAX_TRAIN_ROWS_PER_EPOCH = 1000
+
+# Training profile configuration
+PROFILE = os.environ.get("PROFILE", "in_domain")
+_ablation = os.environ.get("ABLATION_LEVELS")
+ABLATION_LEVELS = _ablation.split(",") if _ablation else None
 
 def log(msg: str) -> None:
     print(f"[4A MLP] {time.strftime('%H:%M:%S')} {msg}", flush=True)
@@ -70,7 +75,7 @@ class IDSStreamDataset(IterableDataset):
         self.parquet_files = get_parquet_files(dataset, split_manifest)
         self.epoch = 0
         from src.iot_ids.preprocessing.pipeline import FittedPreprocessor
-        self.preprocessor = FittedPreprocessor.load(ROOT / "models" / "preprocessing" / f"{dataset}_preprocessor.joblib")
+        self.preprocessor = FittedPreprocessor.load(ROOT / "models" / PROFILE / "preprocessing" / f"{dataset}_preprocessor.joblib")
         
         # Profile attack family distribution just like RF for downsampling
         self.keep_fractions = {}
@@ -158,7 +163,7 @@ def load_full_split(dataset: str, split_name: str, split_manifest: dict, drop_in
     split_drops = drop_indices.get(split_name, {})
     from run_milestone3a import split_assigner, hash_to_split
     from src.iot_ids.preprocessing.pipeline import FittedPreprocessor
-    preprocessor = FittedPreprocessor.load(ROOT / "models" / "preprocessing" / f"{dataset}_preprocessor.joblib")
+    preprocessor = FittedPreprocessor.load(ROOT / "models" / PROFILE / "preprocessing" / f"{dataset}_preprocessor.joblib")
     
     frames = []
     for file_idx, parquet in enumerate(parquet_files):
@@ -190,6 +195,10 @@ def load_full_split(dataset: str, split_name: str, split_manifest: dict, drop_in
     return TensorDataset(torch.tensor(X_np, dtype=torch.float32), torch.tensor(y_np, dtype=torch.float32).unsqueeze(1))
 
 def train_mlp(dataset: str) -> None:
+    if (ROOT / "models" / PROFILE / "neural_network" / f"{dataset}_mlp.pt").exists():
+        log(f"Skipping {dataset}: already trained for profile {PROFILE}.")
+        return
+
     manifest_path = ROOT / "data" / "processed" / "splits" / "split-v1" / dataset / "split_manifest.json"
     if not manifest_path.exists():
         log(f"Skipping {dataset}: split manifest not found.")
@@ -317,7 +326,7 @@ def train_mlp(dataset: str) -> None:
     log(f"[{dataset}] Final Val Accuracy: {acc:.4f} | F1: {f1:.4f}")
     
     # Save Model
-    model_dir = ROOT / "models" / "neural_network"
+    model_dir = ROOT / "models" / PROFILE / "neural_network"
     model_dir.mkdir(parents=True, exist_ok=True)
     
     # We save the entire model (architecture + weights) or state_dict. Let's save state_dict for best practices.
@@ -328,6 +337,8 @@ def train_mlp(dataset: str) -> None:
     metrics = {
         "dataset": dataset,
         "model": "MLP (PyTorch)",
+        "profile": PROFILE,
+        "ablation_levels": ABLATION_LEVELS,
         "train_rows_per_epoch": train_steps * 1024,
         "val_rows_used": len(y_true_final),
         "train_time_sec": round(total_train_time, 2),

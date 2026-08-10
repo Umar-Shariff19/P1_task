@@ -437,57 +437,57 @@
   "N-BaIoT": {
     "N-BaIoT": {
       "rf": {
-        "accuracy": 0.9997,
+        "accuracy": 0.9991,
         "precision": 1.0,
-        "recall": 0.9997,
-        "f1_score": 0.9998,
+        "recall": 0.999,
+        "f1_score": 0.9995,
         "frozen_weights": {
           "rf": 1.0
         },
-        "frozen_threshold": 0.9
+        "frozen_threshold": 0.45000000000000007
       },
       "mlp": {
-        "accuracy": 0.9995,
+        "accuracy": 0.1102,
         "precision": 0.9997,
-        "recall": 0.9998,
-        "f1_score": 0.9997,
+        "recall": 0.0549,
+        "f1_score": 0.1042,
         "frozen_weights": {
           "mlp": 1.0
         },
-        "frozen_threshold": 0.9
+        "frozen_threshold": 0.1
       },
       "ae": {
-        "accuracy": 0.9645,
-        "precision": 0.9639,
-        "recall": 0.9997,
-        "f1_score": 0.9815,
+        "accuracy": 0.9511,
+        "precision": 0.9507,
+        "recall": 0.9999,
+        "f1_score": 0.9747,
         "frozen_weights": {
           "ae": 1.0
         },
-        "frozen_threshold": 0.5
+        "frozen_threshold": 0.4
       },
       "rf+mlp": {
-        "accuracy": 0.9999,
+        "accuracy": 0.9991,
         "precision": 1.0,
-        "recall": 0.9999,
-        "f1_score": 0.9999,
+        "recall": 0.9991,
+        "f1_score": 0.9995,
         "frozen_weights": {
-          "rf": 0.8500000000000001,
-          "mlp": 0.1499999999999999
+          "rf": 0.65,
+          "mlp": 0.35
         },
-        "frozen_threshold": 0.8
+        "frozen_threshold": 0.30000000000000004
       },
       "rf+mlp+ae": {
-        "accuracy": 0.9999,
+        "accuracy": 0.9991,
         "precision": 1.0,
-        "recall": 0.9999,
-        "f1_score": 0.9999,
+        "recall": 0.9991,
+        "f1_score": 0.9995,
         "frozen_weights": {
-          "rf": 0.8500000000000001,
-          "mlp": 0.15000000000000002,
-          "ae": -1.1102230246251565e-16
+          "rf": 0.65,
+          "mlp": 0.35000000000000003,
+          "ae": -5.551115123125783e-17
         },
-        "frozen_threshold": 0.8
+        "frozen_threshold": 0.30000000000000004
       }
     }
   }

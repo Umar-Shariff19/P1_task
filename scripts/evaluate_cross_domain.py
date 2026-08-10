@@ -23,7 +23,12 @@ import sys
 sys.path.append(str(ROOT))
 DATASETS = ["CICIDS2017", "Edge-IIoTset", "BoT-IoT", "N-BaIoT"]
 if os.environ.get("SMOKE_TEST") == "1":
-    DATASETS = ["N-BaIoT"]
+    DATASETS = [os.environ.get("SMOKE_DATASET", "N-BaIoT")]
+
+# Training profile configuration
+PROFILE = os.environ.get("PROFILE", "in_domain")
+_ablation = os.environ.get("ABLATION_LEVELS")
+ABLATION_LEVELS = _ablation.split(",") if _ablation else None
 
 def log(msg: str) -> None:
     print(f"[5 EVAL] {time.strftime('%H:%M:%S')} {msg}", flush=True)
@@ -89,7 +94,7 @@ def load_split(dataset: str, split_name: str) -> tuple[pd.DataFrame, pd.Series]:
         
     full_df = pd.concat(frames, ignore_index=True)
     from src.iot_ids.preprocessing.pipeline import FittedPreprocessor
-    preprocessor = FittedPreprocessor.load(ROOT / "models" / "preprocessing" / f"{dataset}_preprocessor.joblib")
+    preprocessor = FittedPreprocessor.load(ROOT / "models" / PROFILE / "preprocessing" / f"{dataset}_preprocessor.joblib")
     
     X_np = preprocessor.transform(full_df)
     y = (full_df["canonical_label"] != "BENIGN").astype(int).values
@@ -202,20 +207,20 @@ def run():
         loaded_models[ds] = {}
         loaded_metrics[ds] = {}
         
-        rf_path = ROOT / "models" / "random_forest" / f"{ds}_rf.joblib"
-        rf_met = ROOT / "models" / "random_forest" / f"{ds}_rf_metrics.json"
+        rf_path = ROOT / "models" / PROFILE / "random_forest" / f"{ds}_rf.joblib"
+        rf_met = ROOT / "models" / PROFILE / "random_forest" / f"{ds}_rf_metrics.json"
         if rf_path.exists():
             loaded_models[ds]["rf"] = joblib.load(rf_path)
             loaded_metrics[ds]["rf"] = read_json(rf_met)
             
-        mlp_path = ROOT / "models" / "neural_network" / f"{ds}_mlp.pt"
-        mlp_met = ROOT / "models" / "neural_network" / f"{ds}_mlp_metrics.json"
+        mlp_path = ROOT / "models" / PROFILE / "neural_network" / f"{ds}_mlp.pt"
+        mlp_met = ROOT / "models" / PROFILE / "neural_network" / f"{ds}_mlp_metrics.json"
         if mlp_path.exists():
             loaded_models[ds]["mlp"] = torch.load(mlp_path)
             loaded_metrics[ds]["mlp"] = read_json(mlp_met)
             
-        ae_path = ROOT / "models" / "autoencoder" / f"{ds}_ae.joblib"
-        ae_met = ROOT / "models" / "autoencoder" / f"{ds}_ae_metrics.json"
+        ae_path = ROOT / "models" / PROFILE / "autoencoder" / f"{ds}_ae.joblib"
+        ae_met = ROOT / "models" / PROFILE / "autoencoder" / f"{ds}_ae_metrics.json"
         if ae_path.exists():
             loaded_models[ds]["ae"] = joblib.load(ae_path)
             loaded_metrics[ds]["ae"] = read_json(ae_met)
@@ -250,12 +255,17 @@ def run():
         log(f"[{ds}] Loading Test set...")
         test_sets[ds] = load_split(ds, "test")
 
-    # 2. Evaluate Cross-Domain Matrix using Frozen Weights & Thresholds
+    # 2. Evaluate Matrix using Frozen Weights & Thresholds
     for cell_key, cell_info in cross_config["cells"].items():
         if cell_info["status"] != "compatible":
             continue
             
         train_ds, test_ds = cell_key.split("->")
+        
+        # If in-domain profile, strictly enforce same-dataset evaluation
+        if PROFILE == "in_domain" and train_ds != test_ds:
+            continue
+            
         log(f"Evaluating {train_ds} -> {test_ds}")
         
         if test_ds not in test_sets or train_ds not in source_configs:
@@ -293,8 +303,9 @@ def run():
             if ab_name == "rf+mlp+ae":
                 log(f"  {train_ds}->{test_ds} [{ab_name}] | Acc: {acc:.4f} | F1: {f1:.4f}")
         
-    write_json(ROOT / "reports" / "experiments" / "cross_domain_evaluation.json", results)
-    log("Cross-domain evaluation complete.")
+    eval_file = ROOT / "reports" / "experiments" / f"{PROFILE}_evaluation.json"
+    write_json(eval_file, results)
+    log(f"Evaluation complete. Results saved to {eval_file.name}")
 
 if __name__ == "__main__":
     run()

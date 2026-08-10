@@ -23,13 +23,18 @@ import sys
 sys.path.append(str(ROOT))
 DATASETS = ["CICIDS2017", "Edge-IIoTset", "N-BaIoT", "BoT-IoT"]
 if os.environ.get("SMOKE_TEST") == "1":
-    DATASETS = ["N-BaIoT"]
+    DATASETS = [os.environ.get("SMOKE_DATASET", "N-BaIoT")]
 
 # Downsample large datasets to avoid OOM while preserving global representation
 MAX_TRAIN_ROWS = 2_000_000
 if os.environ.get("SMOKE_TEST") == "1":
     MAX_TRAIN_ROWS = 1000
 MAX_TEST_ROWS = 1_000_000
+
+# Training profile configuration
+PROFILE = os.environ.get("PROFILE", "in_domain")
+_ablation = os.environ.get("ABLATION_LEVELS")
+ABLATION_LEVELS = _ablation.split(",") if _ablation else None
 
 def log(msg: str) -> None:
     print(f"[3B RF] {time.strftime('%H:%M:%S')} {msg}", flush=True)
@@ -122,6 +127,10 @@ def load_split(dataset: str, split_name: str, split_manifest: dict, drop_indices
     return full_df, y
 
 def train_rf(dataset: str) -> None:
+    if (ROOT / "models" / PROFILE / "random_forest" / f"{dataset}_rf.joblib").exists():
+        log(f"Skipping {dataset}: already trained for profile {PROFILE}.")
+        return
+
     manifest_path = ROOT / "data" / "processed" / "splits" / "split-v1" / dataset / "split_manifest.json"
     if not manifest_path.exists():
         log(f"Skipping {dataset}: split manifest not found. Run Milestone 3A first.")
@@ -136,7 +145,7 @@ def train_rf(dataset: str) -> None:
     log(f"[{dataset}] Train Loaded: {len(X_train_raw)} rows in {time.time()-t0:.1f}s")
     
     from src.iot_ids.preprocessing.pipeline import get_model_feature_columns, fit_preprocessor, FittedPreprocessor
-    base_cols = get_model_feature_columns(dataset)
+    base_cols = get_model_feature_columns(dataset, profile=PROFILE, levels=ABLATION_LEVELS)
     feature_cols = []
     for c in base_cols:
         if c.endswith("*"):
@@ -146,9 +155,9 @@ def train_rf(dataset: str) -> None:
             if c in X_train_raw.columns:
                 feature_cols.append(c)
                 
-    log(f"[{dataset}] Fitting preprocessor on {len(feature_cols)} features...")
+    log(f"[{dataset}] [{PROFILE}] Fitting preprocessor on {len(feature_cols)} features...")
     preprocessor = fit_preprocessor(X_train_raw, feature_cols)
-    prep_dir = ROOT / "models" / "preprocessing"
+    prep_dir = ROOT / "models" / PROFILE / "preprocessing"
     prep_dir.mkdir(parents=True, exist_ok=True)
     preprocessor.save(prep_dir / f"{dataset}_preprocessor.joblib")
     
@@ -183,7 +192,7 @@ def train_rf(dataset: str) -> None:
     log(f"[{dataset}] Validation Accuracy: {acc:.4f} | F1: {f1:.4f}")
     
     # Save Model
-    model_dir = ROOT / "models" / "random_forest"
+    model_dir = ROOT / "models" / PROFILE / "random_forest"
     model_dir.mkdir(parents=True, exist_ok=True)
     model_path = model_dir / f"{dataset}_rf.joblib"
     joblib.dump(rf, model_path)
@@ -192,6 +201,10 @@ def train_rf(dataset: str) -> None:
     metrics = {
         "dataset": dataset,
         "model": "RandomForest",
+        "profile": PROFILE,
+        "ablation_levels": ABLATION_LEVELS,
+        "feature_count": len(feature_cols),
+        "feature_names": feature_cols,
         "train_rows_used": len(X_train),
         "val_rows_used": len(X_val),
         "train_time_sec": round(train_time, 2),

@@ -1,34 +1,66 @@
 {
-  "train_rf.py_smoke": {
+  "train_rf.py_in_domain_smoke": {
     "status": "COMPLETED",
     "fingerprint": "centralized_preprocessing_v2"
   },
-  "train_mlp.py_smoke": {
+  "train_mlp.py_in_domain_smoke": {
     "status": "COMPLETED",
     "fingerprint": "centralized_preprocessing_v2"
   },
-  "train_ae.py_smoke": {
+  "train_ae.py_in_domain_smoke": {
     "status": "COMPLETED",
     "fingerprint": "centralized_preprocessing_v2"
   },
-  "evaluate_cross_domain.py_smoke": {
+  "evaluate_cross_domain.py_in_domain_smoke": {
     "status": "COMPLETED",
     "fingerprint": "centralized_preprocessing_v2"
   },
-  "train_rf.py": {
+  "train_rf.py_cross_domain_smoke": {
     "status": "COMPLETED",
     "fingerprint": "centralized_preprocessing_v2"
   },
-  "train_mlp.py": {
+  "train_mlp.py_cross_domain_smoke": {
     "status": "COMPLETED",
     "fingerprint": "centralized_preprocessing_v2"
   },
-  "train_ae.py": {
+  "train_ae.py_cross_domain_smoke": {
     "status": "COMPLETED",
     "fingerprint": "centralized_preprocessing_v2"
   },
-  "evaluate_cross_domain.py": {
+  "evaluate_cross_domain.py_cross_domain_smoke": {
     "status": "COMPLETED",
-    "fingerprint": "INVALIDATED"
+    "fingerprint": "centralized_preprocessing_v2"
+  },
+  "train_rf.py_in_domain": {
+    "status": "COMPLETED",
+    "fingerprint": "centralized_preprocessing_v2"
+  },
+  "train_mlp.py_in_domain": {
+    "status": "COMPLETED",
+    "fingerprint": "centralized_preprocessing_v2"
+  },
+  "train_ae.py_in_domain": {
+    "status": "COMPLETED",
+    "fingerprint": "centralized_preprocessing_v2"
+  },
+  "evaluate_cross_domain.py_in_domain": {
+    "status": "COMPLETED",
+    "fingerprint": "centralized_preprocessing_v2"
+  },
+  "train_rf.py_cross_domain": {
+    "status": "COMPLETED",
+    "fingerprint": "centralized_preprocessing_v2"
+  },
+  "train_mlp.py_cross_domain": {
+    "status": "COMPLETED",
+    "fingerprint": "centralized_preprocessing_v2"
+  },
+  "train_ae.py_cross_domain": {
+    "status": "COMPLETED",
+    "fingerprint": "centralized_preprocessing_v2"
+  },
+  "evaluate_cross_domain.py_cross_domain": {
+    "status": "COMPLETED",
+    "fingerprint": "centralized_preprocessing_v2"
   }
 }

@@ -1,0 +1,47 @@
+{
+  "dataset": "Edge-IIoTset",
+  "model": "RandomForest",
+  "profile": "in_domain",
+  "ablation_levels": null,
+  "feature_count": 7,
+  "feature_names": [
+    "duration_seconds",
+    "src_port",
+    "dst_port",
+    "total_bytes",
+    "packet_length_mean",
+    "source_provided_delta_seconds",
+    "protocol_family"
+  ],
+  "train_rows_used": 18976,
+  "val_rows_used": 22206,
+  "train_time_sec": 0.27,
+  "inference_time_sec": 0.04,
+  "metrics": {
+    "accuracy": 0.9984,
+    "precision": 1.0,
+    "recall": 0.9982,
+    "f1_score": 0.9991
+  },
+  "hyperparameters": {
+    "bootstrap": true,
+    "ccp_alpha": 0.0,
+    "class_weight": "balanced",
+    "criterion": "gini",
+    "max_depth": 20,
+    "max_features": "sqrt",
+    "max_leaf_nodes": null,
+    "max_samples": null,
+    "min_impurity_decrease": 0.0,
+    "min_samples_leaf": 1,
+    "min_samples_split": 2,
+    "min_weight_fraction_leaf": 0.0,
+    "monotonic_cst": null,
+    "n_estimators": 100,
+    "n_jobs": -1,
+    "oob_score": false,
+    "random_state": 42,
+    "verbose": 0,
+    "warm_start": false
+  }
+}

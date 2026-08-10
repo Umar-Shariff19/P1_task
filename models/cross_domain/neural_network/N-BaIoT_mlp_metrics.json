@@ -1,0 +1,27 @@
+{
+  "dataset": "N-BaIoT",
+  "model": "MLP (PyTorch)",
+  "profile": "cross_domain",
+  "ablation_levels": null,
+  "train_rows_per_epoch": 400384,
+  "val_rows_used": 1218556,
+  "train_time_sec": 157.24,
+  "inference_time_sec": 24.59,
+  "metrics": {
+    "accuracy": 0.0703,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1_score": 0.0
+  },
+  "hyperparameters": {
+    "hidden_layers": [
+      128,
+      64
+    ],
+    "dropout": 0.2,
+    "optimizer": "AdamW",
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "batch_size": 1024
+  }
+}

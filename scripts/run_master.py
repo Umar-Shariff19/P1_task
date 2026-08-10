@@ -24,8 +24,8 @@ def save_registry(registry: dict) -> None:
     with open(REGISTRY_PATH, "w") as f:
         json.dump(registry, f, indent=2)
 
-def run_script(script_name: str, smoke_test: bool = False):
-    stage_id = f"{script_name}_smoke" if smoke_test else script_name
+def run_script(script_name: str, smoke_test: bool = False, profile: str = "in_domain"):
+    stage_id = f"{script_name}_{profile}_smoke" if smoke_test else f"{script_name}_{profile}"
     print(f"\n{'='*60}\nLaunching {script_name} (Smoke Test: {smoke_test})\n{'='*60}")
     
     registry = load_registry()
@@ -42,10 +42,10 @@ def run_script(script_name: str, smoke_test: bool = False):
     registry[stage_id] = {"status": "RUNNING", "fingerprint": fingerprint}
     save_registry(registry)
     
-    env = None
+    import os
+    env = os.environ.copy()
+    env["PROFILE"] = profile
     if smoke_test:
-        import os
-        env = os.environ.copy()
         env["SMOKE_TEST"] = "1"
         
     t0 = time.time()
@@ -63,6 +63,10 @@ def run_script(script_name: str, smoke_test: bool = False):
     save_registry(registry)
 
 if __name__ == "__main__":
+    import os
+    # Default to SMOKE_TEST if explicitly requested from command line
+    force_smoke = os.environ.get("SMOKE_TEST") == "1"
+    
     scripts = [
         "train_rf.py",
         "train_mlp.py",
@@ -70,10 +74,20 @@ if __name__ == "__main__":
         "evaluate_cross_domain.py"
     ]
     
-    print(">>> BEGINNING SMOKE TEST PHASE <<<")
-    for script in scripts:
-        run_script(script, smoke_test=True)
+    profiles = ["in_domain", "cross_domain"]
     
-    print("\n>>> BEGINNING FULL RESEARCH EXECUTION <<<")
-    for script in scripts:
-        run_script(script, smoke_test=False)
+    if force_smoke:
+        print(">>> FORCING SMOKE TEST PHASE ONLY <<<")
+        for profile in profiles:
+            for script in scripts:
+                run_script(script, smoke_test=True, profile=profile)
+    else:
+        print(">>> BEGINNING SMOKE TEST PHASE <<<")
+        for profile in profiles:
+            for script in scripts:
+                run_script(script, smoke_test=True, profile=profile)
+        
+        print("\n>>> BEGINNING FULL RESEARCH EXECUTION <<<")
+        for profile in profiles:
+            for script in scripts:
+                run_script(script, smoke_test=False, profile=profile)

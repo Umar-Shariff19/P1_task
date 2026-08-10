@@ -15,14 +15,19 @@ import pandas as pd
 from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, roc_curve
 import joblib
-
+import hashlib
 import os
 ROOT = Path(__file__).resolve().parents[1]
 import sys
 sys.path.append(str(ROOT))
 DATASETS = ["CICIDS2017", "Edge-IIoTset", "N-BaIoT", "BoT-IoT"]
 if os.environ.get("SMOKE_TEST") == "1":
-    DATASETS = ["N-BaIoT"]
+    DATASETS = [os.environ.get("SMOKE_DATASET", "N-BaIoT")]
+
+# Training profile configuration
+PROFILE = os.environ.get("PROFILE", "in_domain")
+_ablation = os.environ.get("ABLATION_LEVELS")
+ABLATION_LEVELS = _ablation.split(",") if _ablation else None
 
 def log(msg: str) -> None:
     print(f"[4B AE] {time.strftime('%H:%M:%S')} {msg}", flush=True)
@@ -48,11 +53,10 @@ def load_benign_train(dataset: str, split_manifest: dict, drop_indices: dict):
     parquet_files = get_parquet_files(dataset, split_manifest)
     split_drops = drop_indices.get("train", {})
     from run_milestone3a import split_assigner, hash_to_split
-    import hashlib
     from src.iot_ids.preprocessing.pipeline import FittedPreprocessor
     import torch
     from torch.utils.data import TensorDataset
-    preprocessor = FittedPreprocessor.load(ROOT / "models" / "preprocessing" / f"{dataset}_preprocessor.joblib")
+    preprocessor = FittedPreprocessor.load(ROOT / "models" / PROFILE / "preprocessing" / f"{dataset}_preprocessor.joblib")
     
     for file_idx, parquet in enumerate(parquet_files):
         df = pd.read_parquet(parquet)
@@ -86,7 +90,7 @@ def load_full_split(dataset: str, split_name: str, split_manifest: dict, drop_in
     split_drops = drop_indices.get(split_name, {})
     from run_milestone3a import split_assigner, hash_to_split
     from src.iot_ids.preprocessing.pipeline import FittedPreprocessor
-    preprocessor = FittedPreprocessor.load(ROOT / "models" / "preprocessing" / f"{dataset}_preprocessor.joblib")
+    preprocessor = FittedPreprocessor.load(ROOT / "models" / PROFILE / "preprocessing" / f"{dataset}_preprocessor.joblib")
     
     frames = []
     for file_idx, parquet in enumerate(parquet_files):
@@ -118,6 +122,10 @@ def load_full_split(dataset: str, split_name: str, split_manifest: dict, drop_in
     return TensorDataset(torch.tensor(X_np, dtype=torch.float32), torch.tensor(y_np, dtype=torch.float32).unsqueeze(1))
 
 def train_ae(dataset: str) -> None:
+    if (ROOT / "models" / PROFILE / "autoencoder" / f"{dataset}_ae.joblib").exists():
+        log(f"Skipping {dataset}: already trained for profile {PROFILE}.")
+        return
+
     manifest_path = ROOT / "data" / "processed" / "splits" / "split-v1" / dataset / "split_manifest.json"
     if not manifest_path.exists():
         log(f"Skipping {dataset}: split manifest not found.")
@@ -176,7 +184,7 @@ def train_ae(dataset: str) -> None:
     log(f"[{dataset}] Validation Accuracy: {acc:.4f} | F1: {f1:.4f} | Threshold: {best_threshold:.4f}")
     
     # Save Model
-    model_dir = ROOT / "models" / "autoencoder"
+    model_dir = ROOT / "models" / PROFILE / "autoencoder"
     model_dir.mkdir(parents=True, exist_ok=True)
     model_path = model_dir / f"{dataset}_ae.joblib"
     joblib.dump(ae, model_path)
@@ -185,6 +193,8 @@ def train_ae(dataset: str) -> None:
     metrics = {
         "dataset": dataset,
         "model": "Autoencoder",
+        "profile": PROFILE,
+        "ablation_levels": ABLATION_LEVELS,
         "train_benign_rows_used": train_rows,
         "val_rows_used": len(y_true_all),
         "train_time_sec": round(train_time, 2),

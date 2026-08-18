@@ -1,0 +1,58 @@
+{
+  "dataset": "CICIDS2017",
+  "model": "Autoencoder",
+  "split_version": "split-v3",
+  "fingerprint": "58fb87651b07579a",
+  "train_benign_rows_used": 1690589,
+  "val_rows_used": 311446,
+  "best_threshold": 0.0009591305986646407,
+  "train_time_sec": 84.11,
+  "inference_time_sec": 47.67,
+  "metrics": {
+    "accuracy": 0.5914,
+    "precision": 0.0271,
+    "recall": 0.8507,
+    "f1_score": 0.0525,
+    "macro_f1": 0.396
+  },
+  "confusion_matrix": [
+    [
+      180673,
+      126627
+    ],
+    [
+      619,
+      3527
+    ]
+  ],
+  "hyperparameters": {
+    "activation": "relu",
+    "alpha": 0.0001,
+    "batch_size": "auto",
+    "beta_1": 0.9,
+    "beta_2": 0.999,
+    "early_stopping": false,
+    "epsilon": 1e-08,
+    "hidden_layer_sizes": [
+      32,
+      16,
+      32
+    ],
+    "learning_rate": "constant",
+    "learning_rate_init": 0.001,
+    "loss": "squared_error",
+    "max_fun": 15000,
+    "max_iter": 1,
+    "momentum": 0.9,
+    "n_iter_no_change": 10,
+    "nesterovs_momentum": true,
+    "power_t": 0.5,
+    "random_state": 42,
+    "shuffle": true,
+    "solver": "adam",
+    "tol": 0.0001,
+    "validation_fraction": 0.1,
+    "verbose": false,
+    "warm_start": false
+  }
+}

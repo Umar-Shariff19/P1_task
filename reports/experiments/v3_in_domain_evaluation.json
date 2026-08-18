@@ -1,0 +1,346 @@
+{
+  "CICIDS2017": {
+    "dataset": "CICIDS2017",
+    "fingerprint": "58fb87651b07579a",
+    "test_rows": 480553,
+    "test_benign": 193596,
+    "test_attack": 286957,
+    "rf": {
+      "accuracy": 0.573,
+      "precision": 0.9958,
+      "recall": 0.2862,
+      "f1": 0.4446,
+      "macro_f1": 0.5489,
+      "cm": [
+        [
+          193250,
+          346
+        ],
+        [
+          204843,
+          82114
+        ]
+      ]
+    },
+    "mlp": {
+      "accuracy": 0.559,
+      "precision": 0.9148,
+      "recall": 0.2884,
+      "f1": 0.4386,
+      "macro_f1": 0.5378,
+      "cm": [
+        [
+          185883,
+          7713
+        ],
+        [
+          204190,
+          82767
+        ]
+      ]
+    },
+    "ae": {
+      "accuracy": 0.748,
+      "precision": 0.7251,
+      "recall": 0.9308,
+      "f1": 0.8152,
+      "macro_f1": 0.7096,
+      "cm": [
+        [
+          92352,
+          101244
+        ],
+        [
+          19846,
+          267111
+        ]
+      ]
+    },
+    "ensemble": {
+      "accuracy": 0.5605,
+      "precision": 0.8842,
+      "recall": 0.3039,
+      "f1": 0.4523,
+      "macro_f1": 0.5427,
+      "cm": [
+        [
+          182175,
+          11421
+        ],
+        [
+          199763,
+          87194
+        ]
+      ]
+    },
+    "frozen_weights": {
+      "rf": 0.7,
+      "mlp": 0.3,
+      "ae": -0.0
+    },
+    "frozen_threshold": 0.1,
+    "ae_disclosure": "Active (w_ae>0.0)"
+  },
+  "Edge-IIoTset": {
+    "dataset": "Edge-IIoTset",
+    "fingerprint": "6b0c6668a86f7ce2",
+    "test_rows": 22864,
+    "test_benign": 5014,
+    "test_attack": 17850,
+    "rf": {
+      "accuracy": 0.9999,
+      "precision": 0.9999,
+      "recall": 0.9999,
+      "f1": 0.9999,
+      "macro_f1": 0.9999,
+      "cm": [
+        [
+          5013,
+          1
+        ],
+        [
+          1,
+          17849
+        ]
+      ]
+    },
+    "mlp": {
+      "accuracy": 0.8403,
+      "precision": 0.9949,
+      "recall": 0.7996,
+      "f1": 0.8866,
+      "macro_f1": 0.8084,
+      "cm": [
+        [
+          4941,
+          73
+        ],
+        [
+          3578,
+          14272
+        ]
+      ]
+    },
+    "ae": {
+      "accuracy": 0.7165,
+      "precision": 0.8628,
+      "recall": 0.7573,
+      "f1": 0.8066,
+      "macro_f1": 0.6379,
+      "cm": [
+        [
+          2864,
+          2150
+        ],
+        [
+          4332,
+          13518
+        ]
+      ]
+    },
+    "ensemble": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 0.9999,
+      "f1": 1.0,
+      "macro_f1": 0.9999,
+      "cm": [
+        [
+          5014,
+          0
+        ],
+        [
+          1,
+          17849
+        ]
+      ]
+    },
+    "frozen_weights": {
+      "rf": 0.35,
+      "mlp": 0.25,
+      "ae": 0.4
+    },
+    "frozen_threshold": 0.45,
+    "ae_disclosure": "Active (w_ae>0.0)"
+  },
+  "BoT-IoT": {
+    "dataset": "BoT-IoT",
+    "fingerprint": "53a044b6041c2d52",
+    "test_rows": 57620443,
+    "test_benign": 2130,
+    "test_attack": 57618313,
+    "rf": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "macro_f1": 0.9525,
+      "cm": [
+        [
+          2103,
+          27
+        ],
+        [
+          415,
+          57617898
+        ]
+      ]
+    },
+    "mlp": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "macro_f1": 0.8063,
+      "cm": [
+        [
+          2106,
+          24
+        ],
+        [
+          2639,
+          57615674
+        ]
+      ]
+    },
+    "ae": {
+      "accuracy": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "macro_f1": 0.0,
+      "cm": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "note": "AE excluded from BoT-IoT ensemble (w_ae=0.0)"
+    },
+    "ensemble": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "macro_f1": 0.9789,
+      "cm": [
+        [
+          2061,
+          69
+        ],
+        [
+          113,
+          57618200
+        ]
+      ]
+    },
+    "frozen_weights": {
+      "rf": 1.0,
+      "mlp": 0.0,
+      "ae": 0.0
+    },
+    "frozen_threshold": 0.25,
+    "ae_disclosure": "Excluded (w_ae=0.0)",
+    "bot_iot_class_breakdown": {
+      "benign": {
+        "precision": 0.948,
+        "recall": 0.9676,
+        "f1": 0.9577,
+        "count": 2130
+      },
+      "attack": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "count": 57618313
+      },
+      "macro_f1": 0.9789
+    }
+  },
+  "N-BaIoT": {
+    "dataset": "N-BaIoT",
+    "fingerprint": "377f954b1902a9f1",
+    "test_rows": 1226048,
+    "test_benign": 71678,
+    "test_attack": 1154370,
+    "rf": {
+      "accuracy": 0.9999,
+      "precision": 0.9999,
+      "recall": 1.0,
+      "f1": 0.9999,
+      "macro_f1": 0.9993,
+      "cm": [
+        [
+          71507,
+          171
+        ],
+        [
+          6,
+          1154364
+        ]
+      ]
+    },
+    "mlp": {
+      "accuracy": 0.9989,
+      "precision": 0.999,
+      "recall": 0.9999,
+      "f1": 0.9994,
+      "macro_f1": 0.9952,
+      "cm": [
+        [
+          70526,
+          1152
+        ],
+        [
+          141,
+          1154229
+        ]
+      ]
+    },
+    "ae": {
+      "accuracy": 0.9645,
+      "precision": 0.9639,
+      "recall": 0.9997,
+      "f1": 0.9815,
+      "macro_f1": 0.774,
+      "cm": [
+        [
+          28442,
+          43236
+        ],
+        [
+          289,
+          1154081
+        ]
+      ]
+    },
+    "ensemble": {
+      "accuracy": 0.9998,
+      "precision": 1.0,
+      "recall": 0.9997,
+      "f1": 0.9999,
+      "macro_f1": 0.9989,
+      "cm": [
+        [
+          71678,
+          0
+        ],
+        [
+          294,
+          1154076
+        ]
+      ]
+    },
+    "frozen_weights": {
+      "rf": 0.9,
+      "mlp": 0.1,
+      "ae": -0.0
+    },
+    "frozen_threshold": 0.85,
+    "ae_disclosure": "Active (w_ae>0.0)"
+  }
+}

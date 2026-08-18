@@ -36,6 +36,9 @@ PROFILE = os.environ.get("PROFILE", "in_domain")
 _ablation = os.environ.get("ABLATION_LEVELS")
 ABLATION_LEVELS = _ablation.split(",") if _ablation else None
 
+SPLIT_VERSION = os.environ.get("SPLIT_VERSION", "split-v1")
+MODEL_VERSION = os.environ.get("MODEL_VERSION", PROFILE)
+
 def log(msg: str) -> None:
     print(f"[3B RF] {time.strftime('%H:%M:%S')} {msg}", flush=True)
 
@@ -47,11 +50,15 @@ def write_json(path: Path, payload: object) -> None:
     path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
 
 def get_parquet_files(dataset: str, split_manifest: dict) -> list[Path]:
-    cache_dir = ROOT / "data" / "processed" / "research" / dataset / split_manifest["fingerprint"]
-    return sorted(cache_dir.glob("part-*.parquet"))
+    fp = split_manifest["fingerprint"]
+    for cache_name in ("v3_cache", "v2_cache", "research"):
+        cache_dir = ROOT / "data" / "processed" / cache_name / dataset / fp
+        if cache_dir.exists():
+            return sorted(cache_dir.glob("part-*.parquet"))
+    return sorted((ROOT / "data" / "processed" / "research" / dataset / fp).glob("part-*.parquet"))
 
 def get_drop_indices(dataset: str) -> dict[str, dict[str, list[int]]]:
-    drop_path = ROOT / "data" / "processed" / "splits" / "split-v1" / dataset / "decontamination_drop_indices.json"
+    drop_path = ROOT / "data" / "processed" / "splits" / SPLIT_VERSION / dataset / "decontamination_drop_indices.json"
     if not drop_path.exists():
         return {}
     return read_json(drop_path)
@@ -127,11 +134,11 @@ def load_split(dataset: str, split_name: str, split_manifest: dict, drop_indices
     return full_df, y
 
 def train_rf(dataset: str) -> None:
-    if (ROOT / "models" / PROFILE / "random_forest" / f"{dataset}_rf.joblib").exists():
+    if (ROOT / "models" / MODEL_VERSION / "random_forest" / f"{dataset}_rf.joblib").exists():
         log(f"Skipping {dataset}: already trained for profile {PROFILE}.")
         return
 
-    manifest_path = ROOT / "data" / "processed" / "splits" / "split-v1" / dataset / "split_manifest.json"
+    manifest_path = ROOT / "data" / "processed" / "splits" / SPLIT_VERSION / dataset / "split_manifest.json"
     if not manifest_path.exists():
         log(f"Skipping {dataset}: split manifest not found. Run Milestone 3A first.")
         return
@@ -192,7 +199,7 @@ def train_rf(dataset: str) -> None:
     log(f"[{dataset}] Validation Accuracy: {acc:.4f} | F1: {f1:.4f}")
     
     # Save Model
-    model_dir = ROOT / "models" / PROFILE / "random_forest"
+    model_dir = ROOT / "models" / MODEL_VERSION / "random_forest"
     model_dir.mkdir(parents=True, exist_ok=True)
     model_path = model_dir / f"{dataset}_rf.joblib"
     joblib.dump(rf, model_path)

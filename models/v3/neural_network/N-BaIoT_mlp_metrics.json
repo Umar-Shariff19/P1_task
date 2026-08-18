@@ -1,0 +1,41 @@
+{
+  "dataset": "N-BaIoT",
+  "model": "MLP (PyTorch)",
+  "split_version": "split-v3",
+  "fingerprint": "377f954b1902a9f1",
+  "input_dim": 115,
+  "train_rows_per_epoch": 4618002,
+  "val_rows_used": 1218556,
+  "epochs_run": 4,
+  "best_val_loss": 0.0327,
+  "train_time_sec": 896.82,
+  "inference_time_sec": 25.13,
+  "metrics": {
+    "accuracy": 0.9889,
+    "precision": 0.9883,
+    "recall": 0.9999,
+    "f1_score": 0.994,
+    "macro_f1": 0.9541
+  },
+  "confusion_matrix": [
+    [
+      72250,
+      13435
+    ],
+    [
+      133,
+      1132738
+    ]
+  ],
+  "hyperparameters": {
+    "hidden_layers": [
+      128,
+      64
+    ],
+    "dropout": 0.2,
+    "optimizer": "AdamW",
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "batch_size": 1024
+  }
+}

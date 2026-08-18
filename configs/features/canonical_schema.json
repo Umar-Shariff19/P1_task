@@ -30,7 +30,9 @@
       "flow_iat_mean",
       "flow_iat_std",
       "traffic_asymmetry",
-      "packet_direction_ratio"
+      "packet_direction_ratio",
+      "temporal_causal_count",
+      "behavioral_dest_diversity"
     ],
     "IN_DOMAIN_EDGE_IIOT": [
       "duration_seconds",
@@ -39,7 +41,8 @@
       "total_bytes",
       "packet_length_mean",
       "source_provided_delta_seconds",
-      "protocol_family"
+      "protocol_family",
+      "behavioral_dest_diversity"
     ],
     "IN_DOMAIN_BOT_IOT": [
       "duration_seconds",
@@ -59,7 +62,9 @@
       "packet_length_min",
       "packet_length_max",
       "traffic_asymmetry",
-      "packet_direction_ratio"
+      "packet_direction_ratio",
+      "temporal_causal_count",
+      "behavioral_dest_diversity"
     ],
     "FLOW_RICH_C_B": [
       "total_packets",
@@ -104,6 +109,8 @@
     {"name": "destination_host", "dtype": "string", "level": "behavioral", "semantic_definition": "Destination entity key for causal behavioral feature generation.", "units": null, "transformation": "Edge ip.dst_host; BoT daddr.", "availability": {"CICIDS2017": [], "Edge-IIoTset": ["ip.dst_host"], "BoT-IoT": ["daddr"], "N-BaIoT": []}, "missing_behavior": "Metadata only, never direct model input.", "leakage_role": "USED_FOR_GROUPING_FEATURE_GENERATION", "valid_for": "in_domain"},
     {"name": "traffic_asymmetry", "dtype": "float64", "level": "behavioral", "semantic_definition": "Directional byte imbalance for current flow: (forward - backward) / total bytes.", "units": "ratio", "transformation": "Derived from fwd/bwd bytes where available.", "availability": {"CICIDS2017": ["Total Length of Fwd Packets", "Total Length of Bwd Packets"], "Edge-IIoTset": [], "BoT-IoT": ["sbytes", "dbytes"], "N-BaIoT": []}, "missing_behavior": "NaN when directional bytes unavailable.", "leakage_role": "SAFE_FEATURE", "valid_for": "in_domain"},
     {"name": "packet_direction_ratio", "dtype": "float64", "level": "behavioral", "semantic_definition": "Forward/backward packet count ratio for current flow.", "units": "ratio", "transformation": "fwd_packets / (bwd_packets + 1).", "availability": {"CICIDS2017": ["Total Fwd Packets", "Total Backward Packets"], "Edge-IIoTset": [], "BoT-IoT": ["spkts", "dpkts"], "N-BaIoT": []}, "missing_behavior": "NaN when unavailable.", "leakage_role": "SAFE_FEATURE", "valid_for": "in_domain"},
-    {"name": "source_agg_*", "dtype": "float64", "level": "behavioral", "semantic_definition": "N-BaIoT source-provided KitNET damped-window host/host-pair traffic behavior statistics over historical decay windows.", "units": "source-defined", "transformation": "Preserve numeric MI_dir/H/HH/HH_jit/HpHp aggregate columns with source_agg_ prefix.", "availability": {"CICIDS2017": [], "Edge-IIoTset": [], "BoT-IoT": [], "N-BaIoT": ["MI_dir_*", "H_*", "HH_*", "HH_jit_*", "HpHp_*"]}, "missing_behavior": "N-BaIoT profile only.", "leakage_role": "SAFE_FEATURE", "valid_for": "in_domain"}
+    {"name": "source_agg_*", "dtype": "float64", "level": "behavioral", "semantic_definition": "N-BaIoT source-provided KitNET damped-window host/host-pair traffic behavior statistics over historical decay windows.", "units": "source-defined", "transformation": "Preserve numeric MI_dir/H/HH/HH_jit/HpHp aggregate columns with source_agg_ prefix.", "availability": {"CICIDS2017": [], "Edge-IIoTset": [], "BoT-IoT": [], "N-BaIoT": ["MI_dir_*", "H_*", "HH_*", "HH_jit_*", "HpHp_*"]}, "missing_behavior": "N-BaIoT profile only.", "leakage_role": "SAFE_FEATURE", "valid_for": "in_domain"},
+    {"name": "temporal_causal_count", "dtype": "float64", "level": "temporal", "semantic_definition": "Rolling count of recent causal observations from the same source.", "units": "count", "transformation": "Causal rolling count grouped by source_host.", "availability": {"CICIDS2017": [], "Edge-IIoTset": ["ip.src_host"], "BoT-IoT": ["saddr"], "N-BaIoT": []}, "missing_behavior": "NaN when source_host is missing.", "leakage_role": "SAFE_FEATURE", "valid_for": "in_domain"},
+    {"name": "behavioral_dest_diversity", "dtype": "float64", "level": "behavioral", "semantic_definition": "Historical count of unique destination hosts contacted by this source.", "units": "count", "transformation": "Rolling set count of destination_host grouped by source_host.", "availability": {"CICIDS2017": [], "Edge-IIoTset": ["ip.src_host", "ip.dst_host"], "BoT-IoT": ["saddr", "daddr"], "N-BaIoT": []}, "missing_behavior": "NaN when host identifiers are missing.", "leakage_role": "SAFE_FEATURE", "valid_for": "in_domain"}
   ]
 }

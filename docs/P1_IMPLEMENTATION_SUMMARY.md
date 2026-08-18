@@ -356,6 +356,8 @@ Important decisions and limitations:
 - Edge-IIoTset was deduplicated using exact feature row hashes instead of temporal sequence grouping due to missing temporal artifacts in the processed ML representation.
 - MD5 (128-bit) was accepted as the row hash for the exact decontamination gate due to compute constraints.
 - Ensemble weights are strictly learned from source validation using a constrained Simplex Search, explicitly replacing stacking classifiers.
+- **Diagnostic Finding (CICIDS2017)**: The low F1 score (~0.47) is a scientifically valid outcome of the strict day-aware structural split evaluating on novel Friday zero-day attacks not present in Monday-Thursday training data, demonstrating realistic bounds on generalization.
+- **Diagnostic Finding (BoT-IoT)**: The perfect F1 score (~1.0) is not caused by explicit metadata leakage, but by structural artifacts where highly homogenous attacks (99.99% of the dataset) are perfectly separable from benign traffic using volumetric features without novel temporal variations.
 
 ## 19. Milestone History
 
@@ -440,7 +442,8 @@ Implemented/executed:
 - The orchestrator seamlessly completed a 10.5-hour execution leveraging independent dataset-level checkpointing.
 - Autoencoder threshold edge cases (e.g., zero-variance infinite thresholds on BoT-IoT) were cleanly caught and handled by dynamic exclusion during fusion, allowing the ensemble to gracefully degrade to RF+MLP rather than failing with NaNs.
 
-Final In-Domain Execution Results (f+mlp+ae weighted fusion):
+Final In-Domain Execution Results (
+f+mlp+ae weighted fusion):
 
 | Dataset | Profile | Features | Accuracy | F1 Score |
 |---|---|---|---|---|

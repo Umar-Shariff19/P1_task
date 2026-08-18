@@ -1,0 +1,59 @@
+{
+  "dataset": "N-BaIoT",
+  "model": "Autoencoder",
+  "split_version": "split-v3",
+  "fingerprint": "377f954b1902a9f1",
+  "train_benign_rows_used": 398569,
+  "val_rows_used": 1218556,
+  "best_threshold": 0.14978039382165562,
+  "threshold_status": "finite_valid",
+  "train_time_sec": 107.52,
+  "inference_time_sec": 119.88,
+  "metrics": {
+    "accuracy": 0.9655,
+    "precision": 0.9645,
+    "recall": 0.9997,
+    "f1_score": 0.9818,
+    "macro_f1": 0.8294
+  },
+  "confusion_matrix": [
+    [
+      44009,
+      41676
+    ],
+    [
+      316,
+      1132555
+    ]
+  ],
+  "hyperparameters": {
+    "activation": "relu",
+    "alpha": 0.0001,
+    "batch_size": "auto",
+    "beta_1": 0.9,
+    "beta_2": 0.999,
+    "early_stopping": false,
+    "epsilon": 1e-08,
+    "hidden_layer_sizes": [
+      32,
+      16,
+      32
+    ],
+    "learning_rate": "constant",
+    "learning_rate_init": 0.001,
+    "loss": "squared_error",
+    "max_fun": 15000,
+    "max_iter": 1,
+    "momentum": 0.9,
+    "n_iter_no_change": 10,
+    "nesterovs_momentum": true,
+    "power_t": 0.5,
+    "random_state": 42,
+    "shuffle": true,
+    "solver": "adam",
+    "tol": 0.0001,
+    "validation_fraction": 0.1,
+    "verbose": false,
+    "warm_start": false
+  }
+}

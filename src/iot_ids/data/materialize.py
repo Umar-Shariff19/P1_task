@@ -10,6 +10,8 @@ import psutil
 from iot_ids.data.adapters import build_default_adapters
 from iot_ids.data.cache import cache_fingerprint
 from iot_ids.features.canonical.builder import build_canonical_features
+from iot_ids.features.temporal.causal import add_causal_rolling_count
+from iot_ids.features.behavioral.network import add_historical_destination_diversity
 
 
 def materialize_dataset(
@@ -49,9 +51,13 @@ def materialize_dataset(
     peak_rss_bytes = process.memory_info().rss
     for stale in out_dir.glob("part-*.parquet"):
         stale.unlink()
+    # Cross-chunk state for temporal/behavioral features (Issue 1 & 2 fix)
+    temporal_state: dict[str, int] = {}
+    behavioral_state: dict[str, list[str]] = {}
     for file_index, path in enumerate(files):
         reader = pd.read_csv(path, chunksize=chunksize, low_memory=False, skipinitialspace=True)
         remaining = debug_rows_per_file
+
         for chunk_index, chunk in enumerate(reader):
             if remaining is not None:
                 if remaining <= 0:
@@ -59,6 +65,35 @@ def materialize_dataset(
                 chunk = chunk.head(remaining)
                 remaining -= len(chunk)
             features = build_canonical_features(dataset, chunk, source_path=path)
+            
+            # Phase 2: Temporal (Level 2)
+            # We attempt to create a causal rolling count grouped by source_host, ordered by timestamp
+            if "source_host" in features.columns and "timestamp_start" in features.columns:
+                features, temporal_state = add_causal_rolling_count(
+                    features, 
+                    group_col="source_host", 
+                    order_col="timestamp_start", 
+                    output_col="temporal_causal_count", 
+                    window=100,
+                    prior_counts=temporal_state,
+                )
+            else:
+                features["temporal_causal_count"] = pd.NA
+
+            # Phase 3: Behavioral (Level 3)
+            # We attempt to create a destination diversity feature
+            if "source_host" in features.columns and "destination_host" in features.columns:
+                features, behavioral_state = add_historical_destination_diversity(
+                    features,
+                    source_col="source_host",
+                    destination_col="destination_host",
+                    output_col="behavioral_dest_diversity",
+                    window=50,
+                    prior_history=behavioral_state,
+                )
+            else:
+                features["behavioral_dest_diversity"] = pd.NA
+
             target = out_dir / f"part-{file_index:04d}-{chunk_index:04d}.parquet"
             features.to_parquet(target, index=False)
             rows += len(features)

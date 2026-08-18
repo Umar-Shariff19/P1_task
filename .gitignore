@@ -34,3 +34,17 @@ reports/**/*.parquet
 .env
 .env.*
 !.env.example
+
+# IDE state and AI agent workspace files
+.gemini/
+.vscode/
+.idea/
+
+# Temporary execution logs & local text outputs
+*.log
+verification_output*.txt
+evidence_output*.txt
+
+# Binary model checkpoints (weights)
+*.joblib
+*.pt

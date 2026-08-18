@@ -241,8 +241,9 @@ def manifest_to_serializable(stats: dict[str, Any]) -> dict[str, Any]:
         }
     return serial
 
-def validate_dataset(dataset: str, cache_manifest: dict[str, Any], split_root: Path) -> dict[str, Any]:
-    cache_dir = split_root.parents[1] / "research" / dataset / cache_manifest["fingerprint"]
+def validate_dataset(dataset: str, cache_manifest: dict[str, Any], split_root: Path, cache_dir: Path = None) -> dict[str, Any]:
+    if cache_dir is None:
+        cache_dir = split_root.parents[1] / "research" / dataset / cache_manifest["fingerprint"]
     parquet_files = sorted(cache_dir.glob("part-*.parquet"))
     
     stats = make_empty_stats(dataset, cache_manifest)

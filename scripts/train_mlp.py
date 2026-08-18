@@ -38,6 +38,9 @@ PROFILE = os.environ.get("PROFILE", "in_domain")
 _ablation = os.environ.get("ABLATION_LEVELS")
 ABLATION_LEVELS = _ablation.split(",") if _ablation else None
 
+SPLIT_VERSION = os.environ.get("SPLIT_VERSION", "split-v1")
+MODEL_VERSION = os.environ.get("MODEL_VERSION", PROFILE)
+
 def log(msg: str) -> None:
     print(f"[4A MLP] {time.strftime('%H:%M:%S')} {msg}", flush=True)
 
@@ -49,11 +52,15 @@ def write_json(path: Path, payload: object) -> None:
     path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
 
 def get_parquet_files(dataset: str, split_manifest: dict) -> list[Path]:
-    cache_dir = ROOT / "data" / "processed" / "research" / dataset / split_manifest["fingerprint"]
-    return sorted(cache_dir.glob("part-*.parquet"))
+    fp = split_manifest["fingerprint"]
+    for cache_name in ("v3_cache", "v2_cache", "research"):
+        cache_dir = ROOT / "data" / "processed" / cache_name / dataset / fp
+        if cache_dir.exists():
+            return sorted(cache_dir.glob("part-*.parquet"))
+    return sorted((ROOT / "data" / "processed" / "research" / dataset / fp).glob("part-*.parquet"))
 
 def get_drop_indices(dataset: str) -> dict[str, dict[str, list[int]]]:
-    drop_path = ROOT / "data" / "processed" / "splits" / "split-v1" / dataset / "decontamination_drop_indices.json"
+    drop_path = ROOT / "data" / "processed" / "splits" / SPLIT_VERSION / dataset / "decontamination_drop_indices.json"
     if not drop_path.exists():
         return {}
     return read_json(drop_path)
@@ -79,7 +86,13 @@ class IDSStreamDataset(IterableDataset):
         
         # Profile attack family distribution just like RF for downsampling
         self.keep_fractions = {}
-        if self.is_train and self.max_attack_rows:
+        
+        # --- EPOCH CACHE BYPASS ---
+        # If a pre-materialized epoch cache exists for this dataset/split, we skip profiling entirely!
+        cache_root = ROOT / "data" / "processed" / "v2_cache" / "sampling" / self.dataset
+        self.use_cache = self.is_train and self.max_attack_rows and (cache_root / "manifest.json").exists()
+        
+        if self.is_train and self.max_attack_rows and not self.use_cache:
             from run_milestone3a import split_assigner, hash_to_split
             family_counts = {}
             total_attacks = 0
@@ -109,6 +122,23 @@ class IDSStreamDataset(IterableDataset):
     def __iter__(self):
         from run_milestone3a import split_assigner, hash_to_split
         
+        if getattr(self, "use_cache", False):
+            # FAST PATH: Stream pre-materialized exact cache chunks
+            cache_root = ROOT / "data" / "processed" / "v2_cache" / "sampling" / self.dataset
+            epoch_dir = cache_root / f"epoch_{self.epoch}"
+            if not epoch_dir.exists():
+                raise FileNotFoundError(f"Missing epoch {self.epoch} cache at {epoch_dir}")
+                
+            cache_parquets = sorted(epoch_dir.glob("part-*.parquet"))
+            for p in cache_parquets:
+                df = pd.read_parquet(p)
+                X_np = self.preprocessor.transform(df)
+                y_np = (df["canonical_label"] != "BENIGN").astype(int).values
+                for i in range(len(X_np)):
+                    yield torch.tensor(X_np[i], dtype=torch.float32), torch.tensor([y_np[i]], dtype=torch.float32)
+            return
+
+        # SLOW PATH: Original filtering logic
         for file_idx, parquet in enumerate(self.parquet_files):
             df = pd.read_parquet(parquet)
             file_drop_set = set(self.drop_indices.get(str(file_idx), []))
@@ -195,11 +225,11 @@ def load_full_split(dataset: str, split_name: str, split_manifest: dict, drop_in
     return TensorDataset(torch.tensor(X_np, dtype=torch.float32), torch.tensor(y_np, dtype=torch.float32).unsqueeze(1))
 
 def train_mlp(dataset: str) -> None:
-    if (ROOT / "models" / PROFILE / "neural_network" / f"{dataset}_mlp.pt").exists():
+    if (ROOT / "models" / MODEL_VERSION / "neural_network" / f"{dataset}_mlp.pt").exists():
         log(f"Skipping {dataset}: already trained for profile {PROFILE}.")
         return
 
-    manifest_path = ROOT / "data" / "processed" / "splits" / "split-v1" / dataset / "split_manifest.json"
+    manifest_path = ROOT / "data" / "processed" / "splits" / SPLIT_VERSION / dataset / "split_manifest.json"
     if not manifest_path.exists():
         log(f"Skipping {dataset}: split manifest not found.")
         return
@@ -326,7 +356,7 @@ def train_mlp(dataset: str) -> None:
     log(f"[{dataset}] Final Val Accuracy: {acc:.4f} | F1: {f1:.4f}")
     
     # Save Model
-    model_dir = ROOT / "models" / PROFILE / "neural_network"
+    model_dir = ROOT / "models" / MODEL_VERSION / "neural_network"
     model_dir.mkdir(parents=True, exist_ok=True)
     
     # We save the entire model (architecture + weights) or state_dict. Let's save state_dict for best practices.

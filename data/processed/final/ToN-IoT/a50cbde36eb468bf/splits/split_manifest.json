@@ -1,0 +1,11 @@
+{
+  "dataset": "ToN-IoT",
+  "total_rows": 211043,
+  "train_rows": 126625,
+  "val_rows": 42209,
+  "test_rows": 42209,
+  "train_ratio": 0.6,
+  "val_ratio": 0.2,
+  "test_ratio": 0.2,
+  "complete": true
+}

@@ -1,0 +1,254 @@
+[
+  {
+    "Experiment": "Edge-IIoTset In-Domain",
+    "Metric": "accuracy",
+    "Frozen Baseline": "89.75%",
+    "Fresh Run 1": "89.76%",
+    "Fresh Run 2": "89.76%",
+    "Run 1 vs Run 2 Delta": "0.000000",
+    "Stability Verdict": "IDENTICAL"
+  },
+  {
+    "Experiment": "Edge-IIoTset In-Domain",
+    "Metric": "precision",
+    "Frozen Baseline": "89.23%",
+    "Fresh Run 1": "89.22%",
+    "Fresh Run 2": "89.22%",
+    "Run 1 vs Run 2 Delta": "0.000000",
+    "Stability Verdict": "IDENTICAL"
+  },
+  {
+    "Experiment": "Edge-IIoTset In-Domain",
+    "Metric": "recall",
+    "Frozen Baseline": "99.95%",
+    "Fresh Run 1": "99.97%",
+    "Fresh Run 2": "99.97%",
+    "Run 1 vs Run 2 Delta": "0.000000",
+    "Stability Verdict": "IDENTICAL"
+  },
+  {
+    "Experiment": "Edge-IIoTset In-Domain",
+    "Metric": "f1",
+    "Frozen Baseline": "94.29%",
+    "Fresh Run 1": "94.29%",
+    "Fresh Run 2": "94.29%",
+    "Run 1 vs Run 2 Delta": "0.000000",
+    "Stability Verdict": "IDENTICAL"
+  },
+  {
+    "Experiment": "Edge-IIoTset In-Domain",
+    "Metric": "macro_f1",
+    "Frozen Baseline": "72.31%",
+    "Fresh Run 1": "72.30%",
+    "Fresh Run 2": "72.30%",
+    "Run 1 vs Run 2 Delta": "0.000000",
+    "Stability Verdict": "IDENTICAL"
+  },
+  {
+    "Experiment": "Edge-IIoTset In-Domain",
+    "Metric": "roc_auc",
+    "Frozen Baseline": "0.8773",
+    "Fresh Run 1": "0.8774",
+    "Fresh Run 2": "0.8774",
+    "Run 1 vs Run 2 Delta": "0.000000",
+    "Stability Verdict": "IDENTICAL"
+  },
+  {
+    "Experiment": "Edge-IIoTset In-Domain",
+    "Metric": "pr_auc",
+    "Frozen Baseline": "0.9629",
+    "Fresh Run 1": "0.9790",
+    "Fresh Run 2": "0.9790",
+    "Run 1 vs Run 2 Delta": "0.000000",
+    "Stability Verdict": "STABLE (< 0.5% Variation)"
+  },
+  {
+    "Experiment": "ToN-IoT In-Domain",
+    "Metric": "accuracy",
+    "Frozen Baseline": "96.49%",
+    "Fresh Run 1": "96.53%",
+    "Fresh Run 2": "96.53%",
+    "Run 1 vs Run 2 Delta": "0.000000",
+    "Stability Verdict": "IDENTICAL"
+  },
+  {
+    "Experiment": "ToN-IoT In-Domain",
+    "Metric": "precision",
+    "Frozen Baseline": "96.34%",
+    "Fresh Run 1": "96.41%",
+    "Fresh Run 2": "96.41%",
+    "Run 1 vs Run 2 Delta": "0.000000",
+    "Stability Verdict": "STABLE (< 0.5% Variation)"
+  },
+  {
+    "Experiment": "ToN-IoT In-Domain",
+    "Metric": "recall",
+    "Frozen Baseline": "99.17%",
+    "Fresh Run 1": "99.14%",
+    "Fresh Run 2": "99.14%",
+    "Run 1 vs Run 2 Delta": "0.000000",
+    "Stability Verdict": "IDENTICAL"
+  },
+  {
+    "Experiment": "ToN-IoT In-Domain",
+    "Metric": "f1",
+    "Frozen Baseline": "97.73%",
+    "Fresh Run 1": "97.76%",
+    "Fresh Run 2": "97.76%",
+    "Run 1 vs Run 2 Delta": "0.000000",
+    "Stability Verdict": "IDENTICAL"
+  },
+  {
+    "Experiment": "ToN-IoT In-Domain",
+    "Metric": "macro_f1",
+    "Frozen Baseline": "94.98%",
+    "Fresh Run 1": "95.04%",
+    "Fresh Run 2": "95.04%",
+    "Run 1 vs Run 2 Delta": "0.000000",
+    "Stability Verdict": "STABLE (< 0.5% Variation)"
+  },
+  {
+    "Experiment": "ToN-IoT In-Domain",
+    "Metric": "roc_auc",
+    "Frozen Baseline": "0.9952",
+    "Fresh Run 1": "0.9952",
+    "Fresh Run 2": "0.9952",
+    "Run 1 vs Run 2 Delta": "0.000000",
+    "Stability Verdict": "IDENTICAL"
+  },
+  {
+    "Experiment": "ToN-IoT In-Domain",
+    "Metric": "pr_auc",
+    "Frozen Baseline": "0.9982",
+    "Fresh Run 1": "0.9984",
+    "Fresh Run 2": "0.9984",
+    "Run 1 vs Run 2 Delta": "0.000000",
+    "Stability Verdict": "IDENTICAL"
+  },
+  {
+    "Experiment": "Edge -> ToN Cross-Domain",
+    "Metric": "accuracy",
+    "Frozen Baseline": "76.33%",
+    "Fresh Run 1": "76.32%",
+    "Fresh Run 2": "76.35%",
+    "Run 1 vs Run 2 Delta": "0.000237",
+    "Stability Verdict": "IDENTICAL"
+  },
+  {
+    "Experiment": "Edge -> ToN Cross-Domain",
+    "Metric": "precision",
+    "Frozen Baseline": "76.33%",
+    "Fresh Run 1": "76.33%",
+    "Fresh Run 2": "76.35%",
+    "Run 1 vs Run 2 Delta": "0.000206",
+    "Stability Verdict": "IDENTICAL"
+  },
+  {
+    "Experiment": "Edge -> ToN Cross-Domain",
+    "Metric": "recall",
+    "Frozen Baseline": "99.98%",
+    "Fresh Run 1": "99.97%",
+    "Fresh Run 2": "99.97%",
+    "Run 1 vs Run 2 Delta": "0.000062",
+    "Stability Verdict": "IDENTICAL"
+  },
+  {
+    "Experiment": "Edge -> ToN Cross-Domain",
+    "Metric": "f1",
+    "Frozen Baseline": "86.57%",
+    "Fresh Run 1": "86.57%",
+    "Fresh Run 2": "86.58%",
+    "Run 1 vs Run 2 Delta": "0.000109",
+    "Stability Verdict": "IDENTICAL"
+  },
+  {
+    "Experiment": "Edge -> ToN Cross-Domain",
+    "Metric": "macro_f1",
+    "Frozen Baseline": "43.44%",
+    "Fresh Run 1": "43.44%",
+    "Fresh Run 2": "43.57%",
+    "Run 1 vs Run 2 Delta": "0.001248",
+    "Stability Verdict": "STABLE (< 0.5% Variation)"
+  },
+  {
+    "Experiment": "Edge -> ToN Cross-Domain",
+    "Metric": "roc_auc",
+    "Frozen Baseline": "0.8081",
+    "Fresh Run 1": "0.8093",
+    "Fresh Run 2": "0.8175",
+    "Run 1 vs Run 2 Delta": "0.008225",
+    "Stability Verdict": "MINOR STOCHASTIC VARIATION"
+  },
+  {
+    "Experiment": "Edge -> ToN Cross-Domain",
+    "Metric": "pr_auc",
+    "Frozen Baseline": "0.9387",
+    "Fresh Run 1": "0.9413",
+    "Fresh Run 2": "0.9421",
+    "Run 1 vs Run 2 Delta": "0.000804",
+    "Stability Verdict": "STABLE (< 0.5% Variation)"
+  },
+  {
+    "Experiment": "ToN -> Edge Cross-Domain",
+    "Metric": "accuracy",
+    "Frozen Baseline": "77.94%",
+    "Fresh Run 1": "77.94%",
+    "Fresh Run 2": "76.99%",
+    "Run 1 vs Run 2 Delta": "0.009474",
+    "Stability Verdict": "MINOR STOCHASTIC VARIATION"
+  },
+  {
+    "Experiment": "ToN -> Edge Cross-Domain",
+    "Metric": "precision",
+    "Frozen Baseline": "87.00%",
+    "Fresh Run 1": "87.00%",
+    "Fresh Run 2": "86.03%",
+    "Run 1 vs Run 2 Delta": "0.009671",
+    "Stability Verdict": "MINOR STOCHASTIC VARIATION"
+  },
+  {
+    "Experiment": "ToN -> Edge Cross-Domain",
+    "Metric": "recall",
+    "Frozen Baseline": "86.91%",
+    "Fresh Run 1": "86.91%",
+    "Fresh Run 2": "86.92%",
+    "Run 1 vs Run 2 Delta": "0.000037",
+    "Stability Verdict": "IDENTICAL"
+  },
+  {
+    "Experiment": "ToN -> Edge Cross-Domain",
+    "Metric": "f1",
+    "Frozen Baseline": "86.96%",
+    "Fresh Run 1": "86.96%",
+    "Fresh Run 2": "86.47%",
+    "Run 1 vs Run 2 Delta": "0.004839",
+    "Stability Verdict": "STABLE (< 0.5% Variation)"
+  },
+  {
+    "Experiment": "ToN -> Edge Cross-Domain",
+    "Metric": "macro_f1",
+    "Frozen Baseline": "57.76%",
+    "Fresh Run 1": "57.76%",
+    "Fresh Run 2": "54.80%",
+    "Run 1 vs Run 2 Delta": "0.029631",
+    "Stability Verdict": "MINOR STOCHASTIC VARIATION"
+  },
+  {
+    "Experiment": "ToN -> Edge Cross-Domain",
+    "Metric": "roc_auc",
+    "Frozen Baseline": "0.7212",
+    "Fresh Run 1": "0.7213",
+    "Fresh Run 2": "0.7188",
+    "Run 1 vs Run 2 Delta": "0.002526",
+    "Stability Verdict": "STABLE (< 0.5% Variation)"
+  },
+  {
+    "Experiment": "ToN -> Edge Cross-Domain",
+    "Metric": "pr_auc",
+    "Frozen Baseline": "0.9243",
+    "Fresh Run 1": "0.9495",
+    "Fresh Run 2": "0.9490",
+    "Run 1 vs Run 2 Delta": "0.000413",
+    "Stability Verdict": "STABLE (< 0.5% Variation)"
+  }
+]

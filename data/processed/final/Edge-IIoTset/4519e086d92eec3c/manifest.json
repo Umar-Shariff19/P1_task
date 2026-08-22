@@ -1,0 +1,19 @@
+{
+  "dataset": "Edge-IIoTset",
+  "fingerprint": "4519e086d92eec3c",
+  "rows": 157800,
+  "partitions": 1,
+  "elapsed_seconds": 2.243193699978292,
+  "rows_per_second": 70346.13194639726,
+  "peak_rss_bytes": 325525504,
+  "output_bytes": 2201390,
+  "debug_rows_per_file": null,
+  "schema_version": "final-schema-v1",
+  "label_mapping_version": "label-taxonomy-v1",
+  "feature_version": "final-features-v1",
+  "source_files": [
+    "C:\\Users\\umari\\Documents\\P1_task_Implementation\\data\\raw\\Edge-IIoTset\\Edge-IIoTset dataset\\Selected dataset for ML and DL\\ML-EdgeIIoT-dataset.csv"
+  ],
+  "complete": true,
+  "cache_status": "built"
+}

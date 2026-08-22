@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-
 import pandas as pd
 
 
@@ -18,32 +17,31 @@ def add_historical_destination_diversity(
     source_col: str,
     destination_col: str,
     output_col: str,
-    window: int,
+    window: int = 50,
     prior_history: dict[str, list[str]] | None = None,
 ) -> tuple[pd.DataFrame, dict[str, list[str]]]:
     if source_col not in frame or destination_col not in frame:
         result = frame.copy()
-        result[output_col] = pd.NA
+        result[output_col] = 0.0
         return result, prior_history or {}
+
     result = frame.copy()
-    values: list[float] = []
-    # Deep-copy prior history to avoid mutating caller's state
+    sources = result[source_col].astype(str).values
+    destinations = result[destination_col].astype(str).values
+
     history: dict[str, list[str]] = {}
     if prior_history:
         for k, v in prior_history.items():
             history[k] = list(v)
-    for _, row in result.iterrows():
-        source = str(row[source_col])
-        recent = history.setdefault(source, [])
-        values.append(float(len(set(recent[-window:]))))
-        recent.append(str(row[destination_col]))
-        # Cap history to avoid unbounded memory growth
-        if len(recent) > window * 2:
-            history[source] = recent[-window:]
-    result[output_col] = values
-    # Trim histories to window before returning for cross-chunk carry
-    trimmed: dict[str, list[str]] = {}
-    for k, v in history.items():
-        trimmed[k] = v[-window:]
-    return result, trimmed
 
+    values: list[float] = []
+    for src, dst in zip(sources, destinations):
+        recent = history.setdefault(src, [])
+        values.append(float(len(set(recent[-window:]))))
+        recent.append(dst)
+        if len(recent) > window * 2:
+            history[src] = recent[-window:]
+
+    result[output_col] = values
+    trimmed: dict[str, list[str]] = {k: v[-window:] for k, v in history.items()}
+    return result, trimmed

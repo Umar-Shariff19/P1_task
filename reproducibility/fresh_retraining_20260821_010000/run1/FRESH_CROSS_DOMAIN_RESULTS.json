@@ -1,0 +1,116 @@
+{
+  "Edge-IIoTset_to_ToN-IoT": {
+    "target_test_rows": 42209,
+    "feature_count": 6,
+    "feature_names": [
+      "duration",
+      "src_bytes",
+      "proto_tcp",
+      "proto_udp",
+      "proto_icmp",
+      "is_well_known_port"
+    ],
+    "rf_metrics": {
+      "accuracy": 0.7782463455661115,
+      "precision": 0.7748586551184891,
+      "recall": 0.9999379055543481,
+      "f1": 0.8731260335619595,
+      "macro_f1": 0.4968786875814307,
+      "roc_auc": 0.8546613229221646,
+      "pr_auc": 0.9521201197307665,
+      "confusion_matrix": {
+        "tn": 642,
+        "fp": 9358,
+        "fn": 2,
+        "tp": 32207
+      }
+    },
+    "mlp_metrics": {
+      "accuracy": 0.7433722665782179,
+      "precision": 0.758920568784671,
+      "recall": 0.9726784439131919,
+      "f1": 0.852605796707035,
+      "macro_f1": 0.43069528488353215,
+      "roc_auc": 0.4326633347822037,
+      "pr_auc": 0.6676999318770569,
+      "confusion_matrix": {
+        "tn": 48,
+        "fp": 9952,
+        "fn": 880,
+        "tp": 31329
+      }
+    },
+    "supervised_ensemble_metrics": {
+      "accuracy": 0.7632495439361273,
+      "precision": 0.7633225867627537,
+      "recall": 0.9997205749945668,
+      "f1": 0.8656728455634267,
+      "macro_f1": 0.4344324327567757,
+      "roc_auc": 0.8092866419323792,
+      "pr_auc": 0.9412805366814576,
+      "confusion_matrix": {
+        "tn": 16,
+        "fp": 9984,
+        "fn": 9,
+        "tp": 32200
+      }
+    }
+  },
+  "ToN-IoT_to_Edge-IIoTset": {
+    "target_test_rows": 31560,
+    "feature_count": 6,
+    "feature_names": [
+      "duration",
+      "src_bytes",
+      "proto_tcp",
+      "proto_udp",
+      "proto_icmp",
+      "is_well_known_port"
+    ],
+    "rf_metrics": {
+      "accuracy": 0.7700887198986058,
+      "precision": 0.8603142835964718,
+      "recall": 0.8694007490636704,
+      "f1": 0.8648336500130398,
+      "macro_f1": 0.5480133496939537,
+      "roc_auc": 0.707307096838828,
+      "pr_auc": 0.946197789729989,
+      "confusion_matrix": {
+        "tn": 1091,
+        "fp": 3769,
+        "fn": 3487,
+        "tp": 23213
+      }
+    },
+    "mlp_metrics": {
+      "accuracy": 0.7545627376425855,
+      "precision": 0.8749406551669568,
+      "recall": 0.8282771535580524,
+      "f1": 0.8509696783130676,
+      "macro_f1": 0.577943561338874,
+      "roc_auc": 0.6502974021670443,
+      "pr_auc": 0.9315806916851452,
+      "confusion_matrix": {
+        "tn": 1699,
+        "fp": 3161,
+        "fn": 4585,
+        "tp": 22115
+      }
+    },
+    "supervised_ensemble_metrics": {
+      "accuracy": 0.779404309252218,
+      "precision": 0.8699857539176726,
+      "recall": 0.8691385767790262,
+      "f1": 0.8695619590062578,
+      "macro_f1": 0.5776088063038677,
+      "roc_auc": 0.721308668947766,
+      "pr_auc": 0.9494546848820653,
+      "confusion_matrix": {
+        "tn": 1392,
+        "fp": 3468,
+        "fn": 3494,
+        "tp": 23206
+      }
+    }
+  }
+}

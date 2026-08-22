@@ -20,12 +20,15 @@ def materialize_dataset(
     output_root: Path,
     chunksize: int = 250_000,
     debug_rows_per_file: int | None = None,
-    schema_version: str = "raw-schema-v1",
+    schema_version: str = "final-schema-v1",
     label_mapping_version: str = "label-taxonomy-v1",
-    feature_version: str = "canonical-features-v1",
+    feature_version: str = "final-features-v1",
     force: bool = False,
 ) -> dict[str, object]:
     adapters = {adapter.name: adapter for adapter in build_default_adapters(data_root)}
+    if dataset not in adapters:
+        raise ValueError(f"Dataset {dataset} not registered in active production adapters.")
+    
     adapter = adapters[dataset]
     files = adapter.discover_files()
     fingerprint = cache_fingerprint(
@@ -49,11 +52,13 @@ def materialize_dataset(
     rows = 0
     partitions = 0
     peak_rss_bytes = process.memory_info().rss
+    
     for stale in out_dir.glob("part-*.parquet"):
         stale.unlink()
-    # Cross-chunk state for temporal/behavioral features (Issue 1 & 2 fix)
+        
     temporal_state: dict[str, int] = {}
     behavioral_state: dict[str, list[str]] = {}
+    
     for file_index, path in enumerate(files):
         reader = pd.read_csv(path, chunksize=chunksize, low_memory=False, skipinitialspace=True)
         remaining = debug_rows_per_file
@@ -64,24 +69,28 @@ def materialize_dataset(
                     break
                 chunk = chunk.head(remaining)
                 remaining -= len(chunk)
+                
             features = build_canonical_features(dataset, chunk, source_path=path)
             
-            # Phase 2: Temporal (Level 2)
-            # We attempt to create a causal rolling count grouped by source_host, ordered by timestamp
-            if "source_host" in features.columns and "timestamp_start" in features.columns:
+            # Causal Temporal Feature Generation (State propagates monotonically)
+            if "source_host" in features.columns and "timestamp" in features.columns:
                 features, temporal_state = add_causal_rolling_count(
                     features, 
                     group_col="source_host", 
-                    order_col="timestamp_start", 
+                    order_col="timestamp", 
                     output_col="temporal_causal_count", 
                     window=100,
                     prior_counts=temporal_state,
                 )
+                dur = pd.to_numeric(features.get("duration", 0.0), errors="coerce").fillna(0.0)
+                features["temporal_causal_rate"] = features["temporal_causal_count"] / (dur + 1.0)
+                features["temporal_iat_mean"] = dur / (features["temporal_causal_count"] + 1.0)
             else:
-                features["temporal_causal_count"] = pd.NA
+                features["temporal_causal_count"] = 0.0
+                features["temporal_causal_rate"] = 0.0
+                features["temporal_iat_mean"] = 0.0
 
-            # Phase 3: Behavioral (Level 3)
-            # We attempt to create a destination diversity feature
+            # Causal Behavioral Feature Generation
             if "source_host" in features.columns and "destination_host" in features.columns:
                 features, behavioral_state = add_historical_destination_diversity(
                     features,
@@ -91,8 +100,10 @@ def materialize_dataset(
                     window=50,
                     prior_history=behavioral_state,
                 )
+                features["behavioral_src_activity"] = features["temporal_causal_count"]
             else:
-                features["behavioral_dest_diversity"] = pd.NA
+                features["behavioral_dest_diversity"] = 0.0
+                features["behavioral_src_activity"] = 0.0
 
             target = out_dir / f"part-{file_index:04d}-{chunk_index:04d}.parquet"
             features.to_parquet(target, index=False)

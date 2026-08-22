@@ -1,0 +1,11 @@
+{
+  "dataset": "Edge-IIoTset",
+  "total_rows": 157800,
+  "train_rows": 94680,
+  "val_rows": 31560,
+  "test_rows": 31560,
+  "train_ratio": 0.6,
+  "val_ratio": 0.2,
+  "test_ratio": 0.2,
+  "complete": true
+}

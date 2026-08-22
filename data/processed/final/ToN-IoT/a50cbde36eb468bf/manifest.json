@@ -1,0 +1,19 @@
+{
+  "dataset": "ToN-IoT",
+  "fingerprint": "a50cbde36eb468bf",
+  "rows": 211043,
+  "partitions": 1,
+  "elapsed_seconds": 1.8439015000185464,
+  "rows_per_second": 114454.59532294825,
+  "peak_rss_bytes": 337805312,
+  "output_bytes": 4235924,
+  "debug_rows_per_file": null,
+  "schema_version": "final-schema-v1",
+  "label_mapping_version": "label-taxonomy-v1",
+  "feature_version": "final-features-v1",
+  "source_files": [
+    "C:\\Users\\umari\\Documents\\P1_task_Implementation\\data\\raw\\ToN-IoT\\train_test_network.csv"
+  ],
+  "complete": true,
+  "cache_status": "built"
+}

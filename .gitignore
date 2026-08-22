@@ -48,3 +48,12 @@ evidence_output*.txt
 # Binary model checkpoints (weights)
 *.joblib
 *.pt
+
+# Explicitly track frozen final checkpoints and dataset splits
+!models/final/
+!models/final/**
+!data/processed/final/
+!data/processed/final/**
+
+# Ignore isolated verification retraining runs
+models/verification_retrain/

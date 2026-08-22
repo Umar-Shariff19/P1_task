@@ -1,0 +1,254 @@
+[
+  {
+    "Experiment": "Edge-IIoTset In-Domain",
+    "Metric": "accuracy",
+    "Frozen": "89.75%",
+    "Fresh (Run 1)": "89.76%",
+    "Absolute Diff": "0.000095",
+    "Relative Diff (%)": "+0.0106%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "Edge-IIoTset In-Domain",
+    "Metric": "precision",
+    "Frozen": "89.23%",
+    "Fresh (Run 1)": "89.22%",
+    "Absolute Diff": "0.000068",
+    "Relative Diff (%)": "-0.0076%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "Edge-IIoTset In-Domain",
+    "Metric": "recall",
+    "Frozen": "99.95%",
+    "Fresh (Run 1)": "99.97%",
+    "Absolute Diff": "0.000225",
+    "Relative Diff (%)": "+0.0225%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "Edge-IIoTset In-Domain",
+    "Metric": "f1",
+    "Frozen": "94.29%",
+    "Fresh (Run 1)": "94.29%",
+    "Absolute Diff": "0.000062",
+    "Relative Diff (%)": "+0.0066%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "Edge-IIoTset In-Domain",
+    "Metric": "macro_f1",
+    "Frozen": "72.31%",
+    "Fresh (Run 1)": "72.30%",
+    "Absolute Diff": "0.000082",
+    "Relative Diff (%)": "-0.0113%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "Edge-IIoTset In-Domain",
+    "Metric": "roc_auc",
+    "Frozen": "0.8773",
+    "Fresh (Run 1)": "0.8774",
+    "Absolute Diff": "0.000066",
+    "Relative Diff (%)": "+0.0075%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "Edge-IIoTset In-Domain",
+    "Metric": "pr_auc",
+    "Frozen": "0.9629",
+    "Fresh (Run 1)": "0.9790",
+    "Absolute Diff": "0.016086",
+    "Relative Diff (%)": "+1.6705%",
+    "Verdict": "MINOR STOCHASTIC VARIATION"
+  },
+  {
+    "Experiment": "ToN-IoT In-Domain",
+    "Metric": "accuracy",
+    "Frozen": "96.49%",
+    "Fresh (Run 1)": "96.53%",
+    "Absolute Diff": "0.000379",
+    "Relative Diff (%)": "+0.0393%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "ToN-IoT In-Domain",
+    "Metric": "precision",
+    "Frozen": "96.34%",
+    "Fresh (Run 1)": "96.41%",
+    "Absolute Diff": "0.000745",
+    "Relative Diff (%)": "+0.0774%",
+    "Verdict": "MATCH (Within < 0.5% Variation)"
+  },
+  {
+    "Experiment": "ToN-IoT In-Domain",
+    "Metric": "recall",
+    "Frozen": "99.17%",
+    "Fresh (Run 1)": "99.14%",
+    "Absolute Diff": "0.000310",
+    "Relative Diff (%)": "-0.0313%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "ToN-IoT In-Domain",
+    "Metric": "f1",
+    "Frozen": "97.73%",
+    "Fresh (Run 1)": "97.76%",
+    "Absolute Diff": "0.000232",
+    "Relative Diff (%)": "+0.0238%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "ToN-IoT In-Domain",
+    "Metric": "macro_f1",
+    "Frozen": "94.98%",
+    "Fresh (Run 1)": "95.04%",
+    "Absolute Diff": "0.000609",
+    "Relative Diff (%)": "+0.0641%",
+    "Verdict": "MATCH (Within < 0.5% Variation)"
+  },
+  {
+    "Experiment": "ToN-IoT In-Domain",
+    "Metric": "roc_auc",
+    "Frozen": "0.9952",
+    "Fresh (Run 1)": "0.9952",
+    "Absolute Diff": "0.000016",
+    "Relative Diff (%)": "-0.0016%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "ToN-IoT In-Domain",
+    "Metric": "pr_auc",
+    "Frozen": "0.9982",
+    "Fresh (Run 1)": "0.9984",
+    "Absolute Diff": "0.000274",
+    "Relative Diff (%)": "+0.0274%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "Edge -> ToN Cross-Domain",
+    "Metric": "accuracy",
+    "Frozen": "76.33%",
+    "Fresh (Run 1)": "76.32%",
+    "Absolute Diff": "0.000047",
+    "Relative Diff (%)": "-0.0062%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "Edge -> ToN Cross-Domain",
+    "Metric": "precision",
+    "Frozen": "76.33%",
+    "Fresh (Run 1)": "76.33%",
+    "Absolute Diff": "0.000001",
+    "Relative Diff (%)": "+0.0002%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "Edge -> ToN Cross-Domain",
+    "Metric": "recall",
+    "Frozen": "99.98%",
+    "Fresh (Run 1)": "99.97%",
+    "Absolute Diff": "0.000093",
+    "Relative Diff (%)": "-0.0093%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "Edge -> ToN Cross-Domain",
+    "Metric": "f1",
+    "Frozen": "86.57%",
+    "Fresh (Run 1)": "86.57%",
+    "Absolute Diff": "0.000034",
+    "Relative Diff (%)": "-0.0039%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "Edge -> ToN Cross-Domain",
+    "Metric": "macro_f1",
+    "Frozen": "43.44%",
+    "Fresh (Run 1)": "43.44%",
+    "Absolute Diff": "0.000082",
+    "Relative Diff (%)": "+0.0189%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "Edge -> ToN Cross-Domain",
+    "Metric": "roc_auc",
+    "Frozen": "0.8081",
+    "Fresh (Run 1)": "0.8093",
+    "Absolute Diff": "0.001208",
+    "Relative Diff (%)": "+0.1495%",
+    "Verdict": "MATCH (Within < 0.5% Variation)"
+  },
+  {
+    "Experiment": "Edge -> ToN Cross-Domain",
+    "Metric": "pr_auc",
+    "Frozen": "0.9387",
+    "Fresh (Run 1)": "0.9413",
+    "Absolute Diff": "0.002531",
+    "Relative Diff (%)": "+0.2696%",
+    "Verdict": "MATCH (Within < 0.5% Variation)"
+  },
+  {
+    "Experiment": "ToN -> Edge Cross-Domain",
+    "Metric": "accuracy",
+    "Frozen": "77.94%",
+    "Fresh (Run 1)": "77.94%",
+    "Absolute Diff": "0.000000",
+    "Relative Diff (%)": "+0.0000%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "ToN -> Edge Cross-Domain",
+    "Metric": "precision",
+    "Frozen": "87.00%",
+    "Fresh (Run 1)": "87.00%",
+    "Absolute Diff": "0.000000",
+    "Relative Diff (%)": "+0.0000%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "ToN -> Edge Cross-Domain",
+    "Metric": "recall",
+    "Frozen": "86.91%",
+    "Fresh (Run 1)": "86.91%",
+    "Absolute Diff": "0.000000",
+    "Relative Diff (%)": "+0.0000%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "ToN -> Edge Cross-Domain",
+    "Metric": "f1",
+    "Frozen": "86.96%",
+    "Fresh (Run 1)": "86.96%",
+    "Absolute Diff": "0.000000",
+    "Relative Diff (%)": "+0.0000%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "ToN -> Edge Cross-Domain",
+    "Metric": "macro_f1",
+    "Frozen": "57.76%",
+    "Fresh (Run 1)": "57.76%",
+    "Absolute Diff": "0.000000",
+    "Relative Diff (%)": "+0.0000%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "ToN -> Edge Cross-Domain",
+    "Metric": "roc_auc",
+    "Frozen": "0.7212",
+    "Fresh (Run 1)": "0.7213",
+    "Absolute Diff": "0.000059",
+    "Relative Diff (%)": "+0.0082%",
+    "Verdict": "MATCH (Identical)"
+  },
+  {
+    "Experiment": "ToN -> Edge Cross-Domain",
+    "Metric": "pr_auc",
+    "Frozen": "0.9243",
+    "Fresh (Run 1)": "0.9495",
+    "Absolute Diff": "0.025125",
+    "Relative Diff (%)": "+2.7182%",
+    "Verdict": "MINOR STOCHASTIC VARIATION"
+  }
+]

@@ -1,0 +1,212 @@
+[
+  {
+    "file": "README.md",
+    "line": 56,
+    "query": "99.60",
+    "snippet": "> The early preliminary ToN-IoT Attack F1 result of **99.60%** has been officially **SUPERSEDED** by the recon",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  },
+  {
+    "file": "reports\\tables\\FINAL_CROSS_DOMAIN_RECONCILIATION.md",
+    "line": 12,
+    "query": "8-feature",
+    "snippet": "1. **Feature Space Transition**: Earlier preliminary draft reports contained metric snapshots from an 8-featur",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  },
+  {
+    "file": "reports\\tables\\FINAL_CROSS_DOMAIN_RECONCILIATION.md",
+    "line": 13,
+    "query": "0.8547",
+    "snippet": "2. **Score Source Alignment**: Earlier ROC AUC numbers (`0.8547` for $E \\rightarrow T$) evaluated Random Fores",
+    "classification": "STALE CLAIM IN HISTORICAL REPORT (DOCUMENTATION CLEANUP NEEDED)"
+  },
+  {
+    "file": "reports\\tables\\FINAL_EVALUATION.md",
+    "line": 25,
+    "query": "86.59",
+    "snippet": "| **Edge-IIoTset -> ToN-IoT** | 42,209 | 76.37% | 76.37% | 99.97% | **86.59%** | 43.67% | 0.8084 | 0.9392 |",
+    "classification": "STALE CLAIM IN HISTORICAL REPORT (DOCUMENTATION CLEANUP NEEDED)"
+  },
+  {
+    "file": "reports\\tables\\FINAL_EVALUATION.md",
+    "line": 26,
+    "query": "86.47",
+    "snippet": "| **ToN-IoT -> Edge-IIoTset** | 31,560 | 76.99% | 86.03% | 86.92% | **86.47%** | 54.79% | 0.7187 | 0.9239 |",
+    "classification": "STALE CLAIM IN HISTORICAL REPORT (DOCUMENTATION CLEANUP NEEDED)"
+  },
+  {
+    "file": "reports\\tables\\FINAL_FREEZE_FORENSIC_AUDIT.md",
+    "line": 61,
+    "query": "99.60",
+    "snippet": "- **ToN-IoT Network In-Domain Test**: Attack F1 = **99.60%**, Accuracy = **99.39%**, ROC AUC = **0.9995**",
+    "classification": "STALE CLAIM IN HISTORICAL REPORT (DOCUMENTATION CLEANUP NEEDED)"
+  },
+  {
+    "file": "reports\\tables\\FINAL_FREEZE_FORENSIC_AUDIT.md",
+    "line": 64,
+    "query": "0.8547",
+    "snippet": "- **Edge-IIoTset $\\rightarrow$ ToN-IoT**: Accuracy = **76.34%**, Precision = **77.49%**, Recall = **99.99%**, ",
+    "classification": "STALE CLAIM IN HISTORICAL REPORT (DOCUMENTATION CLEANUP NEEDED)"
+  },
+  {
+    "file": "reports\\tables\\FINAL_FREEZE_FORENSIC_AUDIT.md",
+    "line": 65,
+    "query": "86.47",
+    "snippet": "- **ToN-IoT $\\rightarrow$ Edge-IIoTset**: Accuracy = **76.99%**, Precision = **86.03%**, Recall = **86.94%**, ",
+    "classification": "STALE CLAIM IN HISTORICAL REPORT (DOCUMENTATION CLEANUP NEEDED)"
+  },
+  {
+    "file": "reports\\tables\\FINAL_FREEZE_FORENSIC_AUDIT.md",
+    "line": 65,
+    "query": "0.7073",
+    "snippet": "- **ToN-IoT $\\rightarrow$ Edge-IIoTset**: Accuracy = **76.99%**, Precision = **86.03%**, Recall = **86.94%**, ",
+    "classification": "STALE CLAIM IN HISTORICAL REPORT (DOCUMENTATION CLEANUP NEEDED)"
+  },
+  {
+    "file": "reports\\tables\\FINAL_FRESH_VS_FROZEN_FORENSIC_REPORT.md",
+    "line": 42,
+    "query": "86.47",
+    "snippet": "| **ToN $\\rightarrow$ Edge Cross-Domain** | **Attack F1** | **86.96%** | **86.96%** | **86.47%** | **0.000000*",
+    "classification": "STALE CLAIM IN HISTORICAL REPORT (DOCUMENTATION CLEANUP NEEDED)"
+  },
+  {
+    "file": "reports\\tables\\FINAL_IMPLEMENTATION_INTEGRITY_GATE.md",
+    "line": 20,
+    "query": "86.59",
+    "snippet": "| **Cross-Domain** | **Edge-IIoTset $\\rightarrow$ ToN-IoT** | 6 ($F_{\\text{common}}$) | **76.37%** | 77.49% | ",
+    "classification": "STALE CLAIM IN HISTORICAL REPORT (DOCUMENTATION CLEANUP NEEDED)"
+  },
+  {
+    "file": "reports\\tables\\FINAL_IMPLEMENTATION_INTEGRITY_GATE.md",
+    "line": 20,
+    "query": "0.8547",
+    "snippet": "| **Cross-Domain** | **Edge-IIoTset $\\rightarrow$ ToN-IoT** | 6 ($F_{\\text{common}}$) | **76.37%** | 77.49% | ",
+    "classification": "STALE CLAIM IN HISTORICAL REPORT (DOCUMENTATION CLEANUP NEEDED)"
+  },
+  {
+    "file": "reports\\tables\\FINAL_IMPLEMENTATION_INTEGRITY_GATE.md",
+    "line": 21,
+    "query": "86.47",
+    "snippet": "| **Cross-Domain** | **ToN-IoT $\\rightarrow$ Edge-IIoTset** | 6 ($F_{\\text{common}}$) | **76.99%** | 86.03% | ",
+    "classification": "STALE CLAIM IN HISTORICAL REPORT (DOCUMENTATION CLEANUP NEEDED)"
+  },
+  {
+    "file": "reports\\tables\\FINAL_IMPLEMENTATION_INTEGRITY_GATE.md",
+    "line": 21,
+    "query": "0.7073",
+    "snippet": "| **Cross-Domain** | **ToN-IoT $\\rightarrow$ Edge-IIoTset** | 6 ($F_{\\text{common}}$) | **76.99%** | 86.03% | ",
+    "classification": "STALE CLAIM IN HISTORICAL REPORT (DOCUMENTATION CLEANUP NEEDED)"
+  },
+  {
+    "file": "reports\\tables\\FINAL_IMPLEMENTATION_INTEGRITY_GATE.md",
+    "line": 25,
+    "query": "15 Features",
+    "snippet": "| Dataset | Metric | Old Value (15 Features) | Current Value (13 Features) | Causal Explanation |",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  },
+  {
+    "file": "reports\\tables\\FINAL_IMPLEMENTATION_INTEGRITY_GATE.md",
+    "line": 27,
+    "query": "99.60",
+    "snippet": "| **ToN-IoT Network** | **Attack F1** | 99.60% | **97.73%** | Superseded because old model used `src_pkts` and",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  },
+  {
+    "file": "reports\\tables\\FINAL_IMPLEMENTATION_INTEGRITY_GATE.md",
+    "line": 66,
+    "query": "15 Features",
+    "snippet": "| **In-Domain Models (RF, MLP, AE)** | **15 Features** | **13 Features** | $F_{\\text{common}}$ (6) + Temporal ",
+    "classification": "STALE CLAIM IN HISTORICAL REPORT (DOCUMENTATION CLEANUP NEEDED)"
+  },
+  {
+    "file": "reports\\tables\\FINAL_PRE_PUBLICATION_AUDIT.md",
+    "line": 36,
+    "query": "99.60",
+    "snippet": "- Early preliminary ToN-IoT In-Domain F1 (**99.60%**) is officially **SUPERSEDED** by **97.73%** following the",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  },
+  {
+    "file": "reports\\tables\\FINAL_PRE_PUBLICATION_AUDIT.md",
+    "line": 37,
+    "query": "86.59",
+    "snippet": "- Early preliminary 8-feature cross-domain results (**86.59%** and **86.47%**) are officially **SUPERSEDED** b",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  },
+  {
+    "file": "reports\\tables\\FINAL_PRE_PUBLICATION_AUDIT.md",
+    "line": 37,
+    "query": "86.47",
+    "snippet": "- Early preliminary 8-feature cross-domain results (**86.59%** and **86.47%**) are officially **SUPERSEDED** b",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  },
+  {
+    "file": "reports\\tables\\FINAL_PRE_PUBLICATION_AUDIT.md",
+    "line": 37,
+    "query": "8-feature",
+    "snippet": "- Early preliminary 8-feature cross-domain results (**86.59%** and **86.47%**) are officially **SUPERSEDED** b",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  },
+  {
+    "file": "reports\\tables\\FINAL_PROJECT_FREEZE.md",
+    "line": 171,
+    "query": "99.60",
+    "snippet": "| Early ToN-IoT In-Domain F1 | ToN-IoT Network | **99.60%** | **97.73%** | Superseded because old feature set ",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  },
+  {
+    "file": "reports\\tables\\FINAL_PROJECT_FREEZE.md",
+    "line": 172,
+    "query": "86.59",
+    "snippet": "| 8-Feature Cross-Domain $E \\rightarrow T$ F1 | Edge $\\rightarrow$ ToN | **86.59%** | **86.57%** | Superseded ",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  },
+  {
+    "file": "reports\\tables\\FINAL_PROJECT_FREEZE.md",
+    "line": 173,
+    "query": "0.8547",
+    "snippet": "| 8-Feature Cross-Domain $E \\rightarrow T$ ROC AUC | Edge $\\rightarrow$ ToN | **0.8547** | **0.8081** | Supers",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  },
+  {
+    "file": "reports\\tables\\FINAL_PROJECT_FREEZE.md",
+    "line": 174,
+    "query": "86.47",
+    "snippet": "| 8-Feature Cross-Domain $T \\rightarrow E$ F1 | ToN $\\rightarrow$ Edge | **86.47%** | **86.96%** | Superseded ",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  },
+  {
+    "file": "reports\\tables\\FINAL_PROJECT_FREEZE.md",
+    "line": 175,
+    "query": "0.7073",
+    "snippet": "| 8-Feature Cross-Domain $T \\rightarrow E$ ROC AUC | ToN $\\rightarrow$ Edge | **0.7073** | **0.7212** | Supers",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  },
+  {
+    "file": "reports\\tables\\FINAL_RETRAINING_AND_FROZEN_RECONCILIATION.md",
+    "line": 124,
+    "query": "99.60",
+    "snippet": "1. **ToN-IoT Old F1 (99.60%)**: Derived from Random Forest alone ($P_{\\text{rf}}$) evaluated on an early 15-fe",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  },
+  {
+    "file": "reports\\tables\\FINAL_RETRAINING_AND_FROZEN_RECONCILIATION.md",
+    "line": 125,
+    "query": "86.59",
+    "snippet": "2. **Old Cross-Domain F1 (86.59% / 86.47%)**: Represented Random Forest probabilities $P_{\\text{rf\\_c}}$ evalu",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  },
+  {
+    "file": "reports\\tables\\FINAL_RETRAINING_AND_FROZEN_RECONCILIATION.md",
+    "line": 125,
+    "query": "86.47",
+    "snippet": "2. **Old Cross-Domain F1 (86.59% / 86.47%)**: Represented Random Forest probabilities $P_{\\text{rf\\_c}}$ evalu",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  },
+  {
+    "file": "reports\\tables\\FINAL_RETRAINING_AND_FROZEN_RECONCILIATION.md",
+    "line": 125,
+    "query": "8-feature",
+    "snippet": "2. **Old Cross-Domain F1 (86.59% / 86.47%)**: Represented Random Forest probabilities $P_{\\text{rf\\_c}}$ evalu",
+    "classification": "LEGITIMATE HISTORICAL/SUPERSEDED DOCUMENTATION"
+  }
+]

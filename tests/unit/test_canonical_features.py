@@ -1,75 +1,49 @@
 from __future__ import annotations
 
 import pandas as pd
-
 from iot_ids.features.canonical.builder import build_canonical_features
 
 
-def test_cicids_canonical_features() -> None:
+def test_edge_canonical_features() -> None:
     frame = pd.DataFrame(
         {
-            "Flow Duration": [1_000_000],
-            "Destination Port": [80],
-            "Total Fwd Packets": [3],
-            "Total Backward Packets": [2],
-            "Total Length of Fwd Packets": [300],
-            "Total Length of Bwd Packets": [200],
-            "Flow Bytes/s": [500.0],
-            "Flow Packets/s": [5.0],
-            "Packet Length Mean": [100.0],
-            "Packet Length Std": [2.0],
-            "Min Packet Length": [90],
-            "Max Packet Length": [110],
-            "Flow IAT Mean": [10],
-            "Flow IAT Std": [1],
-            "SYN Flag Count": [1],
-            "ACK Flag Count": [1],
-            "RST Flag Count": [0],
-            "Label": ["BENIGN"],
+            "udp.time_delta": [0.5],
+            "tcp.len": [100],
+            "tcp.flags.ack": [1],
+            "tcp.srcport": [4444],
+            "tcp.dstport": [80],
+            "Attack_label": [0],
+            "Attack_type": ["Normal"],
+            "ip.src_host": ["192.168.0.10"],
+            "ip.dst_host": ["192.168.0.1"],
+            "frame.time": ["2021 11:44:10"],
         }
     )
-    out = build_canonical_features("CICIDS2017", frame)
-    assert out.loc[0, "duration_seconds"] == 1
-    assert out.loc[0, "total_packets"] == 5
-    assert out.loc[0, "canonical_label"] == "BENIGN"
+    out = build_canonical_features("Edge-IIoTset", frame)
+    assert out.loc[0, "duration"] == 0.5
+    assert out.loc[0, "src_bytes"] == 100
+    assert out.loc[0, "is_well_known_port"] == 1.0
+    assert out.loc[0, "label"] == 0
 
 
-def test_bot_canonical_features() -> None:
+def test_ton_canonical_features() -> None:
     frame = pd.DataFrame(
         {
-            "dur": [2.0],
+            "duration": [2.5],
+            "src_bytes": [1000],
+            "src_pkts": [10],
+            "dst_pkts": [8],
             "proto": ["tcp"],
-            "state": ["CON"],
-            "sport": [123],
-            "dport": [80],
-            "pkts": [10],
-            "spkts": [6],
-            "dpkts": [4],
-            "bytes": [1000],
-            "sbytes": [700],
-            "dbytes": [300],
-            "rate": [500],
-            "mean": [100],
-            "stddev": [10],
-            "min": [40],
-            "max": [200],
-            "saddr": ["a"],
-            "daddr": ["b"],
-            "stime": [1],
-            "ltime": [3],
-            "attack": [1],
-            "category": ["DoS"],
+            "dst_port": [443],
+            "label": [1],
+            "type": ["backdoor"],
+            "src_ip": ["192.168.1.37"],
+            "dst_ip": ["192.168.1.193"],
         }
     )
-    out = build_canonical_features("BoT-IoT", frame)
-    assert out.loc[0, "canonical_label"] == "ATTACK"
-    assert out.loc[0, "traffic_asymmetry"] == 0.4
-
-
-def test_nbaiot_canonical_features_excludes_device_as_model_prefix() -> None:
-    frame = pd.DataFrame({"MI_dir_L0.01_mean": [1.2], "HH_L1_std": [0.3]})
-    out = build_canonical_features("N-BaIoT", frame, source_path="1.gafgyt.combo.csv")
-    assert out.loc[0, "source_agg_MI_dir_L0.01_mean"] == 1.2
-    assert out.loc[0, "raw_label"] == "gafgyt.combo"
-    assert out.loc[0, "device_id"] == "1"
-
+    out = build_canonical_features("ToN-IoT", frame)
+    assert out.loc[0, "duration"] == 2.5
+    assert out.loc[0, "src_bytes"] == 1000
+    assert out.loc[0, "proto_tcp"] == 1.0
+    assert out.loc[0, "is_well_known_port"] == 1.0
+    assert out.loc[0, "label"] == 1

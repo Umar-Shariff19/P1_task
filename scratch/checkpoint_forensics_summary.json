@@ -1,0 +1,126 @@
+{
+  "Edge-IIoTset": {
+    "indomain_cols": [
+      "duration",
+      "src_bytes",
+      "proto_tcp",
+      "proto_udp",
+      "proto_icmp",
+      "is_well_known_port",
+      "temporal_causal_count",
+      "temporal_causal_rate",
+      "temporal_iat_mean",
+      "behavioral_dest_diversity",
+      "behavioral_src_activity",
+      "mqtt_msgtype",
+      "mbtcp_unit_id"
+    ],
+    "indomain_count": 13,
+    "common_cols": [
+      "duration",
+      "src_bytes",
+      "proto_tcp",
+      "proto_udp",
+      "proto_icmp",
+      "is_well_known_port"
+    ],
+    "common_count": 6,
+    "rf_n_features": 13,
+    "mlp_in_dim": 13,
+    "ae_in_dim": 13,
+    "files": {
+      "rf_model.joblib": {
+        "md5": "ec9f9ef45dd7b1a894315d83ab5c3360",
+        "mtime_iso": "1787086387.2093475",
+        "size_bytes": 1749753
+      },
+      "mlp_model.pt": {
+        "md5": "3e72264cdab4788c809ab28f47eae9b1",
+        "mtime_iso": "1787086432.5466783",
+        "size_bytes": 58077
+      },
+      "ae_model.pt": {
+        "md5": "e4f6914e7c4dba8469b753dffb0baa0c",
+        "mtime_iso": "1787086436.1390898",
+        "size_bytes": 19163
+      },
+      "prep_indomain.joblib": {
+        "md5": "7977a2ae3a0ac5590db16214b0b940a0",
+        "mtime_iso": "1787086386.5734599",
+        "size_bytes": 1051
+      },
+      "prep_common.joblib": {
+        "md5": "404bb6c3b2abcee861705461de9d85b4",
+        "mtime_iso": "1787086386.572462",
+        "size_bytes": 787
+      },
+      "risk_layer.json": {
+        "md5": "eabce015ab354705476faa453a132f01",
+        "mtime_iso": "1787086529.7473114",
+        "size_bytes": 136639
+      }
+    }
+  },
+  "ToN-IoT": {
+    "indomain_cols": [
+      "duration",
+      "src_bytes",
+      "proto_tcp",
+      "proto_udp",
+      "proto_icmp",
+      "is_well_known_port",
+      "temporal_causal_count",
+      "temporal_causal_rate",
+      "temporal_iat_mean",
+      "behavioral_dest_diversity",
+      "behavioral_src_activity",
+      "conn_state_encoded",
+      "http_method_encoded"
+    ],
+    "indomain_count": 13,
+    "common_cols": [
+      "duration",
+      "src_bytes",
+      "proto_tcp",
+      "proto_udp",
+      "proto_icmp",
+      "is_well_known_port"
+    ],
+    "common_count": 6,
+    "rf_n_features": 13,
+    "mlp_in_dim": 13,
+    "ae_in_dim": 13,
+    "files": {
+      "rf_model.joblib": {
+        "md5": "26f3749f86f41c17373d8de4bc98ce18",
+        "mtime_iso": "1787086440.6961105",
+        "size_bytes": 11505913
+      },
+      "mlp_model.pt": {
+        "md5": "780c10d87954a4db6bb18615f4195b8a",
+        "mtime_iso": "1787086511.0851698",
+        "size_bytes": 58077
+      },
+      "ae_model.pt": {
+        "md5": "34e90092bb875dab0f14dbaadf6d3be5",
+        "mtime_iso": "1787086519.4749703",
+        "size_bytes": 19163
+      },
+      "prep_indomain.joblib": {
+        "md5": "c629cbebebb358a726da0698ad2b428b",
+        "mtime_iso": "1787086436.3309019",
+        "size_bytes": 1067
+      },
+      "prep_common.joblib": {
+        "md5": "9fc5e0973dfcd4473d4b8a4d54df76f3",
+        "mtime_iso": "1787086436.32934",
+        "size_bytes": 787
+      },
+      "risk_layer.json": {
+        "md5": "cd84aa2ab8350b6f0144af40488a7c55",
+        "mtime_iso": "1787086530.034071",
+        "size_bytes": 267789
+      }
+    }
+  }
+}

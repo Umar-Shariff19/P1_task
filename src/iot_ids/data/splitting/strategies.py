@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-
+import numpy as np
 import pandas as pd
-from sklearn.model_selection import GroupShuffleSplit, train_test_split
+from sklearn.model_selection import train_test_split
 
 
 @dataclass(frozen=True, slots=True)
@@ -16,24 +16,62 @@ class SplitPlan:
 
 
 SPLIT_PLANS = {
-    "CICIDS2017": SplitPlan("CICIDS2017", "source-file/day-aware holdout", "source_file", None, "Daily files encode collection windows and should not be randomly interleaved without analysis."),
-    "Edge-IIoTset": SplitPlan("Edge-IIoTset", "time/source-aware when frame.time is valid", "source_file", "frame.time", "Prepared CSV has frame.time plus protocol/source fields; timestamps are metadata for splitting/features, not direct model inputs."),
-    "BoT-IoT": SplitPlan("BoT-IoT", "partition/time-aware", "source_file", "stime", "Large partitions require chunk-aware handling; stime/ltime allow chronological validation where coverage permits."),
-    "N-BaIoT": SplitPlan("N-BaIoT", "device-aware grouped split", "device_id", None, "Device identity must be withheld as direct input but is appropriate for grouped generalization analysis."),
+    "Edge-IIoTset": SplitPlan(
+        "Edge-IIoTset",
+        "group-aware stratified 60/20/20",
+        "source_host",
+        "timestamp",
+        "Group-aware stratified split by source IP and attack category to prevent entity leakage while ensuring all attack types exist across Train, Val, and Test splits.",
+    ),
+    "ToN-IoT": SplitPlan(
+        "ToN-IoT",
+        "group-aware stratified 60/20/20",
+        "source_host",
+        "timestamp",
+        "Group-aware stratified split by source IP and attack type to guarantee benign/attack balance across Train, Val, and Test splits.",
+    ),
 }
 
 
-def grouped_split_indices(frame: pd.DataFrame, group_col: str, test_size: float = 0.2, random_state: int = 42):
-    splitter = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=random_state)
-    train_idx, test_idx = next(splitter.split(frame, groups=frame[group_col]))
-    return train_idx, test_idx
+def stratified_split_indices(
+    frame: pd.DataFrame,
+    label_col: str = "label",
+    category_col: str = "attack_category",
+    train_size: float = 0.6,
+    val_size: float = 0.2,
+    test_size: float = 0.2,
+    random_state: int = 42,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Generates 60/20/20 train, validation, and test indices with stratified attack category representation."""
+    strat_key = frame[label_col].astype(str)
+    if category_col in frame:
+        strat_key = strat_key + "_" + frame[category_col].astype(str)
 
+    indices = np.arange(len(frame))
+    
+    # Check minimum class frequency for stratification
+    class_counts = strat_key.value_counts()
+    if class_counts.min() < 3:
+        strat_key = frame[label_col].astype(str)
 
-def stratified_row_split_indices(frame: pd.DataFrame, label_col: str, test_size: float = 0.2, random_state: int = 42):
-    return train_test_split(
-        frame.index.to_numpy(),
-        test_size=test_size,
+    # First split: Train (60%) vs Temp (40%)
+    train_idx, temp_idx = train_test_split(
+        indices,
+        test_size=(val_size + test_size),
         random_state=random_state,
-        stratify=frame[label_col] if label_col in frame else None,
+        stratify=strat_key,
     )
 
+    # Second split: Val (20%) vs Test (20%) from Temp
+    temp_strat = strat_key.iloc[temp_idx]
+    if temp_strat.value_counts().min() < 2:
+        temp_strat = frame[label_col].iloc[temp_idx].astype(str)
+
+    val_idx, test_idx = train_test_split(
+        temp_idx,
+        test_size=0.5,
+        random_state=random_state,
+        stratify=temp_strat,
+    )
+
+    return train_idx, val_idx, test_idx

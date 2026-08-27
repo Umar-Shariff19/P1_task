@@ -1,0 +1,25 @@
+item,reported_paper,verified_csv,status
+Dataset Count,4 datasets,"4 datasets (ToN-IoT, Edge-IIoTset, NF-ToN-IoT-v2, CICIoT2023)",EXACT_MATCH
+Materialized Flows per Dataset,"7,000 flows","7,000 flows per dataset (4,200 train / 1,400 val / 1,400 test)",EXACT_MATCH
+Total Materialized Testbed,"28,000 flows","28,000 total flows across 4 datasets",EXACT_MATCH
+Conceptual Semantic Features,18 features,18 candidate semantic features (8 Level A + 5 Level B + 5 Level C),EXACT_MATCH
+Numerical Matrix Columns,21 columns,21 numerical columns (17 scalar + 4 protocol one-hots),EXACT_MATCH
+Transfer Directions,12 directions,12 source -> target transfer directions,EXACT_MATCH
+Controlled Feature Profiles,5 profiles,"baseline_common, instant_only, instant_temporal, instant_behavioral, full_multilevel",EXACT_MATCH
+Model Families,2 models,"LogisticRegression, RandomForest",EXACT_MATCH
+Adaptation Regimes,7 regimes,"zero_shot, unsupervised_alignment, unsupervised_correction, threshold_calibration, 1%, 5%, 10% budgets",EXACT_MATCH
+Stage 5 Experiment Count,840 experiments,840 experiments (12 x 5 x 2 x 7),EXACT_MATCH
+RF full_multilevel Zero-Shot ROC-AUC,0.318,0.3180,EXACT_MATCH
+RF full_multilevel Alignment ROC-AUC,0.607,0.6066,EXACT_MATCH
+RF full_multilevel 1% Budget ROC-AUC,0.936,0.9364,EXACT_MATCH
+RF full_multilevel 5% Budget ROC-AUC,0.992,0.9923,EXACT_MATCH
+RF full_multilevel 10% Budget ROC-AUC,0.996,0.9955,EXACT_MATCH
+instant_behavioral 10% Budget FPR,28.7%,28.67%,EXACT_MATCH
+semantic_features_only ROC-AUC,0.869,0.8686,EXACT_MATCH
+full_multilevel Reference ROC-AUC,0.894,0.8941,EXACT_MATCH
+Semantic Performance Retention,97.2%,97.16%,EXACT_MATCH
+Logistic Regression Cohen's dz,1.134,1.1338,EXACT_MATCH
+Logistic Regression Hedges' g,1.055,1.0547,EXACT_MATCH
+Bootstrap 95% CI (5% RF full_multilevel),"[0.989, 0.996]","[0.9888, 0.9959]",EXACT_MATCH
+Bootstrap Resample Iterations,"B = 10,000","10,000 bootstrap resamples (seed=42)",EXACT_MATCH
+Automated Unit Test Suite,34 passed,34 passed in 3.98s,EXACT_MATCH

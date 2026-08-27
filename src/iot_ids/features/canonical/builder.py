@@ -1,10 +1,22 @@
+"""[DEPRECATED] Legacy Feature Builder Module.
+
+DEPRECATION NOTICE: This module is retained for backwards compatibility with pre-Stage 1 exploratory scripts.
+For production multi-level 18-feature extraction, use `iot_ids.features.canonical.flow_builder.CanonicalFlowBuilder`.
+"""
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 import numpy as np
 import pandas as pd
 
 from iot_ids.data.labels import nbaiot_label_from_filename
+
+warnings.warn(
+    "iot_ids.features.canonical.builder is deprecated. Use CanonicalFlowBuilder in iot_ids.features.canonical.flow_builder.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 def _get_series(frame: pd.DataFrame, col: str, default: float | str = 0.0) -> pd.Series:

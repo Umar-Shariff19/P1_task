@@ -15,20 +15,70 @@ data/processed/**
 data/cache/**
 artifacts/**
 
-# Local authoritative/private project inputs. Required locally, not staged by default.
-project_context/**
-references/**
-
-# Keep directory placeholders
+# Keep directory placeholders and tracked sample telemetry data
 !data/raw/.gitkeep
 !data/interim/.gitkeep
 !data/processed/.gitkeep
 !data/cache/.gitkeep
 !artifacts/.gitkeep
+!data/sample_reproduce_stream.pcap
 
-# Generated reports can be reproduced by scripts.
-reports/**/*.png
-reports/**/*.parquet
+# Generated local execution alert logs, figures, & temporary outputs
+reports/*.jsonl
+reports/*.json
+reports/*.csv
+reports/*.md
+reports/figures/
+reports/stage1_ingestion_audit.md
+reports/stage2_*
+reports/stage3_*
+reports/stage4_*
+reports/stage7/
+reports/stage8/
+reports/stage10/
+reports/tables/
+
+# Keep authoritative final release reports and research evidence stages
+!reports/final/
+!reports/final/**
+!reports/stage4/
+!reports/stage4/**
+!reports/stage5/
+!reports/stage5/**
+!reports/stage6/
+!reports/stage6/**
+!reports/stage9/
+!reports/stage9/**
+!reports/stage11/
+!reports/stage11/**
+!reports/stage12/
+!reports/stage12/**
+
+# Local scratch directories, exploratory papers, & zip archives
+scratch/
+conference_latex_template/
+paper_reference/
+paper_support/
+implementation_paper/
+An_Adversarially_Robust_and_Privacy_Preserving_AI_Framework_for_Explainable_Intrusion_Detection_in_IoT_Environments*
+scripts/paper/
+project_context/
+references/
+
+# Obsolete / scratch utility scripts preserved locally
+scripts/01_materialize_canonical_flows.py
+scripts/02_audit_canonical_features.py
+scripts/04_analyze_ablations.py
+scripts/04_generate_stage4_plots.py
+scripts/04_run_benchmarks.py
+scripts/05_analyze_adaptation.py
+scripts/05_generate_stage5_plots.py
+scripts/05_run_validity_audit.py
+scripts/06_generate_stage6_plots.py
+scripts/07_generate_claim_evidence_matrix.py
+scripts/10_adversarial_reviewer_audit.py
+scripts/10_generate_stage10_figure.py
+scripts/cli_predict.py
 
 # Local secrets/config
 .env
@@ -45,15 +95,15 @@ reports/**/*.parquet
 verification_output*.txt
 evidence_output*.txt
 
-# Binary model checkpoints (weights)
+# Binary model checkpoints
 *.joblib
 *.pt
 
-# Explicitly track frozen final checkpoints and dataset splits
+# Explicitly track frozen deployable final model artifact
 !models/final/
 !models/final/**
-!data/processed/final/
-!data/processed/final/**
+!models/final/deployable_artifact/
+!models/final/deployable_artifact/**
 
 # Ignore isolated verification retraining runs
 models/verification_retrain/

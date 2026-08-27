@@ -1,0 +1,2 @@
+total_experiments_stage5,total_shortcut_ablations_stage6,transfer_directions_count,n_bootstraps,full_multilevel_vs_baseline_dz_auc,unsupervised_alignment_vs_zeroshot_dz_auc,limited_label_1pct_vs_zeroshot_dz_auc
+840,288,12,10000,0.26629578594030473,0.45125542821027215,0.8301873969552606

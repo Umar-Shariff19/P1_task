@@ -1,29 +1,28 @@
-from __future__ import annotations
+"""Dataset Ingestion Adapters Module."""
 
 from pathlib import Path
-
-from iot_ids.data.adapters.base import DatasetAdapter
-from iot_ids.data.adapters.bot_iot import BoTIoTAdapter  # Legacy/Deprecated
-from iot_ids.data.adapters.cicids2017 import CICIDS2017Adapter  # Legacy/Deprecated
-from iot_ids.data.adapters.edge_iiotset import EdgeIIoTsetAdapter
-from iot_ids.data.adapters.nbaiot import NBaIoTAdapter  # Legacy/Deprecated
-from iot_ids.data.adapters.ton_iot import ToN_IoTAdapter
+from iot_ids.data.adapters.base import DatasetAdapter, IngestionAuditReport
+from iot_ids.data.adapters.ton_iot import ToNIoTAdapter
+from iot_ids.data.adapters.edge_iiotset import EdgeIIoTsetAggregatorAdapter
+from iot_ids.data.adapters.nf_ton_iot import NFToNIoTAdapter
+from iot_ids.data.adapters.ciciot2023 import CICIoT2023Adapter
 
 
-def build_default_adapters(data_root: Path) -> list[DatasetAdapter]:
-    """Active production dataset adapters: Edge-IIoTset and ToN-IoT Network only."""
+def build_default_adapters(raw_dir: Path, sample_rows: int = 1000) -> list[DatasetAdapter]:
     return [
-        EdgeIIoTsetAdapter(data_root / "Edge-IIoTset"),
-        ToN_IoTAdapter(data_root / "ToN-IoT"),
+        ToNIoTAdapter(raw_dir / "ToN-IoT"),
+        EdgeIIoTsetAggregatorAdapter(raw_dir / "Edge-IIoTset"),
+        NFToNIoTAdapter(raw_dir / "NF-ToN-IoT-v2"),
+        CICIoT2023Adapter(raw_dir / "CICIoT2023"),
     ]
 
 
 __all__ = [
     "DatasetAdapter",
-    "EdgeIIoTsetAdapter",
-    "ToN_IoTAdapter",
-    "BoTIoTAdapter",
-    "CICIDS2017Adapter",
-    "NBaIoTAdapter",
+    "IngestionAuditReport",
+    "ToNIoTAdapter",
+    "EdgeIIoTsetAggregatorAdapter",
+    "NFToNIoTAdapter",
+    "CICIoT2023Adapter",
     "build_default_adapters",
 ]

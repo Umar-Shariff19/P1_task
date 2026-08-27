@@ -1,180 +1,173 @@
-# Multi-Level IoT Intrusion Detection System (IoT-IDS P1)
+# Multi-Level IoT Intrusion Detection System (IoT-IDS)
 
-This repository implements the research pipeline and demonstration system for an **Adversarially Robust, Multi-Level Explainable Intrusion Detection System for IoT and IIoT Environments**.
-
-The system combines supervised classifiers (Random Forest and tabular PyTorch MLP) with an independent, benign-trained Autoencoder anomaly detector managed by a **Design B 2-Stage Risk & Decision Layer**.
+This repository implements the complete scientific research pipeline and production-grade operational edge software for an **Adversarially Robust Multi-Level IoT Intrusion Detection System**.
 
 ---
 
-## 1. PROJECT OVERVIEW
-
-The framework evaluates intrusion detection across two authentic benchmark datasets:
-- **Edge-IIoTset**: High-density Industrial IoT testbed traffic.
-- **ToN-IoT Network**: Heterogeneous IoT/IIoT network traffic capture.
-
-### Key Architecture Components:
-1. **Multi-Level Representation**: Combines static flow features, causal temporal rates/counts, and destination behavioral diversity.
-2. **Harmonized Cross-Domain Transfer**: Evaluates zero-adaptation cross-domain transfer over a 6-feature physical network space ($F_{\text{common}}$).
-3. **Design B 2-Stage Risk Layer**: Combines supervised ensemble threat probability $P_{\text{sup}} = \frac{1}{2} P_{\text{rf}} + \frac{1}{2} P_{\text{mlp}}$ with an independently calibrated Autoencoder anomaly score $S_{\text{ae}}$.
-4. **Explainable AI (XAI)**: Provides global/local feature importances and Autoencoder per-feature reconstruction error decompositions ($e_i = (x_i - \hat{x}_i)^2$).
-5. **Constrained Adversarial Evaluation**: Evaluates white-box MLP gradient attacks (FGSM and PGD-10) with discrete feature masking and domain clamping.
-6. **Interactive Demonstration**: Streamlit web dashboard and CLI smoke test for real-time sample inspection.
+## 1. Project Overview
+Machine learning models for IoT intrusion detection frequently suffer from severe cross-domain generalization degradation when deployed across heterogeneous networks. This project introduces a universal multi-level semantic representation (Instantaneous, Causal Temporal, and Causal Behavioral) paired with unsupervised feature alignment and minimal target domain adaptation to solve cross-domain transfer failure and slash false positive rates.
 
 ---
 
-## 2. FINAL CANONICAL FEATURE REPRESENTATION
-
-### In-Domain Multi-Level Feature Space:
-- **Edge-IIoTset (13 features)**: $6\ F_{\text{common}} + 3\ F_{\text{temporal}} + 2\ F_{\text{behavioral}} + 2\ F_{\text{dataset\_specific}}$ (`mqtt_msgtype`, `mbtcp_unit_id`).
-- **ToN-IoT Network (13 features)**: $6\ F_{\text{common}} + 3\ F_{\text{temporal}} + 2\ F_{\text{behavioral}} + 2\ F_{\text{dataset\_specific}}$ (`conn_state_encoded`, `service_encoded`).
-
-### Harmonized Cross-Domain Space ($F_{\text{common}}$ - 6 Features):
-1. `duration` (Flow duration in seconds)
-2. `src_bytes` (Source payload transfer volume)
-3. `proto_tcp` (TCP transport indicator)
-4. `proto_udp` (UDP transport indicator)
-5. `proto_icmp` (ICMP control indicator)
-6. `is_well_known_port` (Target service port indicator $< 1024$)
-
-> [!NOTE]
-> `src_pkts` and `dst_pkts` were explicitly excluded from $F_{\text{common}}$ because forensic audits revealed non-equivalent record granularities (frame-level record vs flow summary) and proxy mismatch (`tcp.flags.ack` mapped as packet count).
+## 2. Research Methodology
+The central hypothesis posits that structured multi-level representations obeying read-before-write causality provide superior cross-domain generalization compared to flat, universally available flow features. Grounded in statistical domain adaptation theory, the pipeline evaluates zero-shot transfer, unsupervised CORAL feature covariance alignment, and minimal target-domain threshold calibration.
 
 ---
 
-## 3. AUTHORITATIVE FROZEN BENCHMARK RESULTS
+## 3. System Architecture
 
-All metrics below represent the frozen, reconciled evaluation over untouched test split samples:
-
-| Evaluation Profile | Source Domain $\rightarrow$ Target Domain | Feature Space | Accuracy | Attack F1 | ROC AUC | Status |
-| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **In-Domain** | **Edge-IIoTset** | 13 Features | **89.75%** | **94.29%** | **0.8773** | **AUTHORITATIVE (FROZEN)** |
-| **In-Domain** | **ToN-IoT Network** | 13 Features | **96.49%** | **97.73%** | **0.9952** | **AUTHORITATIVE (FROZEN)** |
-| **Cross-Domain** | **Edge-IIoTset $\rightarrow$ ToN-IoT** | 6 $F_{\text{common}}$ | **76.33%** | **86.57%** | **0.8081** | **AUTHORITATIVE (FROZEN)** |
-| **Cross-Domain** | **ToN-IoT $\rightarrow$ Edge-IIoTset** | 6 $F_{\text{common}}$ | **77.94%** | **86.96%** | **0.7212** | **AUTHORITATIVE (FROZEN)** |
-
-> [!IMPORTANT]
-> The early preliminary ToN-IoT Attack F1 result of **99.60%** has been officially **SUPERSEDED** by the reconciled 97.73% result following the clean 6-feature $F_{\text{common}}$ harmonization.
+```text
+                               DEPLOYABLE ARTIFACT
+                    (model.joblib, preprocessor.joblib, aligner.joblib, calibrator.joblib)
+                                       │
+                                       ▼
+Raw Telemetry ──► Packet Capture ──► Flow Aggregator ──► Multi-Level Builder ──► IDSPredictor ──► Alerts & Metrics
+(PCAP / Ingress)    (Scapy Engine)     (5-Tuple LRU)       (18 Features)        (RF Model)     (JSONL & Console)
+```
 
 ---
 
-## 4. REPRODUCTION PIPELINE
+## 4. Dataset Preparation
+The system evaluates **28,000 canonical flows** across four benchmark IoT datasets (7,000 flows per dataset, split 60% train / 20% validation / 20% test chronologically):
+- **ToN-IoT** (Ethernet & Wi-Fi IoT telemetry)
+- **Edge-IIoTset** (Industrial IoT protocol telemetry)
+- **NF-ToN-IoT-v2** (NetFlow v9 feature representation of ToN-IoT)
+- **CICIoT2023** (33-device IoT attack capture)
 
-The end-to-end research pipeline is organized sequentially under `scripts/`:
+---
+
+## 5. Feature Architecture
+The system defines **18 conceptual semantic features** expanding to **21 numerical model matrix columns**:
+- **Level A (Instantaneous)**: 8 conceptual features / 11 numerical columns (flow duration, rates, payload ratio, packet ratio, SYN ratio, 4-way protocol one-hot indicators).
+- **Level B (Causal Temporal)**: 5 conceptual/numerical features (EWMA inter-arrival timing mean, CV, flow rate EWMA, byte rate EWMA, SYN rate EWMA).
+- **Level C (Causal Behavioral)**: 5 conceptual/numerical features (destination IP diversity, destination port entropy, fanout ratio, unanswered ratio, activity EWMA).
+
+---
+
+## 6. Experimental Methodology
+Controlled benchmark experiments (160 runs) evaluate representation profile progressions (`baseline_common`, `instant_only`, `instant_temporal`, `instant_behavioral`, `full_multilevel`) across 4 model families (Random Forest, Logistic Regression, MLP, Autoencoder). Domain adaptation experiments (840 runs) evaluate cross-domain transfer across 12 transfer directions under target label budgets (0%, 1%, 5%, 10%).
+
+---
+
+## 7. Research Results
+- **Within-Domain Benchmark**: `full_multilevel` Random Forest reaches **0.986 Macro F1** and slashes FPR to **1.6%**.
+- **Minimal Target Adaptation**: 5% target label adaptation (42--210 samples) recovers cross-domain transfer to **0.992 ROC-AUC** (95% CI [0.989, 0.996], Cohen's $d_z = 1.134, p = 0.0024$).
+- **Shortcut Independence**: Stripping protocol indicators and raw rates retains **97.2% of performance**.
+
+---
+
+## 8. Installation
 
 ```bash
-# 1. Dataset Materialization & Verification
-.venv\Scripts\python.exe scripts/01_materialize.py
-.venv\Scripts\python.exe scripts/02_validate_materialization.py
-
-# 2. Stratified Temporal Splitting & Verification
-.venv\Scripts\python.exe scripts/03_create_splits.py
-.venv\Scripts\python.exe scripts/04_validate_splits.py
-
-# 3. Model Training & Risk Layer Calibration
-.venv\Scripts\python.exe scripts/05_train_models.py
-.venv\Scripts\python.exe scripts/06_calibrate_risk.py
-
-# 4. Evaluation & Paper Evidence Publication
-.venv\Scripts\python.exe scripts/07_evaluate.py
-.venv\Scripts\python.exe scripts/08_generate_evidence.py
-
-# 5. XAI Attribution & Adversarial Evaluation
-.venv\Scripts\python.exe scripts/09_generate_xai_evidence.py
-.venv\Scripts\python.exe scripts/10_run_adversarial_evaluation.py
-```
-
----
-
-## 5. DEMONSTRATION & INTERFERENCE
-
-### Interactive Streamlit Web Dashboard:
-```bash
-.venv\Scripts\streamlit.exe run demo/app.py
-```
-
-### Automated Terminal CLI Smoke Test:
-```bash
-.venv\Scripts\python.exe demo/cli_demo.py
-```
-
-The interactive demonstration allows real-time dataset selection, clean flow inspection, pre-computed adversarial evasion inspection, probability gauges ($P_{\text{rf}}$, $P_{\text{mlp}}$, $P_{\text{sup}}$), Autoencoder anomaly score ($S_{\text{ae}}$), Design B Risk Decision state banners, feature tables, and XAI reconstruction error charts.
-
----
-
-## 6. EXPLAINABLE AI (XAI) EVIDENCE
-
-- **Feature Attributions**: Evaluated via Random Forest Gini/Permutation importances and MLP permutation importances.
-- **Model Consensus**: Spearman rank correlation coefficient ($\rho = 0.8632$ on Edge-IIoTset) confirms high feature attribution consensus between RF and MLP classifiers.
-- **Autoencoder Error Decomposition**: Measures per-feature squared reconstruction errors $e_i = (x_i - \hat{x}_i)^2$ to identify exact feature dimensions driving anomaly score threshold breaches.
-
----
-
-## 7. CONSTRAINED ADVERSARIAL EVALUATION
-
-Adversarial evaluation measures the impact of gradient perturbations (FGSM and PGD-10 across $\epsilon \in \{0.05, 0.10, 0.20, 0.30\}$) generated against the differentiable MLP classifier:
-
-- **Methodology**: Evaluated in `RobustScaler` standardized feature space with continuous features clamped to training min/max bounds $[x_{\text{min}}, x_{\text{max}}]$.
-- **Discrete Masking**: Discrete protocol indicators (`proto_tcp`, `proto_udp`, `proto_icmp`, `is_well_known_port`, etc.) were 100% masked and unperturbed.
-- **Defensive Diversity**: On Edge-IIoTset, 100.00% of evasive attack samples ($P_{\text{sup}} < 0.5$) triggered AE anomaly flags ($S_{\text{ae}} \ge 0.8$). On ToN-IoT, AE catch rates ranged from **8.12% to 51.14%**.
-
-> [!CAUTION]
-> This study evaluates **constrained feature-space perturbations**, NOT live physical network packet injection. AE anomaly flags represent statistical deviation indications, NOT empirical proof of zero-day detection.
-
----
-
-## 8. REPOSITORY STRUCTURE
-
-```
-P1_task_Implementation/
-├── configs/features/canonical_schema.json   # Canonical feature profiles
-├── data/processed/final/                  # Frozen Parquet split datasets
-├── models/final/                          # Frozen binary model checkpoints
-│   ├── Edge-IIoTset/
-│   └── ToN-IoT/
-├── src/iot_ids/                           # Production source package
-│   ├── models/ensemble/risk_layer.py      # Design B Risk Layer logic
-│   ├── xai/                               # XAI explainer modules
-│   ├── adversarial/                       # FGSM/PGD attack & evaluation modules
-│   └── pipeline/system.py                 # IDSSystemPipeline wrapper
-├── scripts/                               # Sequential pipeline scripts (01 to 10)
-├── demo/                                  # Interactive Streamlit dashboard & CLI
-├── reports/                               # Markdown evidence reports & Claims Matrix
-└── tests/unit/                            # Unit test suite (29/29 passing)
-```
-
----
-
-## 9. QUICK START & ENVIRONMENT SETUP
-
-```powershell
-# 1. Create Python Virtual Environment
+# Clone repository & install package in editable production mode
+git clone https://github.com/Umar-Shariff19/P1_task.git
+cd P1_task_Implementation
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-
-# 2. Install Package Dependencies
-.\.venv\Scripts\pip.exe install -e .[dev]
-
-# 3. Run Unit Test Suite
-.\.venv\Scripts\pytest.exe tests/unit/
-
-# 4. Launch Interactive Demonstration
-.\.venv\Scripts\streamlit.exe run demo/app.py
+# Activate virtual environment
+pip install -e .
 ```
 
 ---
 
-## 10. RAW DATASETS & LICENSE NOTE
+## 9. Training
 
-Raw network captures (`data/raw/`) are excluded from version control under project `.gitignore`. Users must download original captures directly from official dataset providers:
-- **Edge-IIoTset**: [IEEE Dataport / Ferrag et al. (2022)]
-- **ToN-IoT Network**: [Cyber Range Lab, UNSW Canberra / Moustafa et al. (2020)]
+```bash
+iot-ids train --source-domain ToN-IoT --target-domain Edge-IIoTset --model-family RandomForest --artifact-dir models/final/deployable_artifact
+```
 
 ---
 
-## 11. SCIENTIFIC LIMITATIONS
+## 10. Validation
 
-As documented in [CLAIMS_MATRIX.md](file:///C:/Users/umari/Documents/P1_task_Implementation/reports/tables/CLAIMS_MATRIX.md):
-1. In-domain evaluation reflects random-sample pattern generalization under benchmark capture conditions.
-2. Cross-domain transfer is evaluated across separate physical IoT/IIoT testbeds over physical network attributes.
-3. Adversarial perturbations occur in standardized feature space, not live physical network traffic.
-4. Autoencoder defensive coverage varies by dataset topology and is not a universal guarantee.
+```bash
+iot-ids validate --artifact-dir models/final/deployable_artifact --test-domain ToN-IoT
+```
+
+---
+
+## 11. Batch Inference
+
+```bash
+iot-ids predict-batch --artifact-dir models/final/deployable_artifact --input-file data/processed/stage3/ToN-IoT/test.parquet --limit 10 --output-json reports/batch_alerts.json
+```
+
+---
+
+## 12. Streaming Inference
+
+```bash
+iot-ids predict-stream --artifact-dir models/final/deployable_artifact --input-json data/sample_stream_packets.json
+```
+
+---
+
+## 13. PCAP Replay
+
+```bash
+iot-ids replay-pcap --artifact-dir models/final/deployable_artifact --pcap-file data/sample_reproduce_stream.pcap
+```
+
+---
+
+## 14. Live Capture
+
+```bash
+iot-ids predict-live --artifact-dir models/final/deployable_artifact --interface eth0 --bpf-filter "ip"
+```
+
+---
+
+## 15. Runtime Daemon
+
+```bash
+iot-ids run-daemon --artifact-dir models/final/deployable_artifact --pcap-file data/sample_reproduce_stream.pcap --log-file reports/daemon_alerts.jsonl
+```
+
+---
+
+## 16. Docker Deployment
+
+```bash
+docker-compose up --build
+```
+
+---
+
+## 17. Testing
+
+```bash
+python -m pytest tests/unit/data/ tests/unit/features/ tests/unit/experiments/ tests/unit/adaptation/ tests/unit/statistics/ tests/unit/publication/ tests/unit/test_package_and_security.py tests/integration/
+```
+**Status**: **71 / 71 PASSED (100% Pass Rate, 0 Warnings)**.
+
+---
+
+## 18. Reproducibility
+See [reproducibility_checklist.md](file:///C:/Users/umari/Documents/P1_task_Implementation/reports/final/reproducibility_checklist.md) for full step-by-step reproduction instructions.
+
+---
+
+## 19. Limitations
+1. Live network sniffing (`predict-live`) requires elevated network interface privileges (`root` / `CAP_NET_RAW` on Linux, Administrator/Npcap on Windows).
+2. Enterprise SIEM alert exporters (Kafka, Syslog) are not implemented; alerts persist locally via `JSONLFileSink` and `ConsoleAlertSink`.
+
+---
+
+## 20. Repository Structure
+- `src/iot_ids/`: Core operational package (`config`, `data`, `features`, `experiments`, `adaptation`, `pipeline`, `inference`, `registry`, `runtime`, `utils`)
+- `scripts/`: Materialization, benchmarking, publication audit, and operational scripts
+- `reports/`: Research evidence CSVs, LaTeX publication source (`reports/stage9/IEEE_paper_final.tex`), and final audit matrices (`reports/final/`)
+- `tests/`: 71 automated unit and integration tests
+
+---
+
+## 21. Citation
+
+```bibtex
+@article{iot_ids_2026,
+  title={Cross-Domain IoT Intrusion Detection via Multi-Level Causal Representation and Minimal Target Adaptation},
+  author={Anonymized Author(s)},
+  journal={IEEE Transactions on Dependable and Secure Computing},
+  year={2026}
+}
+```

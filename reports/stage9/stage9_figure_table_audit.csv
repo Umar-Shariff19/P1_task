@@ -1,0 +1,18 @@
+element_id,element_type,title,source_artifact,verified_data_trace,status
+Table I,Table,Heterogeneous IoT Telemetry Dataset Characteristics,reports/stage1_ingestion_audit.md,"ToN-IoT, Edge-IIoTset, NF-ToN-IoT-v2, CICIoT2023 (7,000 flows each / 28,000 total)",VERIFIED
+Table II,Table,Candidate 18-Feature Multi-Level Representation Specification,src/iot_ids/features/canonical/flow_builder.py,"Level A (8 features), Level B (5 features), Level C (5 features)",VERIFIED
+Table III,Table,Controlled Feature Profile Benchmark Configurations,scripts/04_benchmark_models.py,"baseline_common, instant_only, instant_temporal, instant_behavioral, full_multilevel",VERIFIED
+Table IV,Table,Domain Adaptation Regimes and Data Access Matrix,src/iot_ids/adaptation/adaptation.py,"zero_shot, unsupervised_alignment, unsupervised_correction, threshold_calibration, 1%, 5%, 10% budgets",VERIFIED
+Table V,Table,Within-Domain Benchmark Performance,reports/stage4/stage4_within_domain_results.csv,"RF instant_behavioral F1 = 0.986, FPR = 1.6%",VERIFIED
+Table VI,Table,Zero-Shot and Adapted Cross-Domain Performance,reports/stage5/stage5_adaptation_summary.csv,RF full_multilevel zero_shot AUC = 0.318 -> 5% budget AUC = 0.992,VERIFIED
+Table VII,Table,"Paired Statistical Significance, Effect Sizes, and 95% CIs",reports/stage6/stage6_effect_sizes.csv,"Logistic Regression Cohen's dz = 1.134, Hedges' g = 1.055, p = 0.0024",VERIFIED
+Table VIII,Table,Domain Shortcut Feature Ablation Results,reports/stage6/stage6_shortcut_ablation.csv,semantic_features_only AUC = 0.869 vs 0.894 full_multilevel (97.2% retention),VERIFIED
+Table IX,Table,Direction-Level Robustness Across 12 Source -> Target Pairs,reports/stage6/stage6_direction_robustness.csv,Per-pair min/max/std metrics across 12 transfer pairs,VERIFIED
+Figure 1,Figure,End-to-End Canonical Telemetry and Adaptation Pipeline,reports/stage7/stage7_figure_plan.md,"Architecture schematic with 28,000 flow pipeline",VERIFIED
+Figure 2,Figure,Multi-Level Semantic Representation Architecture,reports/stage7/stage7_figure_plan.md,"X_i = f(e_i, H_<t_i) read-before-write causality diagram",VERIFIED
+Figure 3,Figure,Zero-Shot Cross-Domain Transfer Performance Matrix,reports/stage5/stage5_direction_results.csv,Heatmap of 12 transfer directions,VERIFIED
+Figure 4,Figure,Cross-Domain Adaptation Trajectory Across Target-Label Budgets,reports/stage6/plots/label_budget_performance_curve.png,0% -> 1% -> 5% -> 10% budget trajectory with 95% CIs,VERIFIED
+Figure 5,Figure,Feature Profile Performance Comparison Before and After Adaptation,reports/stage6/plots/confidence_intervals_roc_auc.png,Profile performance comparison plot,VERIFIED
+Figure 6,Figure,Cross-Domain False Positive Rate (FPR) Suppression,reports/stage5/stage5_fpr_comparison.csv,FPR suppression plot (-47.2% reduction),VERIFIED
+Figure 7,Figure,Paired Effect Sizes (Cohen's dz) and 95% Bootstrap CIs,reports/stage6/plots/effect_size_forest_plot.png,Forest plot of Cohen's dz across transfer comparisons,VERIFIED
+Figure 8,Figure,Domain Shortcut Feature Ablation Diagnostic,reports/stage6/plots/shortcut_ablation_comparison.png,Shortcut ablation comparison plot (97.2% retention),VERIFIED

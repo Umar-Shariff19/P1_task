@@ -6,12 +6,19 @@ malformed packet exception isolation, sink failure handling, and repeated lifecy
 import tempfile
 from pathlib import Path
 import pytest
-import scapy.all as scapy
-from scapy.layers.inet import IP, TCP
+
+try:
+    import scapy.all as scapy
+    from scapy.layers.inet import IP, TCP
+    from iot_ids.runtime.daemon import IDSRuntimeDaemon
+    HAS_SCAPY = True
+except ImportError:
+    HAS_SCAPY = False
+
+pytestmark = pytest.mark.skipif(not HAS_SCAPY, reason="Optional dependency 'scapy' is not installed")
 
 from iot_ids.config import PipelineConfig
 from iot_ids.inference.predictor import IDSPredictor
-from iot_ids.runtime.daemon import IDSRuntimeDaemon
 from iot_ids.utils.sinks import JSONLFileSink, ConsoleAlertSink, MultiAlertSink
 
 

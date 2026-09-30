@@ -22,6 +22,7 @@ dependencies = [
 
 [project.optional-dependencies]
 models = ["torch>=2.2"]
+xai = ["shap>=0.43"]
 onnx = ["onnx>=1.15", "onnxruntime>=1.17", "skl2onnx>=1.16"]
 dev = ["pytest>=8,<9", "ruff>=0.5", "mypy>=1.10"]
 

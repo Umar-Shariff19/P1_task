@@ -17,6 +17,7 @@ FiveTuple = Tuple[str, str, int, int, str]
 
 def normalize_5tuple(
     src_ip: str, dst_ip: str, src_port: int, dst_port: int, proto: str
+    
 ) -> Tuple[FiveTuple, bool]:
     """Sorts 5-tuple canonical direction so (A->B) and (B->A) map to the same flow key.
     

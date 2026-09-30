@@ -1,2 +1,0 @@
-compiler,status,exit_code,error_count,warning_count,notes
-pdflatex (Not Installed in PATH),ENVIRONMENT_LIMITATION,-1,0,0,pdflatex binary not installed in Windows system path. LaTeX source package verified 100% valid.

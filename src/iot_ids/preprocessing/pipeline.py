@@ -62,15 +62,19 @@ class PreprocessingPipeline:
     to numerical network quantities, fitted strictly on Train data.
     """
 
-    def __init__(self, numeric_cols: list[str]):
+    def __init__(self, numeric_cols: list[str], clip_bounds: tuple[float, float] | None = (-10.0, 10.0)):
         self.numeric_cols = list(numeric_cols)
         self.scaler = RobustScaler()
+        self.clip_bounds = clip_bounds
         self.fitted = False
 
     def fit_transform(self, df: pd.DataFrame) -> np.ndarray:
         X_num = df[self.numeric_cols].astype(float).fillna(0.0).values
         X_log = np.log1p(np.maximum(0, X_num))
         X_scaled = self.scaler.fit_transform(X_log)
+        clip_b = getattr(self, "clip_bounds", (-10.0, 10.0))
+        if clip_b is not None:
+            X_scaled = np.clip(X_scaled, clip_b[0], clip_b[1])
         self.fitted = True
         return X_scaled
 
@@ -79,4 +83,8 @@ class PreprocessingPipeline:
             raise RuntimeError("PreprocessingPipeline must be fitted before transform.")
         X_num = df[self.numeric_cols].astype(float).fillna(0.0).values
         X_log = np.log1p(np.maximum(0, X_num))
-        return self.scaler.transform(X_log)
+        X_scaled = self.scaler.transform(X_log)
+        clip_b = getattr(self, "clip_bounds", (-10.0, 10.0))
+        if clip_b is not None:
+            X_scaled = np.clip(X_scaled, clip_b[0], clip_b[1])
+        return X_scaled

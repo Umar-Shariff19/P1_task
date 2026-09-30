@@ -7,11 +7,18 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 import pytest
-import scapy.all as scapy
-from scapy.layers.inet import IP, TCP, UDP, ICMP
-from scapy.layers.l2 import Ether, ARP
 
-from iot_ids.data.packet_capture import scapy_to_canonical_packet, PacketCaptureEngine
+try:
+    import scapy.all as scapy
+    from scapy.layers.inet import IP, TCP, UDP, ICMP
+    from scapy.layers.l2 import Ether, ARP
+    from iot_ids.data.packet_capture import scapy_to_canonical_packet, PacketCaptureEngine
+    HAS_SCAPY = True
+except ImportError:
+    HAS_SCAPY = False
+
+pytestmark = pytest.mark.skipif(not HAS_SCAPY, reason="Optional dependency 'scapy' is not installed")
+
 from iot_ids.inference.predictor import IDSPredictor
 from iot_ids.utils.logging import IDSAlertLogger
 

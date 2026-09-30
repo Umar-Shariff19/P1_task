@@ -1,2 +1,0 @@
-pdf_file,exists,size_bytes,status
-IEEE_paper_final.pdf,False,0,ENVIRONMENT_LIMITATION (pdflatex binary not in PATH)

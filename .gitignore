@@ -1,5 +1,6 @@
 # Local environments
 .venv/
+.venv-1/
 venv/
 __pycache__/
 *.py[cod]
@@ -23,6 +24,14 @@ artifacts/**
 !artifacts/.gitkeep
 !data/sample_reproduce_stream.pcap
 
+# Keep materialized stage3 splits for demo reproducibility (~1.5 MB)
+!data/processed/stage3/
+!data/processed/stage3/**
+
+# Keep final processed datasets
+!data/processed/final/
+!data/processed/final/**
+
 # Generated local execution alert logs, figures, & temporary outputs
 reports/*.jsonl
 reports/*.json
@@ -37,6 +46,9 @@ reports/stage7/
 reports/stage8/
 reports/stage10/
 reports/tables/
+
+# Keep authoritative golden run manifest
+!reports/golden_run_manifest.json
 
 # Keep authoritative final release reports and research evidence stages
 !reports/final/
@@ -64,6 +76,10 @@ An_Adversarially_Robust_and_Privacy_Preserving_AI_Framework_for_Explainable_Intr
 scripts/paper/
 project_context/
 references/
+notebooks/
+
+# Obsolete shareable package (superseded by repository)
+P1_Task_Implementation_Shareable_Codebase.zip
 
 # Obsolete / scratch utility scripts preserved locally
 scripts/01_materialize_canonical_flows.py
@@ -104,6 +120,12 @@ evidence_output*.txt
 !models/final/**
 !models/final/deployable_artifact/
 !models/final/deployable_artifact/**
+
+# Track golden run and standardized runtime model artifacts
+!models/golden_run/
+!models/golden_run/**
+!models/standardized/
+!models/standardized/**
 
 # Ignore isolated verification retraining runs
 models/verification_retrain/

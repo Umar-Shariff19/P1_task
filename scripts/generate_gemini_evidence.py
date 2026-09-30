@@ -9,7 +9,7 @@ exec_logs = """# Gemini Forensic Execution Logs
 ## 1. Audit Execution Overview
 - **Audit Timestamp**: 2026-09-08
 - **Audit Environment**: Windows 11, Python 3.10.11, PyTorch 2.x, Scikit-Learn 1.7.2, Pytest 9.1.1
-- **Target Repository**: `C:\\Users\\umari\\Documents\\P1_task_Implementation`
+- **Target Repository**: Project root (this repository)
 - **Manuscript Directory**: `ieee_paper_draft/`
 
 ## 2. Key Commands Executed & Outputs

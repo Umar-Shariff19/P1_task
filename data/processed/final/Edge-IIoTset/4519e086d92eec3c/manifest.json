@@ -12,7 +12,7 @@
   "label_mapping_version": "label-taxonomy-v1",
   "feature_version": "final-features-v1",
   "source_files": [
-    "C:\\Users\\umari\\Documents\\P1_task_Implementation\\data\\raw\\Edge-IIoTset\\Edge-IIoTset dataset\\Selected dataset for ML and DL\\ML-EdgeIIoT-dataset.csv"
+    "data/raw/Edge-IIoTset/Edge-IIoTset dataset/Selected dataset for ML and DL/ML-EdgeIIoT-dataset.csv"
   ],
   "complete": true,
   "cache_status": "built"

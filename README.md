@@ -143,7 +143,7 @@ python -m pytest tests/unit/data/ tests/unit/features/ tests/unit/experiments/ t
 ---
 
 ## 18. Reproducibility
-See [reproducibility_checklist.md](file:///C:/Users/umari/Documents/P1_task_Implementation/reports/final/reproducibility_checklist.md) for full step-by-step reproduction instructions.
+See [reproducibility_checklist.md](reports/final/reproducibility_checklist.md) for full step-by-step reproduction instructions.
 
 ---
 

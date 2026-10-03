@@ -131,7 +131,7 @@ if demo_mode == "📊 Held-Out Flow Replay":
         sample_idx = st.slider("Select Sample Index", 0, max_value=len(sub_df) - 1, value=0)
         sample_row = sub_df.iloc[sample_idx:sample_idx+1]
         actual_label = int(sample_row["label"].values[0])
-        attack_cat = sample_row.get("attack_category", ["Unknown"])[0] if "attack_category" in sample_row.columns else ("Attack" if actual_label==1 else "Normal")
+        attack_cat = sample_row["attack_category"].iloc[0] if "attack_category" in sample_row.columns else ("Attack" if actual_label==1 else "Normal")
 
         # Execute Engine Inference
         res = engine.predict(sample_row[STANDARDIZED_21_FEATURES], explain=True, top_k=5)[0]
@@ -207,7 +207,7 @@ elif demo_mode == "🔌 PCAP / Packet Replay":
                 for pkt in reader:
                     packets_read += 1
                     cpkt = scapy_to_canonical_packet(pkt)
-                    if cpkt is me := None:
+                    if cpkt is None:
                         continue
                     if cpkt is not None:
                         completed_flow = flow_aggregator.add_packet(cpkt)
@@ -320,8 +320,8 @@ elif demo_mode == "🛡️ Adversarial Evasion (PGD-10)":
                 ).numpy()
 
                 # Evaluate on Models
-                p_rf_orig = float(engine.rf_model.predict_proba(X_orig)[:, 1])
-                p_rf_adv = float(engine.rf_model.predict_proba(X_adv)[:, 1])
+                p_rf_orig = float(engine.rf_model.predict_proba(X_orig)[0, 1])
+                p_rf_adv = float(engine.rf_model.predict_proba(X_adv)[0, 1])
 
                 with torch.no_grad():
                     p_mlp_orig = float(torch.sigmoid(engine.robust_mlp_model(X_orig_t)).item())
@@ -433,3 +433,4 @@ elif demo_mode == "📈 Research Results Dashboard":
 
 st.markdown("---")
 st.caption("Industrial IIoT Intrusion Detection System | Authoritative Option C 21-Feature System Demonstration")
+

@@ -24,6 +24,16 @@ artifacts/**
 !artifacts/.gitkeep
 !data/sample_reproduce_stream.pcap
 
+# Explicitly track only the four final raw datasets
+!data/raw/Edge-IIoTset/
+!data/raw/Edge-IIoTset/**
+!data/raw/CICIOT23/
+!data/raw/CICIOT23/**
+!data/raw/NF-ToN-IoT-v2/
+!data/raw/NF-ToN-IoT-v2/**
+!data/raw/ToN-IoT/
+!data/raw/ToN-IoT/**
+
 # Keep materialized stage3 splits for demo reproducibility (~1.5 MB)
 !data/processed/stage3/
 !data/processed/stage3/**
@@ -45,7 +55,6 @@ reports/stage4_*
 reports/stage7/
 reports/stage8/
 reports/stage10/
-reports/tables/
 
 # Keep authoritative golden run manifest
 !reports/golden_run_manifest.json
@@ -69,32 +78,13 @@ reports/tables/
 # Local scratch directories, exploratory papers, & zip archives
 scratch/
 conference_latex_template/
-paper_reference/
 paper_support/
 implementation_paper/
-An_Adversarially_Robust_and_Privacy_Preserving_AI_Framework_for_Explainable_Intrusion_Detection_in_IoT_Environments*
-scripts/paper/
-project_context/
-references/
+An_Adversarially_Robust_and_Privacy_Preserving_AI_Framework_for_Explainable_Intrusion_Detection_in_IoT_Environments*    
 notebooks/
 
 # Obsolete shareable package (superseded by repository)
 P1_Task_Implementation_Shareable_Codebase.zip
-
-# Obsolete / scratch utility scripts preserved locally
-scripts/01_materialize_canonical_flows.py
-scripts/02_audit_canonical_features.py
-scripts/04_analyze_ablations.py
-scripts/04_generate_stage4_plots.py
-scripts/04_run_benchmarks.py
-scripts/05_analyze_adaptation.py
-scripts/05_generate_stage5_plots.py
-scripts/05_run_validity_audit.py
-scripts/06_generate_stage6_plots.py
-scripts/07_generate_claim_evidence_matrix.py
-scripts/10_adversarial_reviewer_audit.py
-scripts/10_generate_stage10_figure.py
-scripts/cli_predict.py
 
 # Local secrets/config
 .env
@@ -127,5 +117,7 @@ evidence_output*.txt
 !models/standardized/
 !models/standardized/**
 
-# Ignore isolated verification retraining runs
+# Track verification retrain artifacts
+
+# Verification-only retraining artifacts
 models/verification_retrain/

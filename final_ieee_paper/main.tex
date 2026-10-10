@@ -19,7 +19,7 @@
 \maketitle
 
 \begin{abstract}
-The rapid proliferation of Industrial Internet of Things (IIoT) networks has introduced significant cybersecurity vulnerabilities, necessitating high-performance Intrusion Detection Systems (IDS). Machine learning classifiers deployed in IIoT environments face concurrent operational challenges: malicious adversarial perturbations designed to evade detection, privacy risks associated with training on sensitive telemetry, and opacity in threat attribution. This paper presents an integrated hybrid ensemble framework for IIoT intrusion detection. The proposed system features a dual-stream probability fusion architecture (Option C) combining a Random Forest classifier with a deep Multi-Layer Perceptron (MLP) trained under joint Differential Privacy (DP-SGD) and projected gradient descent (PGD) adversarial training. Operating strictly on a standardized 21-feature statistical flow representation, the system avoids raw payload storage, achieving compliance with data minimization requirements. Experimental evaluation across four real-world benchmark datasets (Edge-IIoTset, NF-ToN-IoT-v2, ToN-IoT, and CICIoT2023) demonstrates an aggregate mean ROC-AUC of 0.9970 (0.9988 on Edge-IIoTset, 0.9927 on NF-ToN-IoT-v2, 1.0000 on ToN-IoT, and 0.9965 on CICIoT2023). Under PGD-10 adversarial evasion attacks on NF-ToN-IoT-v2, the Option C ensemble reduces the Attack Success Rate (ASR) to 4.0\%, compared to 53.8\% for a standard neural stream. The neural stream satisfies $(\varepsilon=2.37, \delta=10^{-5})$-differential privacy under Opacus PRV accounting. Model explainability is delivered via Weighted Component Attribution Aggregation ($0.7 \cdot \text{RF} + 0.3 \cdot \text{MLP}$). Single-CPU host latency benchmarks establish a pure detection throughput of 16,505 samples/sec (0.0606 ms/sample) at batch size $N=1024$.
+The rapid proliferation of Industrial Internet of Things (IIoT) networks has introduced significant cybersecurity vulnerabilities, necessitating high-performance Intrusion Detection Systems (IDS). Machine learning classifiers deployed in IIoT environments face concurrent operational challenges: malicious adversarial perturbations designed to evade detection, privacy risks associated with training on sensitive telemetry, and opacity in threat attribution. This paper presents an integrated hybrid ensemble framework for IIoT intrusion detection. The proposed system features a dual-stream probability fusion architecture (Option C) combining a Random Forest classifier with a deep Multi-Layer Perceptron (MLP) trained under joint Differential Privacy (DP-SGD) and projected gradient descent (PGD) adversarial training. Operating strictly on a standardized 21-feature statistical flow representation, the system avoids raw payload storage, achieving compliance with data minimization requirements. Experimental evaluation across four real-world benchmark datasets (Edge-IIoTset, NF-ToN-IoT-v2, ToN-IoT, and CICIoT2023) demonstrates an aggregate mean ROC-AUC of 0.9970 (0.9988 on Edge-IIoTset, 0.9927 on NF-ToN-IoT-v2, 1.0000 on ToN-IoT, and 0.9965 on CICIoT2023). Under PGD-10 adversarial evasion attacks on NF-ToN-IoT-v2, the Option C ensemble reduces the neural-gradient transfer Attack Success Rate (ASR) to 6.5\%, compared to 53.8\% for a standard neural stream. However, under a 500-query black-box NES attack, empirical evasion rises to 36.1\%. The neural stream satisfies $(\varepsilon=2.37, \delta=10^{-5})$-differential privacy under Opacus PRV accounting. Model explainability is delivered via a computationally efficient surrogate Weighted Component Attribution Aggregation ($0.7 \cdot \text{RF} + 0.3 \cdot \text{MLP}$), as exact fused Shapley calculation is intractable. Single-CPU host latency benchmarks establish an offline classifier-only throughput of 16,505 samples/sec at batch size $N=1024$, explicitly excluding packet ingestion and flow aggregation.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -99,7 +99,7 @@ To maintain low latency while providing model interpretability, the framework im
 \begin{equation}
 \mathbf{A}_{\text{Option C}} = 0.7 \cdot \frac{\mathbf{A}_{\text{RF}}}{\|\mathbf{A}_{\text{RF}}\|_1} + 0.3 \cdot \frac{\mathbf{A}_{\text{MLP}}}{\|\mathbf{A}_{\text{MLP}}\|_1}
 \end{equation}
-This approach avoids computing expensive joint game-theoretic Shapley values across fused non-differentiable model boundaries while providing consistent component-level feature attributions.
+This approach serves as a computationally tractable component-wise surrogate approximation. An audit of exact game-theoretic Shapley enumeration confirmed that evaluating the $2^{21}$ coalitions per sample across the fused boundaries is mathematically intractable for live inference and that the linear surrogate violates the strict SHAP additivity axiom.
 
 \section{Experimental Setup}
 
@@ -168,14 +168,14 @@ Table~\ref{tab:adversarial_asr} presents the PGD-10 adversarial Attack Success R
 \textbf{Dataset} & \textbf{Std MLP ASR} & \textbf{Rob MLP ASR} & \textbf{Option C ASR} \\
 \midrule
 Edge-IIoTset   & 0.000 & 0.000 & \textbf{0.038} \\
-NF-ToN-IoT-v2  & 0.538 & 0.480 & \textbf{0.040} \\
+NF-ToN-IoT-v2  & 0.538 & 0.480 & \textbf{0.065} \\
 ToN-IoT        & 0.023 & 0.025 & \textbf{0.000} \\
 CICIoT2023     & 0.023 & 0.013 & \textbf{0.012} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-On NF-ToN-IoT-v2, standard MLP suffers a 53.8\% evasion rate under PGD-10 perturbations. Adversarial training reduces neural ASR to 48.0\%. PGD-10 perturbations were generated using gradients of the robust neural stream; the resulting adversarial samples were then evaluated by the Random Forest branch and the 0.7/0.3 fused detector. Under this evaluation procedure, the fused Option C detector exhibited lower attack success than the corresponding neural stream, reducing the final ensemble ASR to \textbf{4.0\%} on NF-ToN-IoT-v2. This empirical reduction reflects the probability fusion between the non-differentiable Random Forest stream and the robust neural stream.
+On NF-ToN-IoT-v2, standard MLP suffers a 53.8\% evasion rate under PGD-10 perturbations. Adversarial training reduces neural ASR to 48.0\%. PGD-10 perturbations were generated using gradients of the robust neural stream; the resulting adversarial samples were then evaluated by the Random Forest branch and the 0.7/0.3 fused detector. Under this evaluation procedure, the fused Option C detector exhibited lower attack success than the corresponding neural stream, reducing the final ensemble transfer ASR to \textbf{6.5\%} on NF-ToN-IoT-v2. However, under a strict 500-query black-box Natural Evolution Strategies (NES) attack optimizing directly against the fused probability output, the operational evasion rate reaches \textbf{36.1\%}. This demonstrates that neural-gradient transfer substantially understates the empirical vulnerability of the ensemble to direct query-based optimization. This empirical reduction reflects the probability fusion between the non-differentiable Random Forest stream and the robust neural stream.
 
 \subsection{Differential Privacy Analysis}
 Table~\ref{tab:dp_tradeoff} illustrates the privacy-utility-robustness trade-off on NF-ToN-IoT-v2 across noise multipliers $\sigma \in \{0.0, 0.5, 1.0, 2.0\}$ at target $\delta = 10^{-5}$.
@@ -202,7 +202,7 @@ Increasing noise multiplier $\sigma$ from 0.5 to 1.0 provides a strict privacy g
 Feature attribution analysis using Weighted Component Attribution Aggregation reveals that temporal and behavioral flow dynamics substantially contribute to threat detection across IIoT datasets. On Edge-IIoTset, the top three contributing features under the combined $0.7 \cdot \text{RF} + 0.3 \cdot \text{MLP}$ attribution are \texttt{temporal\_flow\_rate\_ewma} (weight 0.310), \texttt{behavioral\_port\_entropy} (weight 0.242), and \texttt{behavioral\_unanswered\_ratio} (weight 0.154), indicating that both temporal dynamics and behavioral metrics are substantial contributors for the analyzed samples.
 
 \subsection{Runtime Latency \& Throughput Benchmarks}
-Inference latency was benchmarked on a single-CPU host across batch sizes $N \in \{1, \dots, 1024\}$ for pure Option C detection prediction. Fig.~\ref{fig:runtime_tp} illustrates throughput scaling.
+Offline classifier-only inference latency was benchmarked on a single-CPU host across batch sizes $N \in \{1, \dots, 1024\}$ for Option C detection prediction on pre-aggregated tabular features. Fig.~\ref{fig:runtime_tp} illustrates throughput scaling.
 
 \begin{figure}[htbp]
 \centering
@@ -230,7 +230,7 @@ Inference latency was benchmarked on a single-CPU host across batch sizes $N \in
 \end{tabular}
 \end{table}
 
-At batch size $N=1024$, the inference engine achieved approximately 16,505 samples/sec (per-sample latency of 0.0606 ms) on a single CPU host. Single-sample inference latency ($N=1$) is 69.40 ms.
+At batch size $N=1024$, the classification engine achieved approximately 16,505 samples/sec (per-sample latency of 0.0606 ms) on a single CPU host. Crucially, this metric excludes upstream network packet capture, Scapy payload parsing, and stateful flow aggregation overheads.
 
 \section{Research Limitations and Gaps}
 Table~\ref{tab:limitations_matrix} summarizes the addressed capabilities and remaining limitations of the current framework.
@@ -243,16 +243,17 @@ Table~\ref{tab:limitations_matrix} summarizes the addressed capabilities and rem
 \toprule
 \textbf{Limitation / Gap} & \textbf{Current Evidence Scope} & \textbf{Future Direction} \\
 \midrule
+XAI Additivity & Component-wise SHAP surrogate violates exact Shapley additivity. & Develop exact SHAP estimators for hybrid ensembles. \\
+End-to-End Throughput & Benchmark excludes live packet capture and flow aggregation. & Validate end-to-end throughput on physical testbed. \\
 DP Scope Limit & Guaranteed on neural stream only ($\varepsilon=2.37$). & Extend DP tree building to Random Forest stream. \\
-Physical Network Ingress & Software socket daemon implemented & Validate on physical live 10Gbps hardware testbed. \\
+Black-box Optimization & Query-based attack (36.1\% ASR) bypassed neural-gradient transfer. & Develop exact joint gradient attacks on tree-neural boundary. \\
 Federated Training & Multi-client aggregation code implemented. & Conduct multi-node federated training trials. \\
-Joint PGD Attack & Neural PGD-10 ASR verified (4.0\%). & Develop exact joint gradient attacks on tree-neural boundary. \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \section{Conclusion}
-This paper presented a hybrid ensemble framework for IIoT network intrusion detection that unifies detection performance, adversarial robustness, differential privacy, and explainability. By combining a Random Forest classifier with a DP-SGD + PGD-7 trained MLP via Option C probability fusion (0.7/0.3), the system achieves a mean ROC-AUC of 0.9970 across four IIoT datasets, reduces PGD-10 evasion ASR to 4.0\%, enforces $(\varepsilon=2.37, \delta=10^{-5})$-DP on the neural stream, provides transparent feature attributions, and sustains a single-CPU host processing throughput of 16,505 samples/sec.
+This paper presented a hybrid ensemble framework for IIoT network intrusion detection that unifies detection performance, adversarial robustness, differential privacy, and explainability. By combining a Random Forest classifier with a DP-SGD + PGD-7 trained MLP via Option C probability fusion (0.7/0.3), the system achieves a mean ROC-AUC of 0.9970 across four IIoT datasets, reduces PGD-10 neural-gradient transfer ASR to 6.5\% (though remaining vulnerable to 36.1\% evasion under 500-query black-box optimization), enforces $(\varepsilon=2.37, \delta=10^{-5})$-DP on the neural stream, provides computationally tractable surrogate feature attributions, and sustains a single-CPU offline classifier throughput of 16,505 samples/sec.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}

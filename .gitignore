@@ -121,3 +121,57 @@ evidence_output*.txt
 
 # Verification-only retraining artifacts
 models/verification_retrain/
+
+# -----------------------------------------------------------------
+# Paper / manuscript material -- kept locally, excluded from Git
+# -----------------------------------------------------------------
+
+# LaTeX manuscript directory
+final_ieee_paper/
+
+# Reference PDFs and example LaTeX source
+paper_reference/
+
+# Project spec/context Word documents
+project_context/
+
+# Paper submission zip archives at root
+FINAL_IEEE_PAPER*.zip
+FINAL_IEEE_PAPER_Overleaf*.zip
+
+# Paper figure-generation and LaTeX packaging scripts
+scripts/paper/
+scripts/build_*overleaf*.py
+scripts/build_p1_task_implementation_zip.py
+scripts/finalize_zip_and_hashes.py
+scripts/generate_final_paper_figures.py
+scripts/generate_paper_draft_figures.py
+scripts/generate_paper_figures_v2.py
+scripts/generate_publication_evidence.py
+scripts/generate_redesigned_paper_figures.py
+scripts/verify_latex_syntax.py
+scripts/zip_fixed_package.py
+scripts/08_run_publication_audit.py
+scripts/09_run_submission_compilation.py
+scripts/11_run_submission_packaging.py
+
+# Paper-specific report directories
+reports/paper_evidence/
+
+# LaTeX generated/build file types
+*.bib
+*.sty
+*.cls
+*.bst
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.toc
+*.lof
+*.lot
+*.synctex.gz
+
+# AI agent workspace directories (local only)
+.antigravity/
+brain/

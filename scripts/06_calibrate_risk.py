@@ -56,6 +56,8 @@ class AutoencoderModule(nn.Module):
 
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     parser = argparse.ArgumentParser(description="Stage 06: Risk Layer Calibration & Model Gate")
     parser.add_argument(
         "--profile",

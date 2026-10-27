@@ -1,6 +1,10 @@
 # FINAL IMPLEMENTATION STATUS & REPRODUCIBILITY REPORT
 
-## 1. Overview & Objectives Achieved
+> **Evidence-status correction — 2026-10-27:** This file preserves a prior project snapshot. Its claims that the neural stream has a verified $(\varepsilon=2.37, \delta=10^{-5})$ guarantee and that the historical splits/metrics were chronologically generated and provenance-verified are not substantiated by the current evidence. The current golden pipeline fuses the non-private adversarial MLP; its DP-trained MLP is a separate analysis branch and is not saved as the fusion checkpoint. The DP loop's sampling, randomness, normalization, and accountant assumptions do not support a formal guarantee as written. Stage 3 uses per-class adapter stream order; ToN-IoT and NF-ToN-IoT-v2 timestamps are synthesized from row order, and the tracked split files have no run manifest. Historical metric values remain reported values, not newly reproduced results. See [Phase H provenance audit](PHASE_H_RESEARCH_PROVENANCE.md) for evidence and required author actions. No paper archive or historical result was rewritten.
+
+> **Status:** Historical snapshot only. Its original manuscript links now point to archived paper materials; its completion statements and manuscript checks are not current verification. The canonical implementation/evidence status is [`results/README.md`](results/README.md).
+
+## 1. Overview & Objectives Achieved (historical wording)
 
 The implementation of the **Industrial IIoT Intrusion Detection System** has been completed around the authoritative **Option C (0.7 Random Forest + 0.3 Robust MLP) 21-Feature System Architecture**.
 
@@ -12,11 +16,8 @@ All forensic audit items have been verified against codebase ground truth, resea
 
 ### A. XAI Attribution Verification
 - **Audit Finding**: The audit flagged that earlier paper drafts contained Random Forest-only SHAP values (`0.248`, `0.158`, `0.150`).
-- **Repository Verification**: Inspection of [main.tex](file:///c:/Users/umari/Documents/P1_task_Implementation/final_ieee_paper/main.tex) line 202 confirmed that the final IEEE paper already cites the exact combined Weighted Component Attribution values:
-  - `temporal_flow_rate_ewma` (weight **0.310**)
-  - `behavioral_port_entropy` (weight **0.242**)
-  - `behavioral_unanswered_ratio` (weight **0.154**)
-- **Resolution**: Implementation and paper are 100% consistent with the $0.7 \times \text{RF}_{\text{norm}} + 0.3 \times \text{MLP}_{\text{norm}}$ Weighted Component Attribution methodology.
+- **Historical manuscript cross-check**: A prior report referenced an IEEE manuscript source now held in the dated external archive. That manuscript was not revalidated in this phase; current XAI evidence status is recorded in [`results/claims/claim_evidence_ledger.md`](results/claims/claim_evidence_ledger.md).
+- **Current evidence**: No claim of complete paper-to-code consistency is made. See [`results/implementation/known_limitations.md`](results/implementation/known_limitations.md).
 
 ### B. DP/PGD Feature Mask Typo Correction
 - **Audit Finding**: [dp_sgd.py](file:///c:/Users/umari/Documents/P1_task_Implementation/src/iot_ids/privacy/dp_sgd.py) contained `feature_mask[17:21] = 0.0` with the comment `# Freeze protocol indicators`.

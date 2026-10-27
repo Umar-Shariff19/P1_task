@@ -1,0 +1,77 @@
+{
+  "$comment": "Synthetic schema fixtures only. No experiment ran, and these placeholders establish no authorization or historical provenance.",
+  "positive": {
+    "schema_version": 1,
+    "experiment_id": "synthetic-example-only",
+    "started_at": "2026-10-27T00:00:00Z",
+    "finished_at": null,
+    "source": {
+      "revision": "0000000000000000000000000000000000000000",
+      "working_tree_dirty": true,
+      "diff_record_id": "synthetic-placeholder-diff",
+      "entrypoint": "synthetic-placeholder.py",
+      "command": "synthetic-only"
+    },
+    "safety_policy_version": "synthetic-placeholder-policy",
+    "datasets": [
+      {
+        "dataset_id": "synthetic-dataset-only",
+        "authorization_reference": "synthetic-not-an-approval",
+        "split_id": "synthetic-split-only",
+        "generator": {
+          "name": "synthetic-generator",
+          "version": "0.0-placeholder",
+          "config": {"seed": 0}
+        }
+      }
+    ],
+    "models": [
+      {
+        "model_id": "synthetic-model-only",
+        "checkpoint_id": "synthetic-checkpoint-only",
+        "checkpoint_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "config": {"placeholder": true}
+      }
+    ],
+    "training_config": {"placeholder": true},
+    "evaluation_config": {"placeholder": true},
+    "environment": {
+      "python": "0.0-placeholder",
+      "platform": "synthetic-only",
+      "dependencies": {"schema-validator": "placeholder"},
+      "lockfile_id": null
+    },
+    "metrics": [
+      {
+        "name": "synthetic_metric",
+        "definition": "placeholder only; not a scientific metric result",
+        "value": 0.0,
+        "split_id": "synthetic-split-only"
+      }
+    ],
+    "outputs": [
+      {
+        "artifact_id": "synthetic-output-only",
+        "role": "placeholder",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ]
+  },
+  "negative_mutations": [
+    {"name": "missing source revision", "remove": ["source.revision"]},
+    {"name": "dirty tree without diff reference", "remove": ["source.diff_record_id"]},
+    {"name": "missing dataset identity", "remove": ["datasets.0.dataset_id"]},
+    {"name": "missing split identity", "remove": ["datasets.0.split_id"]},
+    {"name": "missing generator version", "remove": ["datasets.0.generator.version"]},
+    {"name": "missing generator configuration", "remove": ["datasets.0.generator.config"]},
+    {"name": "missing model identity", "remove": ["models.0.model_id"]},
+    {"name": "missing checkpoint identity", "remove": ["models.0.checkpoint_id"]},
+    {"name": "missing training configuration", "remove": ["training_config"]},
+    {"name": "missing evaluation configuration", "remove": ["evaluation_config"]},
+    {"name": "missing environment dependency information", "remove": ["environment.dependencies"]},
+    {"name": "missing metric definition", "remove": ["metrics.0.definition"]},
+    {"name": "missing metric output", "remove": ["outputs.0.sha256"]},
+    {"name": "missing experiment timestamp", "remove": ["started_at"]},
+    {"name": "missing safety policy version", "remove": ["safety_policy_version"]}
+  ]
+}

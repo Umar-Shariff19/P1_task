@@ -26,6 +26,8 @@ class ModelRegistry:
         metadata: Optional[Dict[str, Any]] = None
     ) -> Path:
         """Saves a complete IDSSystemPipeline artifact to a directory."""
+        from iot_ids.provenance.windows_access import require_real_data_authorization
+        require_real_data_authorization()
         save_dir = Path(save_dir)
         save_dir.mkdir(parents=True, exist_ok=True)
 
@@ -56,6 +58,8 @@ class ModelRegistry:
 
     @staticmethod
     def load_pipeline(load_dir: Path) -> IDSSystemPipeline:
+        from iot_ids.provenance.windows_access import require_real_data_authorization
+        require_real_data_authorization()
         """Loads an IDSSystemPipeline artifact from a saved directory."""
         load_dir = Path(load_dir).resolve()
         if not load_dir.exists():

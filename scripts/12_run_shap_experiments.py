@@ -70,6 +70,8 @@ class AutoencoderModule(torch.nn.Module):
 
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     parser = argparse.ArgumentParser(description="Stage 12: SHAP Explainability Experiments")
     parser.add_argument(
         "--profile",

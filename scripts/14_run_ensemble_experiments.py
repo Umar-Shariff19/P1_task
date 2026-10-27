@@ -83,6 +83,8 @@ def compute_metrics(y_true, y_probs, threshold=0.5):
 
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     parser = argparse.ArgumentParser(description="Stage 14: Ensemble & Model Comparison Experiment Runner")
     parser.add_argument(
         "--profile",

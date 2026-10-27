@@ -8,6 +8,8 @@ from iot_ids.data.splitting.strategies import stratified_split_indices
 from iot_ids.utils.paths import REPO_ROOT
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     print("============================================================")
     print("=== STAGE 03: STRUCTURAL SPLIT GENERATION ===")
     print("============================================================\n")

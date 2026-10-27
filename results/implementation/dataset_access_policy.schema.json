@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Owner-supplied dataset access policy (declarative contract)",
+  "description": "Structural contract only. A valid document is not authentic approval and cannot authorize access without independent signature/trust-anchor verification and OS-bound filesystem enforcement.",
+  "$comment": "The repository currently has no approved roots or trust anchor. Do not use this schema example to authorize research access.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "example_only",
+    "policy_revision",
+    "status",
+    "filesystem_policy_version",
+    "datasets",
+    "artifact_roots",
+    "protected_roots",
+    "policy_approval"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "example_only": { "type": "boolean" },
+    "policy_revision": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["DRAFT", "ACTIVE"] },
+    "filesystem_policy_version": { "type": "string", "minLength": 1 },
+    "datasets": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["dataset_id", "approved_root", "permitted_operations", "identity_pin", "approval"],
+        "properties": {
+          "dataset_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$" },
+          "approved_root": {
+            "type": ["string", "null"],
+            "description": "Owner-authorized absolute root. Semantic path and alias support is determined by the reviewed provider, not this schema."
+          },
+          "permitted_operations": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "discover_dataset_files",
+                "audit_dataset",
+                "stream_dataset",
+                "read_split",
+                "train_model",
+                "evaluate_model",
+                "read_checkpoint",
+                "write_checkpoint",
+                "write_experiment_output"
+              ]
+            }
+          },
+          "identity_pin": {
+            "oneOf": [
+              { "type": "null" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["path_kind", "volume_identity", "root_file_identity", "case_policy"],
+                "properties": {
+                  "path_kind": { "enum": ["local_drive", "unc", "mapped_drive"] },
+                  "volume_identity": { "type": "string", "minLength": 1 },
+                  "root_file_identity": { "type": "string", "minLength": 1 },
+                  "case_policy": { "enum": ["case_insensitive", "case_sensitive", "mixed"] }
+                }
+              }
+            ]
+          },
+          "approval": { "$ref": "#/$defs/approval" }
+        }
+      }
+    },
+    "artifact_roots": {
+      "type": "object",
+      "description": "Separately approved roots for checkpoint and experiment-output access; dataset-root approval does not imply artifact-root approval.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["resource_id", "approved_root", "permitted_operations", "identity_pin", "approval"],
+        "properties": {
+          "resource_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$" },
+          "approved_root": { "type": ["string", "null"] },
+          "permitted_operations": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "enum": ["read_checkpoint", "write_checkpoint", "write_experiment_output"] }
+          },
+          "identity_pin": {
+            "oneOf": [
+              { "type": "null" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["path_kind", "volume_identity", "root_file_identity", "case_policy"],
+                "properties": {
+                  "path_kind": { "enum": ["local_drive", "unc", "mapped_drive"] },
+                  "volume_identity": { "type": "string", "minLength": 1 },
+                  "root_file_identity": { "type": "string", "minLength": 1 },
+                  "case_policy": { "enum": ["case_insensitive", "case_sensitive", "mixed"] }
+                }
+              }
+            ]
+          },
+          "approval": { "$ref": "#/$defs/approval" }
+        }
+      }
+    },
+    "protected_roots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["root_id", "path", "coverage", "identity_pin", "approval"],
+        "properties": {
+          "root_id": { "type": "string", "minLength": 1 },
+          "path": { "type": ["string", "null"] },
+          "coverage": { "enum": ["exact", "descendants", "ancestors_and_descendants"] },
+          "identity_pin": {
+            "oneOf": [
+              { "type": "null" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["path_kind", "volume_identity", "root_file_identity", "case_policy"],
+                "properties": {
+                  "path_kind": { "enum": ["local_drive", "unc", "mapped_drive"] },
+                  "volume_identity": { "type": "string", "minLength": 1 },
+                  "root_file_identity": { "type": "string", "minLength": 1 },
+                  "case_policy": { "enum": ["case_insensitive", "case_sensitive", "mixed"] }
+                }
+              }
+            ]
+          },
+          "approval": { "$ref": "#/$defs/approval" }
+        }
+      }
+    },
+    "policy_approval": { "$ref": "#/$defs/approval" }
+  },
+  "$defs": {
+    "approval": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["approval_record_id", "approver_identity", "approved_at", "trust_anchor_id", "signed_policy_sha256", "signature_reference"],
+          "properties": {
+            "approval_record_id": { "type": "string", "minLength": 1 },
+            "approver_identity": { "type": "string", "minLength": 1 },
+            "approved_at": { "type": "string", "format": "date-time" },
+            "trust_anchor_id": { "type": "string", "minLength": 1 },
+            "signed_policy_sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+            "signature_reference": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "ACTIVE" } }, "required": ["status"] },
+      "then": {
+        "properties": {
+          "example_only": { "const": false },
+          "datasets": {
+            "minProperties": 1,
+            "additionalProperties": {
+              "required": ["dataset_id", "approved_root", "permitted_operations", "identity_pin", "approval"],
+              "properties": {
+                "approved_root": { "type": "string", "minLength": 1 },
+                "permitted_operations": { "minItems": 1 },
+                "identity_pin": { "type": "object" },
+                "approval": { "type": "object" }
+              }
+            }
+          },
+          "artifact_roots": {
+            "additionalProperties": {
+              "required": ["resource_id", "approved_root", "permitted_operations", "identity_pin", "approval"],
+              "properties": {
+                "approved_root": { "type": "string", "minLength": 1 },
+                "permitted_operations": { "minItems": 1 },
+                "identity_pin": { "type": "object" },
+                "approval": { "type": "object" }
+              }
+            }
+          },
+          "protected_roots": {
+            "minItems": 1,
+            "items": {
+              "properties": {
+                "path": { "type": "string", "minLength": 1 },
+                "identity_pin": { "type": "object" },
+                "approval": { "type": "object" }
+              }
+            }
+          },
+          "policy_approval": { "type": "object" }
+        }
+      }
+    }
+  ]
+}

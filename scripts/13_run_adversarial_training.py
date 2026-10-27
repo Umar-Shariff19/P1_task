@@ -111,6 +111,8 @@ def evaluate_under_attack(model, X_clean, y, epsilon, continuous_mask, x_min, x_
 
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     parser = argparse.ArgumentParser(description="Stage 13: Adversarial Robustness & Training Experiments")
     parser.add_argument(
         "--profile",

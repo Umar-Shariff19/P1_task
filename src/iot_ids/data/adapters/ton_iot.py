@@ -33,6 +33,8 @@ class ToNIoTAdapter(DatasetAdapter):
     name = "ToN-IoT"
 
     def get_source_files(self) -> List[Path]:
+        from iot_ids.provenance.windows_access import require_real_data_authorization
+        require_real_data_authorization()
         if self.raw_path.is_file():
             return [self.raw_path]
         target = self.raw_path / "train_test_network.csv"
@@ -41,6 +43,8 @@ class ToNIoTAdapter(DatasetAdapter):
     def stream_canonical_flows(
         self, chunksize: int = 100000
     ) -> Generator[CanonicalFlow, None, IngestionAuditReport]:
+        from iot_ids.provenance.windows_access import require_real_data_authorization
+        require_real_data_authorization()
         files = self.get_source_files()
         report = IngestionAuditReport(
             dataset_name=self.name,

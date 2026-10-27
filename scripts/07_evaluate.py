@@ -76,6 +76,8 @@ def eval_metrics(y_true, y_prob, threshold=0.5):
 
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     print("============================================================")
     print("=== STAGE 07: IN-DOMAIN & CROSS-DOMAIN EVALUATION ===")
     print("============================================================\n")

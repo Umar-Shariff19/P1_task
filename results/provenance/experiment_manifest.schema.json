@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IoT IDS prospective experiment provenance record",
+  "description": "Prospective field-shape schema only. Schema validity does not establish that an experiment ran, that access was authorized, or that any historical provenance claim is true.",
+  "$comment": "Authorization references and provenance fields are opaque records. Their presence is not proof of approval, execution, or historical linkage.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "experiment_id",
+    "started_at",
+    "source",
+    "safety_policy_version",
+    "datasets",
+    "models",
+    "training_config",
+    "evaluation_config",
+    "environment",
+    "metrics",
+    "outputs"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "experiment_id": { "type": "string", "minLength": 1 },
+    "started_at": { "type": "string", "format": "date-time" },
+    "finished_at": { "type": ["string", "null"], "format": "date-time" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision", "working_tree_dirty", "entrypoint", "command"],
+      "properties": {
+        "revision": { "type": "string", "pattern": "^([a-fA-F0-9]{40}|[a-fA-F0-9]{64})$" },
+        "working_tree_dirty": { "type": "boolean" },
+        "diff_record_id": { "type": ["string", "null"] },
+        "entrypoint": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "working_tree_dirty": { "const": true } },
+            "required": ["working_tree_dirty"]
+          },
+          "then": {
+            "required": ["diff_record_id"],
+            "properties": { "diff_record_id": { "type": "string", "minLength": 1 } }
+          }
+        }
+      ]
+    },
+    "safety_policy_version": { "type": "string", "minLength": 1 },
+    "datasets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["dataset_id", "authorization_reference", "split_id", "generator"],
+        "properties": {
+          "dataset_id": { "type": "string", "minLength": 1 },
+          "authorization_reference": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Opaque reference to an external approval record; its presence is not proof that approval exists or is valid."
+          },
+          "split_id": { "type": "string", "minLength": 1 },
+          "generator": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "version", "config"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "version": { "type": "string", "minLength": 1 },
+              "config": { "type": "object" },
+              "input_manifest_id": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "models": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["model_id", "checkpoint_id", "checkpoint_sha256", "config"],
+        "properties": {
+          "model_id": { "type": "string", "minLength": 1 },
+          "checkpoint_id": { "type": "string", "minLength": 1 },
+          "checkpoint_sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+          "config": { "type": "object" }
+        }
+      }
+    },
+    "training_config": { "type": "object" },
+    "evaluation_config": { "type": "object" },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["python", "platform", "dependencies"],
+      "properties": {
+        "python": { "type": "string", "minLength": 1 },
+        "platform": { "type": "string", "minLength": 1 },
+        "dependencies": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": { "type": "string" }
+        },
+        "lockfile_id": { "type": ["string", "null"] }
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "definition", "value", "split_id"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "definition": { "type": "string", "minLength": 1 },
+          "value": { "type": "number" },
+          "split_id": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["artifact_id", "role", "sha256"],
+        "properties": {
+          "artifact_id": { "type": "string", "minLength": 1 },
+          "role": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" }
+        }
+      }
+    }
+  }
+}

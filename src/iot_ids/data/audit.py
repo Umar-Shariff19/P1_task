@@ -77,6 +77,8 @@ def write_markdown(audits: list[dict[str, object]], environment: dict[str, objec
 
 
 def run_audit(data_root: Path, output: Path, sample_rows: int) -> list[dict[str, object]]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     output.mkdir(parents=True, exist_ok=True)
     adapters = build_default_adapters(data_root, sample_rows=sample_rows)
     audits = [asdict(adapter.audit()) for adapter in adapters]
@@ -91,6 +93,8 @@ def run_audit(data_root: Path, output: Path, sample_rows: int) -> list[dict[str,
 
 
 def main() -> None:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     parser = argparse.ArgumentParser(description="Audit P1 raw IoT IDS datasets.")
     parser.add_argument("--data-root", default="data/raw")
     parser.add_argument("--output", default="reports/eda")

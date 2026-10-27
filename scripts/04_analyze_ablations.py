@@ -7,11 +7,28 @@ from __future__ import annotations
 
 from pathlib import Path
 import pandas as pd
-import numpy as np
 
 
-def analyze_ablations():
-    reports_dir = Path("reports")
+def summarize_metric(frame: pd.DataFrame, column: str) -> tuple[float | None, int, int]:
+    """Return (mean, defined_count, undefined_count) without inventing zeroes."""
+    if column not in frame.columns:
+        raise KeyError(f"Required metric column is missing: {column}")
+    values = pd.to_numeric(frame[column], errors="raise")
+    defined = values.dropna()
+    mean = float(defined.mean()) if not defined.empty else None
+    return mean, int(defined.size), int(values.isna().sum())
+
+
+def _difference(left: float | None, right: float | None) -> float | None:
+    if left is None or right is None:
+        return None
+    return float(left - right)
+
+
+def analyze_ablations(reports_dir: str | Path = Path("reports")):
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
+    reports_dir = Path(reports_dir)
     df_within = pd.read_csv(reports_dir / "stage4_results.csv")
     df_cross = pd.read_csv(reports_dir / "stage4_cross_domain.csv")
 
@@ -30,41 +47,44 @@ def analyze_ablations():
         base_within = sub_within[sub_within["feature_profile"] == "baseline_common"]
         base_cross = sub_cross[sub_cross["feature_profile"] == "baseline_common"]
 
-        base_within_f1 = base_within["macro_f1"].mean() if len(base_within) > 0 else 0.0
-        base_within_fpr = base_within["fpr"].mean() if len(base_within) > 0 else 0.0
-
-        base_cross_f1 = base_cross["macro_f1"].mean() if len(base_cross) > 0 else 0.0
-        base_cross_fpr = base_cross["fpr"].mean() if len(base_cross) > 0 else 0.0
-        base_cross_auc = base_cross["roc_auc"].mean() if len(base_cross) > 0 else 0.0
+        base_within_f1, _, _ = summarize_metric(base_within, "macro_f1")
+        base_within_fpr, _, _ = summarize_metric(base_within, "fpr")
+        base_cross_f1, _, _ = summarize_metric(base_cross, "macro_f1")
+        base_cross_fpr, _, _ = summarize_metric(base_cross, "fpr")
+        base_cross_auc, _, _ = summarize_metric(base_cross, "roc_auc")
 
         for p in profiles:
             p_within = sub_within[sub_within["feature_profile"] == p]
             p_cross = sub_cross[sub_cross["feature_profile"] == p]
-
-            w_auc = p_within["roc_auc"].mean() if len(p_within) > 0 else 0.0
-            w_pr = p_within["pr_auc"].mean() if len(p_within) > 0 else 0.0
-            w_f1 = p_within["macro_f1"].mean() if len(p_within) > 0 else 0.0
-            w_fpr = p_within["fpr"].mean() if len(p_within) > 0 else 0.0
-
-            c_auc = p_cross["roc_auc"].mean() if len(p_cross) > 0 else 0.0
-            c_pr = p_cross["pr_auc"].mean() if len(p_cross) > 0 else 0.0
-            c_f1 = p_cross["macro_f1"].mean() if len(p_cross) > 0 else 0.0
-            c_fpr = p_cross["fpr"].mean() if len(p_cross) > 0 else 0.0
+            w_auc, w_auc_defined, w_auc_undefined = summarize_metric(p_within, "roc_auc")
+            w_pr, _, _ = summarize_metric(p_within, "pr_auc")
+            w_f1, _, _ = summarize_metric(p_within, "macro_f1")
+            w_fpr, _, _ = summarize_metric(p_within, "fpr")
+            c_auc, c_auc_defined, c_auc_undefined = summarize_metric(p_cross, "roc_auc")
+            c_pr, _, _ = summarize_metric(p_cross, "pr_auc")
+            c_f1, _, _ = summarize_metric(p_cross, "macro_f1")
+            c_fpr, _, _ = summarize_metric(p_cross, "fpr")
 
             ablation_rows.append({
                 "model_name": model,
                 "feature_profile": p,
-                "within_roc_auc_mean": float(w_auc),
-                "within_pr_auc_mean": float(w_pr),
-                "within_macro_f1_mean": float(w_f1),
-                "within_fpr_mean": float(w_fpr),
-                "cross_roc_auc_mean": float(c_auc),
-                "cross_pr_auc_mean": float(c_pr),
-                "cross_macro_f1_mean": float(c_f1),
-                "cross_fpr_mean": float(c_fpr),
-                "delta_cross_auc_vs_baseline": float(c_auc - base_cross_auc),
-                "delta_cross_f1_vs_baseline": float(c_f1 - base_cross_f1),
-                "delta_cross_fpr_vs_baseline": float(c_fpr - base_cross_fpr),
+                "within_roc_auc_mean": w_auc,
+                "within_roc_auc_defined_count": w_auc_defined,
+                "within_roc_auc_undefined_count": w_auc_undefined,
+                "within_pr_auc_mean": w_pr,
+                "within_macro_f1_mean": w_f1,
+                "within_fpr_mean": w_fpr,
+                "cross_roc_auc_mean": c_auc,
+                "cross_roc_auc_defined_count": c_auc_defined,
+                "cross_roc_auc_undefined_count": c_auc_undefined,
+                "cross_pr_auc_mean": c_pr,
+                "cross_macro_f1_mean": c_f1,
+                "cross_fpr_mean": c_fpr,
+                "delta_cross_auc_vs_baseline": _difference(c_auc, base_cross_auc),
+                "delta_cross_f1_vs_baseline": _difference(c_f1, base_cross_f1),
+                "delta_cross_fpr_vs_baseline": _difference(c_fpr, base_cross_fpr),
+                # The input CSVs are not bound to authenticated provenance.
+                "evidence_status": "UNVERIFIED",
             })
 
     df_ablation = pd.DataFrame(ablation_rows)

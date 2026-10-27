@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "example_only": true,
+  "policy_revision": "DRAFT-SYNTHETIC-EXAMPLE-ONLY",
+  "status": "DRAFT",
+  "filesystem_policy_version": "UNRESOLVED-OWNER-DECISION",
+  "datasets": {
+    "synthetic-example-only": {
+      "dataset_id": "synthetic-example-only",
+      "approved_root": null,
+      "permitted_operations": [],
+      "identity_pin": null,
+      "approval": null
+    }
+  },
+  "artifact_roots": {},
+  "protected_roots": [
+    {
+      "root_id": "synthetic-protected-placeholder-only",
+      "path": null,
+      "coverage": "ancestors_and_descendants",
+      "identity_pin": null,
+      "approval": null
+    }
+  ],
+  "policy_approval": null
+}

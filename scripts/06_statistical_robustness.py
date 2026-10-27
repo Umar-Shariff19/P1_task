@@ -30,6 +30,8 @@ DATASETS = ["ToN-IoT", "Edge-IIoTset", "NF-ToN-IoT-v2", "CICIoT2023"]
 
 
 def load_dataset_splits(data_dir: Path, ds_name: str):
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     ds_path = data_dir / ds_name
     return (
         pd.read_parquet(ds_path / "train.parquet"),
@@ -39,6 +41,8 @@ def load_dataset_splits(data_dir: Path, ds_name: str):
 
 
 def run_stage6_statistical_robustness():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     stage5_dir = Path("reports/stage5")
     stage3_dir = Path("reports")
     data_dir = Path("data/processed/stage3")

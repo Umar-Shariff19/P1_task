@@ -79,6 +79,8 @@ def compute_sample_mlp_attr(mlp_model, x_scaled):
     return np.abs(grad_attr)
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     print("==========================================================================")
     print("=== PHASE 4: XAI ATTACK-FAMILY & LOCAL CASE STUDY ANALYSIS ===")
     print("==========================================================================\n")

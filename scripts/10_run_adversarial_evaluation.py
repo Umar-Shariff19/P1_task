@@ -55,6 +55,8 @@ class AutoencoderModule(torch.nn.Module):
 
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     print("============================================================")
     print("=== STAGE 10: ADVERSARIAL ROBUSTNESS EVALUATION ===")
     print("============================================================\n")

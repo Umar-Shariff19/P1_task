@@ -74,6 +74,8 @@ def evaluate_model(model, X, y):
 
 
 def load_dataset_splits(base_dir, dataset_name, prep_pipeline, profile="historical_13"):
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     """Load train/val/test splits and preprocess."""
     ds_dir = base_dir / dataset_name
     if not ds_dir.exists():
@@ -106,6 +108,8 @@ def load_dataset_splits(base_dir, dataset_name, prep_pipeline, profile="historic
 
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     parser = argparse.ArgumentParser(description="Stage 11: Federated Learning Experiments")
     parser.add_argument(
         "--profile",

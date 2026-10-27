@@ -6,6 +6,8 @@ inactivity timeouts, and maximum duration boundaries.
 """
 from __future__ import annotations
 
+import math
+from numbers import Integral, Real
 from typing import Dict, List, Optional, Tuple
 import pandas as pd
 
@@ -114,6 +116,24 @@ class FlowAggregator:
     """
 
     def __init__(self, inactivity_timeout: float = 15.0, max_flow_duration: float = 120.0, max_active_flows: int = 10000):
+        for name, value in (
+            ("inactivity_timeout", inactivity_timeout),
+            ("max_flow_duration", max_flow_duration),
+        ):
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, Real)
+                or not math.isfinite(value)
+                or value <= 0
+            ):
+                raise ValueError(f"{name} must be finite and positive")
+        if (
+            isinstance(max_active_flows, bool)
+            or not isinstance(max_active_flows, Integral)
+            or max_active_flows <= 0
+        ):
+            raise ValueError("max_active_flows must be a positive integer")
+
         self.inactivity_timeout = inactivity_timeout
         self.max_flow_duration = max_flow_duration
         self.max_active_flows = max_active_flows

@@ -55,9 +55,13 @@ class DatasetAdapter(ABC):
     def stream_canonical_flows(
         self, chunksize: int = 100000
     ) -> Generator[CanonicalFlow, None, IngestionAuditReport]:
-        """Yields CanonicalFlow objects in strict chronological stream.
-        
-        Returns IngestionAuditReport upon completion.
+        """Yield canonical flows in adapter stream order.
+
+        Timestamp provenance and ordering are dataset-specific. A yielded stream
+        is not necessarily chronological in source event time; consumers must
+        verify the adapter's timestamp semantics before making that assumption.
+
+        Returns an IngestionAuditReport upon completion.
         """
 
     @abstractmethod
@@ -65,6 +69,8 @@ class DatasetAdapter(ABC):
         """Returns list of raw source files managed by this adapter."""
 
     def audit(self, sample_rows: int = 1000) -> DatasetAudit:
+        from iot_ids.provenance.windows_access import require_real_data_authorization
+        require_real_data_authorization()
         """Runs a quick audit scan over dataset source files."""
         files = self.get_source_files()
         file_profiles = [FileProfile.from_path(p) for p in files if p.exists()]

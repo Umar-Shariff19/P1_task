@@ -24,8 +24,14 @@ from iot_ids.training.train import train_and_export_pipeline, load_split_datafra
 from iot_ids.inference.predictor import IDSPredictor
 from iot_ids.utils.logging import IDSAlertLogger
 from iot_ids.utils.sinks import JSONLFileSink, ConsoleAlertSink, MultiAlertSink
-from iot_ids.data.packet_capture import PacketCaptureEngine
-from iot_ids.runtime.daemon import IDSRuntimeDaemon
+try:
+    from iot_ids.data.packet_capture import PacketCaptureEngine
+except ImportError:  # scapy may be unavailable in test environments
+    PacketCaptureEngine = None
+try:
+    from iot_ids.runtime.daemon import IDSRuntimeDaemon
+except ImportError:  # scapy may be unavailable in test environments
+    IDSRuntimeDaemon = None
 
 
 def main():
@@ -103,6 +109,15 @@ def main():
     p_daemon.add_argument("--limit", type=int, default=None, help="Maximum packet limit")
 
     args = parser.parse_args()
+    from iot_ids.provenance.windows_access import (
+        RealDataAuthorizationUnavailable,
+        require_real_data_authorization,
+    )
+    try:
+        require_real_data_authorization()
+    except RealDataAuthorizationUnavailable as exc:
+        print(f"{exc.code.value}: {exc}", file=sys.stderr)
+        raise SystemExit(2) from None
 
     if not args.subcommand:
         parser.print_help()
@@ -125,6 +140,10 @@ def main():
             sys.exit(1)
 
         predictor = IDSPredictor.from_artifact(artifact_path)
+        # Diagnostic output: report effective configuration
+        print(f"[CONFIG] Loaded artifact directory: {artifact_path}")
+        print(f"[CONFIG] Feature profile: {predictor.pipeline.feature_profile}")
+        print(f"[CONFIG] Decision threshold: {predictor.pipeline.decision_threshold}")
         test_dir = Path("data/processed/stage3") / args.test_domain
 
         if not test_dir.exists():
@@ -232,6 +251,9 @@ def main():
 
         predictor = IDSPredictor.from_artifact(artifact_path)
         logger = IDSAlertLogger(log_path=Path(args.log_file) if args.log_file else None, enable_console=True)
+        if PacketCaptureEngine is None:
+            print("Error: This command requires Scapy. Install the project's capture dependencies and try again.", file=sys.stderr)
+            sys.exit(1)
         engine = PacketCaptureEngine(predictor=predictor, logger=logger)
 
         print(f"Starting live packet capture on interface '{args.interface or 'default'}' (filter: '{args.bpf_filter}')...")
@@ -256,6 +278,9 @@ def main():
 
         predictor = IDSPredictor.from_artifact(artifact_path)
         logger = IDSAlertLogger(log_path=Path(args.log_file) if args.log_file else None, enable_console=True)
+        if PacketCaptureEngine is None:
+            print("Error: This command requires Scapy. Install the project's capture dependencies and try again.", file=sys.stderr)
+            sys.exit(1)
         engine = PacketCaptureEngine(predictor=predictor, logger=logger)
 
         print(f"Replaying PCAP file '{pcap_path}'...")
@@ -284,6 +309,9 @@ def main():
             bpf_filter=args.bpf_filter,
         )
 
+        if IDSRuntimeDaemon is None:
+            print("Error: This command requires Scapy. Install the project's capture dependencies and try again.", file=sys.stderr)
+            sys.exit(1)
         daemon = IDSRuntimeDaemon(
             predictor=predictor,
             config=config,

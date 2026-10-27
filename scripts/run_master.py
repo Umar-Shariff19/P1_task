@@ -14,17 +14,23 @@ ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = ROOT / "reports" / "experiments" / "master_registry.json"
 
 def load_registry() -> dict:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     if REGISTRY_PATH.exists():
         with open(REGISTRY_PATH, "r") as f:
             return json.load(f)
     return {}
 
 def save_registry(registry: dict) -> None:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     REGISTRY_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(REGISTRY_PATH, "w") as f:
         json.dump(registry, f, indent=2)
 
 def run_script(script_name: str, smoke_test: bool = False, profile: str = "in_domain"):
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     stage_id = f"{script_name}_{profile}_smoke" if smoke_test else f"{script_name}_{profile}"
     print(f"\n{'='*60}\nLaunching {script_name} (Smoke Test: {smoke_test})\n{'='*60}")
     

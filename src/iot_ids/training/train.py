@@ -21,6 +21,8 @@ from iot_ids.registry.manager import ModelRegistry
 
 
 def load_split_dataframe(dataset_dir: Path, split: str = "train") -> pd.DataFrame:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     """Loads split DataFrame from Parquet or CSV."""
     parquet_path = dataset_dir / f"{split}.parquet"
     csv_path = dataset_dir / f"{split}.csv"
@@ -33,6 +35,8 @@ def load_split_dataframe(dataset_dir: Path, split: str = "train") -> pd.DataFram
 
 
 def train_and_export_pipeline(config: PipelineConfig, stage3_dir: Optional[Path] = None) -> Path:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     """Trains a multi-level operational pipeline and exports it as a deployable ModelRegistry artifact."""
     stage3_root = Path(stage3_dir) if stage3_dir else Path("data/processed/stage3")
     src_dir = stage3_root / config.source_domain

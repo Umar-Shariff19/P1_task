@@ -10,6 +10,8 @@ class BoTIoTAdapter(DatasetAdapter):
     name = "BoT-IoT"
 
     def discover_files(self) -> list[Path]:
+        from iot_ids.provenance.windows_access import require_real_data_authorization
+        require_real_data_authorization()
         return sorted(p for p in self.root.rglob("*.csv") if p.name.lower() != "data_names.csv")
 
     def dataset_notes(self, audit: DatasetAudit) -> list[str]:

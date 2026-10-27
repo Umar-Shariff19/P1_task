@@ -31,6 +31,8 @@ def get_file_sha256(path: Path) -> str:
     return h.hexdigest()
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     print("==========================================================================")
     print("=== COMPILING AUTHORITATIVE NUMERICAL LEDGER ===")
     print("==========================================================================\n")

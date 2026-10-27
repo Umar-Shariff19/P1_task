@@ -22,6 +22,8 @@ from iot_ids.runtime.schema import STANDARDIZED_21_FEATURES
 
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     print("==========================================================================")
     print("=== RUNNING RUNTIME LATENCY & OVERHEAD BENCHMARKS ===")
     print("==========================================================================\n")

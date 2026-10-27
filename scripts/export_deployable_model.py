@@ -19,6 +19,8 @@ from iot_ids.registry.manager import ModelRegistry
 
 
 def load_dataset_split(dataset_dir: Path, split: str = "train") -> pd.DataFrame:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     parquet_path = dataset_dir / f"{split}.parquet"
     csv_path = dataset_dir / f"{split}.csv"
     if parquet_path.exists():
@@ -30,6 +32,8 @@ def load_dataset_split(dataset_dir: Path, split: str = "train") -> pd.DataFrame:
 
 
 def export_deployable_model_artifact():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     stage3_dir = Path("data/processed/stage3")
     export_dir = Path("models/final/deployable_artifact")
     

@@ -70,3 +70,32 @@ def test_flow_aggregator_reconstruction():
     flushed = aggregator.flush()
     assert len(flushed) == 1
     assert flushed[0].bytes_src == 50
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"inactivity_timeout": 0}, "inactivity_timeout"),
+        ({"inactivity_timeout": -1}, "inactivity_timeout"),
+        ({"inactivity_timeout": float("nan")}, "inactivity_timeout"),
+        ({"max_flow_duration": float("inf")}, "max_flow_duration"),
+        ({"max_active_flows": 0}, "max_active_flows"),
+        ({"max_active_flows": 1.5}, "max_active_flows"),
+        ({"max_active_flows": True}, "max_active_flows"),
+    ],
+)
+def test_flow_aggregator_rejects_invalid_limits(kwargs, message):
+    with pytest.raises(ValueError, match=message):
+        FlowAggregator(**kwargs)
+
+
+def test_flow_aggregator_accepts_valid_limits():
+    aggregator = FlowAggregator(
+        inactivity_timeout=0.5,
+        max_flow_duration=2,
+        max_active_flows=1,
+    )
+
+    assert aggregator.inactivity_timeout == 0.5
+    assert aggregator.max_flow_duration == 2
+    assert aggregator.max_active_flows == 1

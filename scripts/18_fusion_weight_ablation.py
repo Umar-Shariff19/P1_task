@@ -82,6 +82,8 @@ def file_sha256(path: Path) -> str:
     return h.hexdigest()
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     print("==========================================================================")
     print("=== PHASE 2: EMPIRICAL FUSION-WEIGHT ABLATION STUDY ===")
     print("==========================================================================\n")

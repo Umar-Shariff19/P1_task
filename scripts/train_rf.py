@@ -50,6 +50,8 @@ def write_json(path: Path, payload: object) -> None:
     path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
 
 def get_parquet_files(dataset: str, split_manifest: dict) -> list[Path]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     fp = split_manifest["fingerprint"]
     for cache_name in ("v3_cache", "v2_cache", "research"):
         cache_dir = ROOT / "data" / "processed" / cache_name / dataset / fp
@@ -58,12 +60,16 @@ def get_parquet_files(dataset: str, split_manifest: dict) -> list[Path]:
     return sorted((ROOT / "data" / "processed" / "research" / dataset / fp).glob("part-*.parquet"))
 
 def get_drop_indices(dataset: str) -> dict[str, dict[str, list[int]]]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     drop_path = ROOT / "data" / "processed" / "splits" / SPLIT_VERSION / dataset / "decontamination_drop_indices.json"
     if not drop_path.exists():
         return {}
     return read_json(drop_path)
 
 def load_split(dataset: str, split_name: str, split_manifest: dict, drop_indices: dict, max_attack_rows: int = None, is_train: bool = False) -> tuple[pd.DataFrame, pd.Series]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     """Loads a specific split, applying decontamination and attack-family stratified downsampling."""
     parquet_files = get_parquet_files(dataset, split_manifest)
     
@@ -134,6 +140,8 @@ def load_split(dataset: str, split_name: str, split_manifest: dict, drop_indices
     return full_df, y
 
 def train_rf(dataset: str) -> None:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     if (ROOT / "models" / MODEL_VERSION / "random_forest" / f"{dataset}_rf.joblib").exists():
         log(f"Skipping {dataset}: already trained for profile {PROFILE}.")
         return
@@ -227,6 +235,8 @@ def train_rf(dataset: str) -> None:
     write_json(model_dir / f"{dataset}_rf_metrics.json", metrics)
 
 def run():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     for ds in DATASETS:
         train_rf(ds)
         print("-" * 60)

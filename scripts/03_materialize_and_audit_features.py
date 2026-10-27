@@ -1,8 +1,10 @@
 """Stage 3 Materialization and Statistical Audit Runner.
 
 Ingests flows from ToN-IoT, Edge-IIoTset, NF-ToN-IoT-v2, and CICIoT2023,
-materializes chronological 60/20/20 train/val/test feature splits with strict boundary state resets,
-and generates empirical statistical quality audit reports (KS, Wasserstein, MI, correlation, VIF).
+partitions each label class in adapter stream order into 60/20/20 splits,
+sorts rows within each split by timestamp, resets feature state at split
+boundaries, and generates statistical quality audit reports (KS, Wasserstein,
+MI, correlation, VIF). Adapter timestamps are not uniformly source event time.
 """
 from __future__ import annotations
 
@@ -56,6 +58,8 @@ FEATURE_PROFILES = {
 def materialize_dataset(
     dataset_name: str, adapter, sample_limit: int = 7000, output_dir: Path = Path("data/processed/stage3")
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     print(f"\n==========================================================================")
     print(f"=== MATERIALIZING STAGE 3 DATASET: {dataset_name} ===")
     print(f"==========================================================================")
@@ -79,7 +83,8 @@ def materialize_dataset(
         if (len(benign) >= target_benign and len(attack) >= target_attack) or max_flows_scanned >= 150000:
             break
 
-    # Chronological partition within each class (60% Train, 20% Val, 20% Test)
+    # Partition each adapter stream by class and source order. This is only a
+    # chronological split if that adapter's stream is ordered by source event time.
     tr_b, v_b, te_b = benign[:int(len(benign)*0.6)], benign[int(len(benign)*0.6):int(len(benign)*0.8)], benign[int(len(benign)*0.8):]
     tr_a, v_a, te_a = attack[:int(len(attack)*0.6)], attack[int(len(attack)*0.6):int(len(attack)*0.8)], attack[int(len(attack)*0.8):]
 
@@ -89,7 +94,7 @@ def materialize_dataset(
 
     n_total = len(train_flows) + len(val_flows) + len(test_flows)
     print(f"Total flows ingested: {n_total} in {time.time() - t0:.2f}s")
-    print(f"Chronological Splits -> Train: {len(train_flows)} (Benign: {sum(1 for f in train_flows if f.label==0)}, Attack: {sum(1 for f in train_flows if f.label==1)}), "
+    print(f"Class-wise 60/20/20 Splits -> Train: {len(train_flows)} (Benign: {sum(1 for f in train_flows if f.label==0)}, Attack: {sum(1 for f in train_flows if f.label==1)}), "
           f"Val: {len(val_flows)} (Benign: {sum(1 for f in val_flows if f.label==0)}, Attack: {sum(1 for f in val_flows if f.label==1)}), "
           f"Test: {len(test_flows)} (Benign: {sum(1 for f in test_flows if f.label==0)}, Attack: {sum(1 for f in test_flows if f.label==1)})")
 
@@ -129,6 +134,8 @@ def materialize_dataset(
 
 
 def run_stage3_audit():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     raw_dir = Path("data/raw")
     output_dir = Path("data/processed/stage3")
     reports_dir = Path("reports")

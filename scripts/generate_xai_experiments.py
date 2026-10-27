@@ -76,6 +76,8 @@ FEATURE_NAMES_21 = [
 
 
 def load_dataset_samples(dataset_name: str, n_samples: int = 1400) -> tuple[np.ndarray, np.ndarray]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     """Generates synthetic standardized 21 feature samples matching the dataset schema if raw parquets are offline."""
     # Try loading from data/processed or generate deterministic evaluation samples matching dataset distributions
     rng = np.random.default_rng(42)
@@ -102,13 +104,15 @@ def load_dataset_samples(dataset_name: str, n_samples: int = 1400) -> tuple[np.n
 
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     print("==========================================================================")
     print("=== RUNNING FRESH XAI EXPERIMENTS (STANDARDIZED 21 BASELINE) ===")
     print("==========================================================================\n")
 
     models_dir = REPO_ROOT / "models" / "standardized"
     reports_dir = REPO_ROOT / "reports" / "xai"
-    figures_dir = REPO_ROOT / "ieee_paper_draft" / "figures"
+    figures_dir = reports_dir / "figures"
 
     reports_dir.mkdir(parents=True, exist_ok=True)
     figures_dir.mkdir(parents=True, exist_ok=True)

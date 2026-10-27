@@ -48,6 +48,8 @@ MODELS = ["LogisticRegression", "RandomForest"]
 
 
 def load_dataset_splits(data_dir: Path, ds_name: str):
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     ds_path = data_dir / ds_name
     return (
         pd.read_parquet(ds_path / "train.parquet"),
@@ -57,6 +59,8 @@ def load_dataset_splits(data_dir: Path, ds_name: str):
 
 
 def run_stage5_benchmarks(smoke_test: bool = False):
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     data_dir = Path("data/processed/stage3")
     output_dir = Path("reports/stage5")
     cm_dir = output_dir / "stage4_confusion_matrices"

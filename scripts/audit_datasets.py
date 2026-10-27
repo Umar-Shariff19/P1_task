@@ -9,4 +9,6 @@ from iot_ids.data.audit import main
 
 
 if __name__ == "__main__":
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     main()

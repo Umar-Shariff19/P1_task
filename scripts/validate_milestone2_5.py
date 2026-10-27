@@ -206,6 +206,8 @@ def compatibility_matrix() -> dict[str, object]:
 
 
 def run_benchmark() -> dict[str, object]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     out = ROOT / "data" / "cache" / "milestone2_5_benchmark"
     configs = {
         "CICIDS2017": 20_000,
@@ -280,6 +282,8 @@ def feature_classification(schema: dict) -> list[dict[str, object]]:
 
 
 def main() -> None:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     audit = read_json(ROOT / "reports" / "eda" / "dataset_audit.json")
     schema = read_json(ROOT / "configs" / "features" / "canonical_schema.json")
     out_dir = ROOT / "reports" / "eda"

@@ -43,6 +43,8 @@ def write_json(path: Path, payload: object) -> None:
     path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
 
 def get_parquet_files(dataset: str, split_manifest: dict) -> list[Path]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     fp = split_manifest["fingerprint"]
     for cache_name in ("v3_cache", "v2_cache", "research"):
         cache_dir = ROOT / "data" / "processed" / cache_name / dataset / fp
@@ -51,12 +53,16 @@ def get_parquet_files(dataset: str, split_manifest: dict) -> list[Path]:
     return sorted((ROOT / "data" / "processed" / "research" / dataset / fp).glob("part-*.parquet"))
 
 def get_drop_indices(dataset: str) -> dict[str, dict[str, list[int]]]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     drop_path = ROOT / "data" / "processed" / "splits" / SPLIT_VERSION / dataset / "decontamination_drop_indices.json"
     if not drop_path.exists():
         return {}
     return read_json(drop_path)
 
 def load_benign_train(dataset: str, split_manifest: dict, drop_indices: dict):
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     parquet_files = get_parquet_files(dataset, split_manifest)
     split_drops = drop_indices.get("train", {})
     from run_milestone3a import split_assigner, hash_to_split
@@ -90,6 +96,8 @@ def load_benign_train(dataset: str, split_manifest: dict, drop_indices: dict):
             yield torch.tensor(X_np, dtype=torch.float32), torch.tensor(y_np, dtype=torch.float32).unsqueeze(1)
 
 def load_full_split(dataset: str, split_name: str, split_manifest: dict, drop_indices: dict):
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     from torch.utils.data import TensorDataset
     import torch
     import hashlib
@@ -129,6 +137,8 @@ def load_full_split(dataset: str, split_name: str, split_manifest: dict, drop_in
     return TensorDataset(torch.tensor(X_np, dtype=torch.float32), torch.tensor(y_np, dtype=torch.float32).unsqueeze(1))
 
 def train_ae(dataset: str) -> None:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     if (ROOT / "models" / MODEL_VERSION / "autoencoder" / f"{dataset}_ae.joblib").exists():
         log(f"Skipping {dataset}: already trained for profile {PROFILE}.")
         return
@@ -218,6 +228,8 @@ def train_ae(dataset: str) -> None:
     write_json(model_dir / f"{dataset}_ae_metrics.json", metrics)
 
 def run():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     for ds in DATASETS:
         train_ae(ds)
         print("-" * 60)

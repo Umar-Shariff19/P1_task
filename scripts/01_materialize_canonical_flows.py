@@ -17,6 +17,8 @@ from iot_ids.data.adapters import (
 
 
 def run_stage1_validation(sample_limit: int = 50000) -> None:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     raw_dir = Path("data/raw")
 
     adapters = [

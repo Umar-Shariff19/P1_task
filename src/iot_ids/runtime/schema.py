@@ -89,6 +89,9 @@ def validate_input_schema(
     # 2. Check feature count
     actual_cols = list(df.columns)
 
+    if df.empty:
+        raise ValueError("Runtime Schema Error: Input batch must contain at least one sample.")
+
     if len(actual_cols) != expected_count:
         missing_feats = [col for col in expected_feature_names if col not in actual_cols]
         extra_feats = [col for col in actual_cols if col not in expected_feature_names]
@@ -110,8 +113,27 @@ def validate_input_schema(
     # 4. Enforce deterministic canonical feature ordering
     df_canonical = df[expected_feature_names].copy()
 
-    # 5. Numeric validation (NaN and Inf checks)
-    num_array = df_canonical.to_numpy()
+    # 5. Numeric validation (type, NaN and Inf checks). Check dtypes before
+    # calling NumPy so object/string columns fail with a controlled schema
+    # error instead of leaking a low-level ``np.isnan`` TypeError.
+    non_numeric_cols = [
+        col
+        for col in expected_feature_names
+        if not pd.api.types.is_numeric_dtype(df_canonical[col].dtype)
+        or pd.api.types.is_complex_dtype(df_canonical[col].dtype)
+    ]
+    if non_numeric_cols:
+        raise ValueError(
+            f"Runtime Schema Error: Input features must be real numeric values; "
+            f"invalid columns: {non_numeric_cols}"
+        )
+
+    try:
+        num_array = df_canonical.to_numpy(dtype=np.float64, na_value=np.nan)
+    except (TypeError, ValueError, OverflowError):
+        raise ValueError(
+            "Runtime Schema Error: Input features cannot be represented as real numeric values."
+        ) from None
 
     if np.isnan(num_array).any():
         nan_cols = df_canonical.columns[df_canonical.isna().any()].tolist()

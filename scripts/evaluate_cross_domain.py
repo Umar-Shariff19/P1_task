@@ -41,16 +41,22 @@ def write_json(path: Path, payload: object) -> None:
     path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
 
 def get_parquet_files(dataset: str, split_manifest: dict) -> list[Path]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     cache_dir = ROOT / "data" / "processed" / "research" / dataset / split_manifest["fingerprint"]
     return sorted(cache_dir.glob("part-*.parquet"))
 
 def get_drop_indices(dataset: str) -> dict[str, dict[str, list[int]]]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     drop_path = ROOT / "data" / "processed" / "splits" / "split-v1" / dataset / "decontamination_drop_indices.json"
     if not drop_path.exists():
         return {}
     return read_json(drop_path)
 
 def load_split(dataset: str, split_name: str) -> tuple[pd.DataFrame, pd.Series]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     manifest_path = ROOT / "data" / "processed" / "splits" / "split-v1" / dataset / "split_manifest.json"
     manifest = read_json(manifest_path)
     drop_indices = get_drop_indices(dataset)
@@ -134,6 +140,8 @@ def load_split(dataset: str, split_name: str) -> tuple[pd.DataFrame, pd.Series]:
     return X_np, y
 
 def get_component_predictions(models: dict, metrics: dict, X: np.ndarray) -> dict[str, np.ndarray]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     """Returns a dict of 1D numpy arrays with probabilities/scores."""
     preds = {}
     
@@ -222,6 +230,8 @@ def get_simplex_combinations(models_to_include: list[str]) -> list[tuple]:
     return combinations
 
 def run():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     cross_config = read_json(ROOT / "configs" / "experiments" / "cross_dataset_compatibility.json")
     results = {}
     

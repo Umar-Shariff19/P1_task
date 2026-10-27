@@ -1,173 +1,46 @@
-# Multi-Level IoT Intrusion Detection System (IoT-IDS)
+# IoT IDS Implementation Project
 
-This repository implements the complete scientific research pipeline and production-grade operational edge software for an **Adversarially Robust Multi-Level IoT Intrusion Detection System**.
+This repository contains an implementation and reproducibility record for a multi-level IoT intrusion detection system. Source code, configurations, tests, artifact loaders, and evidence are the project deliverables. Historical metrics and manuscript statements are not treated as newly reproduced findings.
 
----
+## System
 
-## 1. Project Overview
-Machine learning models for IoT intrusion detection frequently suffer from severe cross-domain generalization degradation when deployed across heterogeneous networks. This project introduces a universal multi-level semantic representation (Instantaneous, Causal Temporal, and Causal Behavioral) paired with unsupervised feature alignment and minimal target domain adaptation to solve cross-domain transfer failure and slash false positive rates.
+The Python package in `src/iot_ids/` includes dataset adapters and canonical flow handling, feature construction, training and inference, a Random Forest and MLP pipelines, adversarial utilities, privacy-related experimental code, explainability, an artifact registry, CLI commands, and runtime packet/flow processing. The runtime and research pipelines are related but distinct: the golden research pipeline uses 21 standardized features and Option C probability fusion (`0.7 * RF + 0.3 * robust MLP`). Its separate DP-SGD-style experiment is not the fusion model and does not currently substantiate a formal privacy guarantee.
 
----
+The research pipeline is configured for Edge-IIoTset, ToN-IoT, NF-ToN-IoT-v2, and CICIoT2023. Stage 3 source currently partitions each label class in adapter stream order into 60/20/20 groups and sorts within each group by timestamp. This does not establish globally chronological splits, and existing split artifacts have no linked generation manifest. Temporal generalization is therefore unverified.
 
-## 2. Research Methodology
-The central hypothesis posits that structured multi-level representations obeying read-before-write causality provide superior cross-domain generalization compared to flat, universally available flow features. Grounded in statistical domain adaptation theory, the pipeline evaluates zero-shot transfer, unsupervised CORAL feature covariance alignment, and minimal target-domain threshold calibration.
+## Setup and safe checks
 
----
+Use Python 3.10 or newer. Install the package and development extras in an isolated environment:
 
-## 3. System Architecture
-
-```text
-                               DEPLOYABLE ARTIFACT
-                    (model.joblib, preprocessor.joblib, aligner.joblib, calibrator.joblib)
-                                       │
-                                       ▼
-Raw Telemetry ──► Packet Capture ──► Flow Aggregator ──► Multi-Level Builder ──► IDSPredictor ──► Alerts & Metrics
-(PCAP / Ingress)    (Scapy Engine)     (5-Tuple LRU)       (18 Features)        (RF Model)     (JSONL & Console)
-```
-
----
-
-## 4. Dataset Preparation
-The system evaluates **28,000 canonical flows** across four benchmark IoT datasets (7,000 flows per dataset, split 60% train / 20% validation / 20% test chronologically):
-- **ToN-IoT** (Ethernet & Wi-Fi IoT telemetry)
-- **Edge-IIoTset** (Industrial IoT protocol telemetry)
-- **NF-ToN-IoT-v2** (NetFlow v9 feature representation of ToN-IoT)
-- **CICIoT2023** (33-device IoT attack capture)
-
----
-
-## 5. Feature Architecture
-The system defines **18 conceptual semantic features** expanding to **21 numerical model matrix columns**:
-- **Level A (Instantaneous)**: 8 conceptual features / 11 numerical columns (flow duration, rates, payload ratio, packet ratio, SYN ratio, 4-way protocol one-hot indicators).
-- **Level B (Causal Temporal)**: 5 conceptual/numerical features (EWMA inter-arrival timing mean, CV, flow rate EWMA, byte rate EWMA, SYN rate EWMA).
-- **Level C (Causal Behavioral)**: 5 conceptual/numerical features (destination IP diversity, destination port entropy, fanout ratio, unanswered ratio, activity EWMA).
-
----
-
-## 6. Experimental Methodology
-Controlled benchmark experiments (160 runs) evaluate representation profile progressions (`baseline_common`, `instant_only`, `instant_temporal`, `instant_behavioral`, `full_multilevel`) across 4 model families (Random Forest, Logistic Regression, MLP, Autoencoder). Domain adaptation experiments (840 runs) evaluate cross-domain transfer across 12 transfer directions under target label budgets (0%, 1%, 5%, 10%).
-
----
-
-## 7. Research Results
-- **Within-Domain Benchmark**: `full_multilevel` Random Forest reaches **0.986 Macro F1** and slashes FPR to **1.6%**.
-- **Minimal Target Adaptation**: 5% target label adaptation (42--210 samples) recovers cross-domain transfer to **0.992 ROC-AUC** (95% CI [0.989, 0.996], Cohen's $d_z = 1.134, p = 0.0024$).
-- **Shortcut Independence**: Stripping protocol indicators and raw rates retains **97.2% of performance**.
-
----
-
-## 8. Installation
-
-```bash
-# Clone repository & install package in editable production mode
-git clone https://github.com/Umar-Shariff19/P1_task.git
-cd P1_task_Implementation
+```powershell
 python -m venv .venv
-# Activate virtual environment
-pip install -e .
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
 ```
 
----
+Optional model and explainability dependencies are in the `models` and `xai` extras in `pyproject.toml`. The current test suite also includes tests that may load local datasets or artifacts. Inspect a test's fixtures and data paths before running it. A focused, synthetic-only check is:
 
-## 9. Training
-
-```bash
-iot-ids train --source-domain ToN-IoT --target-domain Edge-IIoTset --model-family RandomForest --artifact-dir models/final/deployable_artifact
+```powershell
+python -m pytest tests/unit/data/test_flow_aggregator.py -q
 ```
 
----
+Do not run dataset-wide scans or pipelines as a substitute for reviewing data access. BoT-IoT file 4 is prohibited. The previously exposed ToN-IoT test split and prohibited BCL evaluator must not be accessed or run.
 
-## 10. Validation
+## Workflows and artifacts
 
-```bash
-iot-ids validate --artifact-dir models/final/deployable_artifact --test-domain ToN-IoT
-```
+- Data preparation: `scripts/01_*` through `scripts/03_*`; Stage 3 writes under `data/processed/stage3/`.
+- Golden training/evaluation: `scripts/run_golden_pipeline.py`; it reads train/validation/test splits and writes model files under `models/golden_run/` and a manifest under `reports/`. Do not run it without an approved, safe data-access plan; it can overwrite official outputs.
+- Deployable artifacts: `models/final/deployable_artifact/`, described by `pipeline_metadata.json`.
+- CLI: registered as `iot-ids` in `pyproject.toml`; inspect the selected command's artifact and data paths before invocation.
 
----
+## Evidence and status
 
-## 11. Batch Inference
+[`results/README.md`](results/README.md) is the canonical index for implementation status, validation, provenance, claims, and future experiment records. It replaces in-repository manuscript files as the central research-evidence record. Historical implementation reports remain available at the repository root and under `reports/`, but the canonical ledger controls current evidence status.
 
-```bash
-iot-ids predict-batch --artifact-dir models/final/deployable_artifact --input-file data/processed/stage3/ToN-IoT/test.parquet --limit 10 --output-json reports/batch_alerts.json
-```
+The Phase I/Phase J inventory and capture incidents remain unresolved: the earlier recursive inventory may have enumerated protected path metadata, and the earlier Scapy-present test invoked capture code without evidence establishing whether capture started or packets arrived. No zero-access or zero-capture conclusion is supported. Git history confirms `reports/tables/latex_ci_table.tex` was tracked and later deleted; its 2,459-byte historical blob is now preserved at the exact archive path `C:\Users\umari\Documents\IDS_Manuscript_Archive\2026-10-27\original\reports\tables\latex_ci_table.tex`, verified by existence and byte length without reading the contents. It was not restored to the repository. Phase J used only explicit-path checks and static inspection; it did not access protected data, run the prohibited evaluator or test split, or invoke live capture. See `results/validation/safety_and_data_access.md` and `results/implementation/manuscript_cleanup_inventory.md` for the evidence and limits.
 
----
+The root IEEE submission packages were moved to `C:\Users\umari\Documents\IDS_Manuscript_Archive\2026-10-27\original\`; the colleague's paper package was moved to the corresponding `candidate\` archive. Shared project context documents and research evidence were retained. The candidate repository is a comparison source, not the authoritative implementation.
 
-## 12. Streaming Inference
+## Important limitations
 
-```bash
-iot-ids predict-stream --artifact-dir models/final/deployable_artifact --input-json data/sample_stream_packets.json
-```
-
----
-
-## 13. PCAP Replay
-
-```bash
-iot-ids replay-pcap --artifact-dir models/final/deployable_artifact --pcap-file data/sample_reproduce_stream.pcap
-```
-
----
-
-## 14. Live Capture
-
-```bash
-iot-ids predict-live --artifact-dir models/final/deployable_artifact --interface eth0 --bpf-filter "ip"
-```
-
----
-
-## 15. Runtime Daemon
-
-```bash
-iot-ids run-daemon --artifact-dir models/final/deployable_artifact --pcap-file data/sample_reproduce_stream.pcap --log-file reports/daemon_alerts.jsonl
-```
-
----
-
-## 16. Docker Deployment
-
-```bash
-docker-compose up --build
-```
-
----
-
-## 17. Testing
-
-```bash
-python -m pytest tests/unit/data/ tests/unit/features/ tests/unit/experiments/ tests/unit/adaptation/ tests/unit/statistics/ tests/unit/publication/ tests/unit/test_package_and_security.py tests/integration/
-```
-**Status**: **71 / 71 PASSED (100% Pass Rate, 0 Warnings)**.
-
----
-
-## 18. Reproducibility
-See [reproducibility_checklist.md](reports/final/reproducibility_checklist.md) for full step-by-step reproduction instructions.
-
----
-
-## 19. Limitations
-1. Live network sniffing (`predict-live`) requires elevated network interface privileges (`root` / `CAP_NET_RAW` on Linux, Administrator/Npcap on Windows).
-2. Enterprise SIEM alert exporters (Kafka, Syslog) are not implemented; alerts persist locally via `JSONLFileSink` and `ConsoleAlertSink`.
-
----
-
-## 20. Repository Structure
-- `src/iot_ids/`: Core operational package (`config`, `data`, `features`, `experiments`, `adaptation`, `pipeline`, `inference`, `registry`, `runtime`, `utils`)
-- `scripts/`: Materialization, benchmarking, publication audit, and operational scripts
-- `reports/`: Research evidence CSVs, LaTeX publication source (`reports/stage9/IEEE_paper_final.tex`), and final audit matrices (`reports/final/`)
-- `tests/`: 71 automated unit and integration tests
-
----
-
-## 21. Citation
-
-```bibtex
-@article{iot_ids_2026,
-  title={Cross-Domain IoT Intrusion Detection via Multi-Level Causal Representation and Minimal Target Adaptation},
-  author={Anonymized Author(s)},
-  journal={IEEE Transactions on Dependable and Secure Computing},
-  year={2026}
-}
-```
+Split provenance, exact provenance for historical model artifacts/metrics, the reported privacy guarantee, and confirmatory BCL evidence remain unresolved. A generic lexical dataset-root authorization primitive is available in `src/iot_ids/data/path_policy.py`, but it is not integrated into adapters and cannot authorize real roots without owner-approved roots and a trusted Windows identity verifier. The candidate BCL flow is not integrated. Runtime, adversarial robustness, explainability, and reported benchmark results require appropriately documented experiments before they can be treated as experimentally validated. See `results/claims/claim_evidence_ledger.md`, `results/implementation/known_limitations.md`, and `results/implementation/research_readiness_matrix.md`.

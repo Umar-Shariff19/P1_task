@@ -11,6 +11,8 @@ import numpy as np
 
 
 def run_validity_audit():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     reports_dir = Path("reports/stage5")
     reports_dir.mkdir(parents=True, exist_ok=True)
 

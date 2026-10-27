@@ -12,6 +12,8 @@ from scipy import stats
 
 
 def analyze_adaptation():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     reports_dir = Path("reports/stage5")
     df_exp = pd.read_csv(reports_dir / "stage5_experiment_results.csv")
 

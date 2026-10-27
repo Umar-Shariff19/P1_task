@@ -8,11 +8,16 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import sys
 import time
 import pandas as pd
 
 from iot_ids.experiments.runner import run_within_domain_experiment, run_cross_domain_experiment
 from iot_ids.features.canonical.flow_builder import INSTANT_FEATURE_NAMES, TEMPORAL_FEATURE_NAMES, BEHAVIORAL_FEATURE_NAMES, CANONICAL_18_FEATURE_NAMES
+from iot_ids.provenance.windows_access import (
+    RealDataAuthorizationUnavailable,
+    require_real_data_authorization,
+)
 
 FEATURE_PROFILES = {
     "baseline_common": [
@@ -45,6 +50,7 @@ MODEL_NAMES = ["LogisticRegression", "RandomForest"]
 
 
 def load_dataset_splits(data_dir: Path, dataset_name: str):
+    require_real_data_authorization()
     ds_path = data_dir / dataset_name
     df_train = pd.read_parquet(ds_path / "train.parquet")
     df_val = pd.read_parquet(ds_path / "val.parquet")
@@ -53,6 +59,10 @@ def load_dataset_splits(data_dir: Path, dataset_name: str):
 
 
 def run_benchmarks(smoke_test: bool = False):
+    # No path access or output creation is allowed until a trusted real-data
+    # authorization provider has been reviewed and configured.
+    require_real_data_authorization()
+
     data_dir = Path("data/processed/stage3")
     reports_dir = Path("reports")
     reports_dir.mkdir(parents=True, exist_ok=True)
@@ -163,4 +173,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Stage 4 Controlled Model Benchmarking Runner")
     parser.add_argument("--smoke-test", action="store_true", help="Run fast pre-flight smoke test")
     args = parser.parse_args()
-    run_benchmarks(smoke_test=args.smoke_test)
+    try:
+        run_benchmarks(smoke_test=args.smoke_test)
+    except RealDataAuthorizationUnavailable as exc:
+        print(f"{exc.code.value}: {exc}", file=sys.stderr)
+        raise SystemExit(2) from None

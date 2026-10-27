@@ -6,7 +6,6 @@ Computes 95% non-parametric bootstrap confidence intervals (B=1000, seed=42) for
 
 Outputs:
   - reports/tables/table_statistical_confidence_intervals.json
-  - reports/tables/latex_ci_table.tex
 """
 import os
 import sys
@@ -85,6 +84,8 @@ def compute_percentile_ci(replicates, point_est):
     }
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     print("==========================================================================")
     print("=== PHASE 3: BOOTSTRAP CONFIDENCE INTERVALS (B=1000, 95% CI) ===")
     print("==========================================================================\n")
@@ -249,58 +250,6 @@ def main():
     with open(out_json_path, "w", encoding="utf-8") as f:
         json.dump(output_json, f, indent=2)
     print(f"Saved bootstrap JSON to: {out_json_path}")
-
-    # Generate LaTeX Table
-    latex_lines = [
-        "\\begin{table*}[htbp]",
-        "\\caption{Clean Detection Performance and PGD-10 Adversarial Robustness with 95\\% Non-Parametric Bootstrap Confidence Intervals ($B=1,000$)}",
-        "\\label{tab:bootstrap_confidence_intervals}",
-        "\\centering",
-        "\\begin{tabular}{lcccc}",
-        "\\toprule",
-        "\\textbf{Dataset / Model} & \\textbf{Clean ROC-AUC [95\\% CI]} & \\textbf{Clean Macro F1 [95\\% CI]} & \\textbf{PGD-10 ASR [95\\% CI]} \\\\",
-        "\\midrule"
-    ]
-
-    for ds in DATASETS:
-        latex_lines.append(f"\\multicolumn{{4}}{{l}}{{\\textbf{{{ds}}} ($N={ci_results_by_dataset[ds]['total_test_samples']}$, $N_{{\\text{{attack}}}}={ci_results_by_dataset[ds]['attackable_malicious_samples']}$)}} \\\\")
-        c_res = ci_results_by_dataset[ds]["clean_metrics"]
-        a_res = ci_results_by_dataset[ds]["adversarial_metrics"]
-
-        # RF
-        rf_auc_ci = c_res["RF"]["roc_auc"]["ci_string"]
-        rf_f1_ci = c_res["RF"]["macro_f1"]["ci_string"]
-        latex_lines.append(f"\\quad Random Forest & {rf_auc_ci} & {rf_f1_ci} & N/A \\\\")
-
-        # Std MLP
-        std_auc_ci = c_res["Standard_MLP"]["roc_auc"]["ci_string"]
-        std_f1_ci = c_res["Standard_MLP"]["macro_f1"]["ci_string"]
-        std_asr_ci = a_res["Standard_MLP"]["pgd10_asr"]["ci_string"]
-        latex_lines.append(f"\\quad Standard MLP & {std_auc_ci} & {std_f1_ci} & {std_asr_ci} \\\\")
-
-        # Robust MLP
-        rob_auc_ci = c_res["Robust_MLP"]["roc_auc"]["ci_string"]
-        rob_f1_ci = c_res["Robust_MLP"]["macro_f1"]["ci_string"]
-        rob_asr_ci = a_res["Robust_MLP"]["pgd10_asr"]["ci_string"]
-        latex_lines.append(f"\\quad Robust MLP & {rob_auc_ci} & {rob_f1_ci} & {rob_asr_ci} \\\\")
-
-        # Option C
-        opt_auc_ci = c_res["Option_C"]["roc_auc"]["ci_string"]
-        opt_f1_ci = c_res["Option_C"]["macro_f1"]["ci_string"]
-        opt_asr_ci = a_res["Option_C"]["pgd10_asr"]["ci_string"]
-        latex_lines.append(f"\\quad \\textbf{{Option C (Fused)}} & \\textbf{{{opt_auc_ci}}} & \\textbf{{{opt_f1_ci}}} & \\textbf{{{opt_asr_ci}}} \\\\")
-        latex_lines.append("\\midrule")
-
-    latex_lines.extend([
-        "\\bottomrule",
-        "\\end{tabular}",
-        "\\end{table*}"
-    ])
-
-    out_tex_path = reports_tables_dir / "latex_ci_table.tex"
-    with open(out_tex_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(latex_lines))
-    print(f"Saved LaTeX CI table to: {out_tex_path}\n")
 
     # Print Summary Table to Console
     print("==========================================================================")

@@ -7,6 +7,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from iot_ids.utils.paths import REPO_ROOT
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     print("============================================================")
     print("=== STAGE 02: MATERIALIZATION FORENSIC GATE VALIDATION ===")
     print("============================================================\n")

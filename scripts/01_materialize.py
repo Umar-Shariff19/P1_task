@@ -7,6 +7,8 @@ from iot_ids.data.materialize import materialize_dataset
 from iot_ids.utils.paths import REPO_ROOT
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     print("============================================================")
     print("=== STAGE 01: FINAL DATASET MATERIALIZATION ===")
     print("============================================================\n")

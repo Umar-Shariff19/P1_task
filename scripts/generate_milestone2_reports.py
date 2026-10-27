@@ -108,6 +108,8 @@ def capture_environment() -> dict[str, object]:
 
 
 def main() -> None:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     inventory = deep_schema_inventory()
     write_json(ROOT / "reports" / "eda" / "deep_schema_inventory.json", inventory)
     rows = feature_availability()

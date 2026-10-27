@@ -21,6 +21,8 @@ from iot_ids.features.canonical.flow_builder import CanonicalFlowBuilder, CANONI
 
 
 def audit_dataset_features(name: str, adapter, sample_limit: int = 10000) -> pd.DataFrame:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     print(f"--- Running Stage 2 Feature Diagnostics for: {name} ---")
     t0 = time.time()
 
@@ -72,6 +74,8 @@ def audit_dataset_features(name: str, adapter, sample_limit: int = 10000) -> pd.
 
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     raw_dir = Path("data/raw")
 
     datasets = [

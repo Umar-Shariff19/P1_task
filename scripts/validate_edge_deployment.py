@@ -20,6 +20,8 @@ from iot_ids.utils.sinks import MultiAlertSink, JSONLFileSink, ConsoleAlertSink
 
 
 def validate_edge_deployment():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     print("==========================================================================")
     print("=== STARTING PHASE D EDGE DEPLOYMENT & PRODUCTION HARDENING VALIDATION ===")
     print("==========================================================================")

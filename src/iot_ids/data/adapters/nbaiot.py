@@ -11,11 +11,15 @@ class NBaIoTAdapter(DatasetAdapter):
     metadata_files = {"data_summary.csv", "device_info.csv", "features.csv"}
 
     def discover_files(self) -> list[Path]:
+        from iot_ids.provenance.windows_access import require_real_data_authorization
+        require_real_data_authorization()
         return sorted(
             p for p in self.root.rglob("*.csv") if p.name.lower() not in self.metadata_files
         )
 
     def audit(self) -> DatasetAudit:
+        from iot_ids.provenance.windows_access import require_real_data_authorization
+        require_real_data_authorization()
         audit = super().audit()
         if audit.status != "ok":
             return audit

@@ -25,6 +25,8 @@ def materialize_dataset(
     feature_version: str = "final-features-v1",
     force: bool = False,
 ) -> dict[str, object]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     adapters = {adapter.name: adapter for adapter in build_default_adapters(data_root)}
     if dataset not in adapters:
         raise ValueError(f"Dataset {dataset} not registered in active production adapters.")

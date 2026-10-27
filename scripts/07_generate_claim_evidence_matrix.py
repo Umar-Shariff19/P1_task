@@ -10,6 +10,8 @@ import pandas as pd
 
 
 def generate_claim_evidence_matrix():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     output_dir = Path("reports/stage7")
     output_dir.mkdir(parents=True, exist_ok=True)
 

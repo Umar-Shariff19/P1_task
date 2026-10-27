@@ -16,11 +16,16 @@ plt.rcParams.update({"font.sans-serif": "DejaVu Sans", "font.size": 10, "figure.
 
 
 def generate_plots():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     reports_dir = Path("reports/stage4")
     plots_dir = reports_dir / "plots"
     plots_dir.mkdir(parents=True, exist_ok=True)
 
     df_cross = pd.read_csv(reports_dir / "stage4_cross_domain_results.csv")
+    fpr_defined = int(df_cross["fpr"].notna().sum())
+    fpr_total = int(len(df_cross))
+    fpr_scope = f"FPR plotted from defined rows only: {fpr_defined}/{fpr_total}; undefined values are not zero."
 
     print("--- Generating Stage 4 Research Visualizations ---")
 
@@ -43,7 +48,11 @@ def generate_plots():
     )
     plt.figure(figsize=(7, 5.5))
     sns.heatmap(fpr_pivot, annot=True, fmt=".3f", cmap="OrRd", cbar=True, vmin=0.2, vmax=1.0)
-    plt.title("Zero-Shot Cross-Domain False Positive Rate (FPR) Matrix", fontsize=11, fontweight="bold")
+    plt.title(
+        "Zero-Shot Cross-Domain False Positive Rate (FPR) Matrix\n" + fpr_scope,
+        fontsize=10,
+        fontweight="bold",
+    )
     plt.xlabel("Target Domain (Test)", fontsize=10, fontweight="bold")
     plt.ylabel("Source Domain (Train)", fontsize=10, fontweight="bold")
     plt.tight_layout()
@@ -69,7 +78,11 @@ def generate_plots():
     sns.barplot(
         data=df_cross, x="feature_profile", y="fpr", hue="model", palette="rocket_r", errorbar="se"
     )
-    plt.title("Cross-Domain False Positive Rate (FPR) Suppression by Profile", fontsize=11, fontweight="bold")
+    plt.title(
+        "Cross-Domain False Positive Rate (FPR) Suppression by Profile\n" + fpr_scope,
+        fontsize=10,
+        fontweight="bold",
+    )
     plt.xlabel("Feature Representation Profile", fontsize=10, fontweight="bold")
     plt.ylabel("Cross-Domain False Positive Rate (FPR)", fontsize=10, fontweight="bold")
     plt.xticks(rotation=15)

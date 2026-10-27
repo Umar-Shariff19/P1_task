@@ -75,6 +75,8 @@ class RobustMLPModule(torch.nn.Module):
 
 
 def load_evaluation_samples(dataset_name: str, n_train: int = 2000, n_test: int = 1000):
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     """Generates synthetic standardized evaluation samples for privacy benchmarks matching schema."""
     rng = np.random.default_rng(42)
 
@@ -150,12 +152,14 @@ def evaluate_model_roc_auc_and_asr(model: torch.nn.Module, X_test: np.ndarray, y
 
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     print("==========================================================================")
     print("=== RUNNING FRESH DIFFERENTIAL PRIVACY & UTILITY EXPERIMENTS ===")
     print("==========================================================================\n")
 
     reports_dir = REPO_ROOT / "reports" / "privacy"
-    figures_dir = REPO_ROOT / "ieee_paper_draft" / "figures"
+    figures_dir = reports_dir / "figures"
     reports_dir.mkdir(parents=True, exist_ok=True)
     figures_dir.mkdir(parents=True, exist_ok=True)
 
@@ -259,7 +263,7 @@ def main():
         avg_asrs.append(float(np.mean(asrs)))
 
     color_auc = '#283655'
-    ax1.set_xlabel("Privacy Budget ($\epsilon$ at $\delta=10^{-5}$)")
+    ax1.set_xlabel(r"Privacy Budget ($\epsilon$ at $\delta=10^{-5}$)")
     ax1.set_ylabel("Clean ROC-AUC Score", color=color_auc)
     line1 = ax1.plot(eps_vals[1:], avg_aucs[1:], marker='o', color=color_auc, linewidth=1.8, label="ROC-AUC vs Epsilon")
     ax1.tick_params(axis='y', labelcolor=color_auc)

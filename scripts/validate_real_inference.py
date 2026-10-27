@@ -15,6 +15,8 @@ from iot_ids.inference.predictor import IDSPredictor
 
 
 def validate_real_inference():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     artifact_dir = Path("models/final/deployable_artifact")
     stage3_dir = Path("data/processed/stage3")
 

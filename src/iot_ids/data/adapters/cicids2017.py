@@ -10,6 +10,8 @@ class CICIDS2017Adapter(DatasetAdapter):
     name = "CICIDS2017"
 
     def discover_files(self) -> list[Path]:
+        from iot_ids.provenance.windows_access import require_real_data_authorization
+        require_real_data_authorization()
         return sorted(self.root.rglob("*.csv"))
 
     def dataset_notes(self, audit: DatasetAudit) -> list[str]:

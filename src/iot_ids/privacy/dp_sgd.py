@@ -1,7 +1,11 @@
-"""Differential Privacy (DP-SGD) Module for PyTorch Neural Models.
+"""Experimental DP-SGD-style training code; its epsilon values are not guarantees.
 
-Implements per-example gradient clipping, calibrated Gaussian noise addition,
-Poisson subsampling, and PyTorch Opacus PRV / RDP accounting for (epsilon, delta) guarantees.
+The current trainer does not establish the assumptions required by its accountant:
+it seeds ordinary NumPy/PyTorch random generators, conditions empty Poisson draws
+to force a batch, normalizes by the realized batch size, and exposes raw losses.
+The optional accountant dependency is also not pinned. Do not use its epsilon
+output as a differential-privacy claim without correcting and validating the full
+mechanism, accounting, and released outputs.
 """
 from __future__ import annotations
 
@@ -39,7 +43,11 @@ def compute_dp_epsilon(
     target_delta: float = 1e-5,
     epochs: int | None = None,
 ) -> float:
-    """Computes exact (epsilon, delta) privacy budget using PyTorch Opacus PRV/RDP Accountant."""
+    """Return a numeric accountant estimate under the supplied mechanism assumptions.
+
+    This function does not validate that the training loop satisfies those
+    assumptions, and its current use does not establish an epsilon guarantee.
+    """
     if noise_multiplier <= 0.0:
         return float("inf")
 
@@ -150,7 +158,11 @@ def train_robust_mlp_dp(
     adv_alpha: float = 0.025,
     adv_steps: int = 7,
 ) -> Dict[str, Any]:
-    """Trains PyTorch MLP with joint domain-constrained PGD-7 adversarial training, Poisson subsampling, and DP-SGD."""
+    """Run the experimental adversarial/noisy-gradient loop and return diagnostics.
+
+    The current implementation is not validated as a differentially private
+    mechanism; its returned ``privacy_epsilon`` is an unverified estimate.
+    """
     torch.manual_seed(dp_config.seed)
     np.random.seed(dp_config.seed)
 
@@ -217,7 +229,8 @@ def train_robust_mlp_dp(
         mean_epoch_loss = float(np.mean(epoch_losses)) if epoch_losses else 0.0
         history.append({"epoch": epoch + 1, "loss": mean_epoch_loss})
 
-    # Calculate exact epsilon using Opacus accountant on ACTUAL executed steps
+    # This is an accountant estimate under supplied assumptions, not a
+    # verified guarantee for this trainer's implemented sampling mechanism.
     epsilon = compute_dp_epsilon(
         steps=total_actual_steps,
         sample_rate=sample_rate,

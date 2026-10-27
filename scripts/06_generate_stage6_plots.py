@@ -17,6 +17,8 @@ plt.rcParams.update({"font.sans-serif": "DejaVu Sans", "font.size": 10, "figure.
 
 
 def generate_plots():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     reports_dir = Path("reports/stage6")
     plots_dir = reports_dir / "plots"
     plots_dir.mkdir(parents=True, exist_ok=True)

@@ -122,6 +122,8 @@ def train_robust_mlp(X_tr: np.ndarray, y_tr: np.ndarray, epochs: int = 15, batch
     return model
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     print("==========================================================================")
     print("=== STARTING GOLDEN EXPERIMENT PIPELINE (REAL DATASET PROVENANCE) ===")
     print("==========================================================================\n")

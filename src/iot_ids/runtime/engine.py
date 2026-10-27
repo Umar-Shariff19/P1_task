@@ -54,10 +54,47 @@ class InferenceEngine:
         dataset: str = "ToN-IoT",
         models_base_dir: Optional[Union[str, Path]] = None,
         decision_threshold: float = 0.5,
+        *,
+        _synthetic_components: Optional[tuple[Any, Any, Any]] = None,
     ):
+        if _synthetic_components is None:
+            from iot_ids.provenance.windows_access import require_real_data_authorization
+            require_real_data_authorization()
+        elif (
+            profile != "standardized_21"
+            or dataset != "SYNTHETIC_ONLY"
+            or models_base_dir is not None
+        ):
+            raise ValueError(
+                "Synthetic component injection requires profile='standardized_21', "
+                "dataset='SYNTHETIC_ONLY', and no model directory."
+            )
+        self._validate_threshold(decision_threshold)
         self.profile = profile
         self.dataset = dataset
-        self.decision_threshold = decision_threshold
+        self.decision_threshold = float(decision_threshold)
+
+        if _synthetic_components is not None:
+            if (
+                profile != "standardized_21"
+                or dataset != "SYNTHETIC_ONLY"
+                or models_base_dir is not None
+            ):
+                raise ValueError(
+                    "Synthetic component injection requires profile='standardized_21', "
+                    "dataset='SYNTHETIC_ONLY', and no model directory."
+                )
+            if not isinstance(_synthetic_components, tuple) or len(_synthetic_components) != 3:
+                raise ValueError("Synthetic components must be (preprocessor, RF model, MLP model).")
+            self.model_dir = None
+            self.expected_dim = len(STANDARDIZED_21_FEATURES)
+            self.feature_names = list(STANDARDIZED_21_FEATURES)
+            self.preprocessor, self.rf_model, self.robust_mlp_model = _synthetic_components
+            self.robust_mlp_model.eval()
+            self.historical_model = None
+            self._validate_components()
+            self.initialization_mode = "SYNTHETIC_IN_MEMORY_ONLY"
+            return
 
         if self.profile == "standardized_21":
             if self.dataset not in self.SUPPORTED_STANDARDIZED_DATASETS:
@@ -88,6 +125,101 @@ class InferenceEngine:
         self.historical_model = None
 
         self._load_and_validate_artifacts()
+        self.initialization_mode = "CHECKPOINT_BACKED"
+
+    @classmethod
+    def for_synthetic_components(
+        cls,
+        *,
+        preprocessor: Any,
+        rf_model: Any,
+        mlp_model: nn.Module,
+        decision_threshold: float = 0.5,
+    ) -> "InferenceEngine":
+        """Build an inference engine from injected components for synthetic testing only.
+
+        The factory cannot select a research dataset or model directory and never
+        loads files. It exercises the same ``predict`` implementation as production.
+        """
+        return cls(
+            profile="standardized_21",
+            dataset="SYNTHETIC_ONLY",
+            decision_threshold=decision_threshold,
+            _synthetic_components=(preprocessor, rf_model, mlp_model),
+        )
+
+    @staticmethod
+    def _validate_threshold(value: Any) -> None:
+        if isinstance(value, (bool, np.bool_)) or not np.isscalar(value):
+            raise ValueError("decision_threshold must be a finite number in [0, 1].")
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError, OverflowError):
+            raise ValueError("decision_threshold must be a finite number in [0, 1].") from None
+        if not np.isfinite(numeric) or not 0.0 <= numeric <= 1.0:
+            raise ValueError("decision_threshold must be a finite number in [0, 1].")
+
+    def _validate_components(self) -> None:
+        if not callable(getattr(self.preprocessor, "transform", None)):
+            raise TypeError("Inference preprocessor must provide transform().")
+        preprocessor_features = getattr(
+            self.preprocessor,
+            "feature_names",
+            getattr(self.preprocessor, "numeric_cols", None),
+        )
+        if preprocessor_features is not None and list(preprocessor_features) != self.feature_names:
+            raise ValueError("Inference preprocessor feature order does not match the runtime schema.")
+        if not callable(getattr(self.rf_model, "predict_proba", None)):
+            raise TypeError("Inference Random Forest component must provide predict_proba().")
+        rf_dim = getattr(self.rf_model, "n_features_in_", None)
+        if rf_dim is not None and int(rf_dim) != self.expected_dim:
+            raise ValueError("Inference Random Forest feature dimension does not match the runtime schema.")
+        if not isinstance(self.robust_mlp_model, nn.Module):
+            raise TypeError("Inference MLP component must be a torch.nn.Module.")
+        first_layer = getattr(getattr(self.robust_mlp_model, "net", None), "__getitem__", None)
+        if callable(first_layer):
+            try:
+                input_dim = self.robust_mlp_model.net[0].in_features
+            except (AttributeError, IndexError, TypeError):
+                input_dim = None
+            if input_dim is not None and int(input_dim) != self.expected_dim:
+                raise ValueError("Inference MLP input dimension does not match the runtime schema.")
+
+    def _transform_preprocessor_frozen(self, df_canonical: pd.DataFrame) -> np.ndarray:
+        """Transform once, then enforce the model input shape and finite-value contract."""
+        if not callable(getattr(self.preprocessor, "transform", None)):
+            raise TypeError("Preprocessor object lacks transform() method.")
+        try:
+            transformed = np.asarray(self.preprocessor.transform(df_canonical), dtype=np.float64)
+        except (TypeError, ValueError, OverflowError):
+            raise ValueError("Preprocessor output must be a real numeric matrix.") from None
+        expected_shape = (len(df_canonical), self.expected_dim)
+        if transformed.shape != expected_shape:
+            raise ValueError(
+                f"Preprocessor output shape {transformed.shape} does not match {expected_shape}."
+            )
+        if not np.isfinite(transformed).all():
+            raise ValueError("Preprocessor output must contain only finite values.")
+        return transformed
+
+    def _positive_class_probabilities(self, output: Any, row_count: int) -> np.ndarray:
+        """Validate sklearn probability output and select class 1 explicitly."""
+        probabilities = np.asarray(output)
+        if probabilities.shape != (row_count, 2):
+            raise ValueError("Classifier predict_proba() must return an (n_samples, 2) matrix.")
+        if not np.issubdtype(probabilities.dtype, np.number) or np.iscomplexobj(probabilities):
+            raise ValueError("Classifier probabilities must be real numeric values.")
+        probabilities = probabilities.astype(np.float64)
+        if not np.isfinite(probabilities).all():
+            raise ValueError("Classifier probabilities must be finite.")
+        if ((probabilities < 0.0) | (probabilities > 1.0)).any():
+            raise ValueError("Classifier probabilities must be within [0, 1].")
+        classes = np.asarray(getattr(self.rf_model, "classes_", []))
+        if classes.shape != (2,) or not np.array_equal(classes, np.array([0, 1])):
+            raise ValueError("Classifier classes must be ordered as binary labels [0, 1].")
+        if not np.allclose(probabilities.sum(axis=1), 1.0, rtol=1e-6, atol=1e-7):
+            raise ValueError("Classifier probability rows must sum to 1.")
+        return probabilities[:, 1]
 
     def _load_and_validate_artifacts(self) -> None:
         """Loads model artifacts and validates feature input dimensions fail-fast."""
@@ -166,12 +298,6 @@ class InferenceEngine:
                     f"expected {self.expected_dim} for profile '{self.profile}'."
                 )
 
-    def _transform_preprocessor_frozen(self, df_canonical: pd.DataFrame) -> np.ndarray:
-        """Executes transform() ONLY on preprocessor without fit() or refitting."""
-        if hasattr(self.preprocessor, "transform"):
-            return self.preprocessor.transform(df_canonical)
-        raise AttributeError("Preprocessor object lacks transform() method.")
-
     def predict(
         self,
         inputs: Union[pd.DataFrame, Dict[str, Any], np.ndarray, List[Dict[str, Any]]],
@@ -189,6 +315,12 @@ class InferenceEngine:
             Structured prediction dictionary (single sample) or list of prediction dicts (batch).
         """
         # 1. Schema Validation & Canonical Ordering
+        if explain and (
+            isinstance(top_k, (bool, np.bool_))
+            or not isinstance(top_k, (int, np.integer))
+            or not 1 <= int(top_k) <= self.expected_dim
+        ):
+            raise ValueError(f"top_k must be an integer in [1, {self.expected_dim}] when explain=True.")
         df_canonical = validate_input_schema(
             inputs,
             profile=self.profile,
@@ -199,21 +331,39 @@ class InferenceEngine:
 
         # 2. Preprocessing Transformation (FROZEN - NO FIT)
         X_proc = self._transform_preprocessor_frozen(df_canonical)
+        row_count = len(df_canonical)
 
         # 3. Model Inference Execution
         if self.profile == "standardized_21":
             # RF Probabilities
-            rf_probs = self.rf_model.predict_proba(X_proc)[:, 1]
+            rf_probs = self._positive_class_probabilities(
+                self.rf_model.predict_proba(X_proc), row_count
+            )
 
             # Robust PyTorch MLP Probabilities
             with torch.no_grad():
-                mlp_logits = self.robust_mlp_model(torch.tensor(X_proc, dtype=torch.float32)).squeeze(-1)
-                mlp_probs = torch.sigmoid(mlp_logits).numpy()
-                if mlp_probs.ndim == 0:
-                    mlp_probs = np.array([float(mlp_probs)])
+                mlp_logits = self.robust_mlp_model(
+                    torch.tensor(X_proc, dtype=torch.float32)
+                )
+            if not isinstance(mlp_logits, torch.Tensor):
+                raise ValueError("MLP output must be a torch tensor of binary logits.")
+            if mlp_logits.shape == (row_count, 1):
+                mlp_logits = mlp_logits[:, 0]
+            elif mlp_logits.shape != (row_count,):
+                raise ValueError("MLP output must have one logit per input sample.")
+            if not torch.isfinite(mlp_logits).all():
+                raise ValueError("MLP logits must contain only finite values.")
+            mlp_probs = torch.sigmoid(mlp_logits).detach().cpu().numpy().astype(np.float64)
 
             # Option C Probability Fusion: 0.7 * P_RF + 0.3 * P_MLP_Adv
+            if rf_probs.shape != (row_count,) or mlp_probs.shape != (row_count,):
+                raise ValueError("Model probability outputs must match the input batch length.")
             ensemble_probs = 0.7 * rf_probs + 0.3 * mlp_probs
+            if (
+                not np.isfinite(ensemble_probs).all()
+                or ((ensemble_probs < 0.0) | (ensemble_probs > 1.0)).any()
+            ):
+                raise ValueError("Fused probabilities must be finite values within [0, 1].")
 
             results = []
             for i in range(len(ensemble_probs)):
@@ -241,13 +391,21 @@ class InferenceEngine:
                         feature_names=self.feature_names,
                         top_k=top_k,
                     )
+                    if (
+                        not isinstance(local_exp, dict)
+                        or not isinstance(local_exp.get("top_k_features"), list)
+                        or len(local_exp["top_k_features"]) != min(int(top_k), self.expected_dim)
+                    ):
+                        raise ValueError("Explainability output does not match the requested top_k contract.")
                     res["explanation"] = local_exp
 
                 results.append(res)
 
         else:
             # Historical 13-feature profile (RF only)
-            rf_probs = self.rf_model.predict_proba(X_proc)[:, 1]
+            rf_probs = self._positive_class_probabilities(
+                self.rf_model.predict_proba(X_proc), row_count
+            )
             results = []
             for i in range(len(rf_probs)):
                 p_rf = float(rf_probs[i])

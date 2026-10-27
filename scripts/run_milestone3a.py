@@ -114,6 +114,8 @@ def disk_backed_deduplication(
     parquet_files: list[Path],
     split_root: Path
 ) -> tuple[dict[str, dict[int, set[int]]], dict[str, Any]]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     bucket_dir = split_root / "tmp_buckets" / dataset
     if bucket_dir.exists():
         shutil.rmtree(bucket_dir)
@@ -242,6 +244,8 @@ def manifest_to_serializable(stats: dict[str, Any]) -> dict[str, Any]:
     return serial
 
 def validate_dataset(dataset: str, cache_manifest: dict[str, Any], split_root: Path, cache_dir: Path = None) -> dict[str, Any]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     if cache_dir is None:
         cache_dir = split_root.parents[1] / "research" / dataset / cache_manifest["fingerprint"]
     parquet_files = sorted(cache_dir.glob("part-*.parquet"))
@@ -307,6 +311,8 @@ def validate_dataset(dataset: str, cache_manifest: dict[str, Any], split_root: P
     return serial
 
 def run() -> dict[str, Any]:
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     audit = read_json(ROOT / "reports" / "eda" / "dataset_audit.json")
     raw_rows = {ds["name"]: sum((f.get("row_count") or 0) for f in ds["files"]) for ds in audit["datasets"]}
     cache_root = ROOT / "data" / "processed" / "research"

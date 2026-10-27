@@ -101,6 +101,8 @@ def train_autoencoder(X_benign: np.ndarray, epochs: int = 15, batch_size: int = 
 
 
 def main():
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
     parser = argparse.ArgumentParser(description="Stage 05: Model Training (RF, MLP, Autoencoder)")
     parser.add_argument(
         "--profile",

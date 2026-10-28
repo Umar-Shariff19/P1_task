@@ -216,6 +216,58 @@ def _pipeline_with_test_model(model, feature_names=None):
     )
 
 
+def test_synthetic_packets_aggregate_into_inference_alert():
+    """Generated packets traverse aggregation, feature extraction, and shared inference."""
+    model = _SyntheticThresholdModel()
+    pipeline = _pipeline_with_test_model(model)
+    packets = [
+        {
+            "timestamp": 100.0,
+            "src_ip": "10.0.0.1",
+            "dst_ip": "192.168.1.10",
+            "src_port": 12345,
+            "dst_port": 80,
+            "protocol": "tcp",
+            "length": 120,
+            "syn": 1,
+            "label": 1,
+            "attack_category": "SYNTHETIC_TEST",
+        },
+        {
+            "timestamp": 101.0,
+            "src_ip": "10.0.0.1",
+            "dst_ip": "192.168.1.10",
+            "src_port": 12345,
+            "dst_port": 80,
+            "protocol": "tcp",
+            "length": 80,
+            "ack": 1,
+            "label": 1,
+            "attack_category": "SYNTHETIC_TEST",
+        },
+    ]
+
+    for packet in packets:
+        assert pipeline.flow_aggregator.add_packet(packet) is None
+    flows = pipeline.flow_aggregator.flush()
+    assert len(flows) == 1
+    assert flows[0].timestamp_end - flows[0].timestamp_start == pytest.approx(1.0)
+
+    alert = pipeline.process_flow(flows[0])
+    alert = json.loads(json.dumps(alert, allow_nan=False))
+
+    assert model.last_features.shape == (1, len(CANONICAL_18_FEATURE_NAMES))
+    assert list(alert["raw_features"]) == list(CANONICAL_18_FEATURE_NAMES)
+    assert alert["feature_profile"] == "synthetic_test"
+    assert alert["prediction_prob"] == pytest.approx(0.9)
+    assert alert["decision_threshold"] == pytest.approx(0.5)
+    assert alert["is_anomaly"] is True
+    assert alert["risk_score"] == pytest.approx(0.9)
+    assert alert["risk_level"] == "CRITICAL"
+    assert alert["src_ip"] == "10.0.0.1"
+    assert alert["dst_ip"] == "192.168.1.10"
+
+
 def test_batch_inference_uses_declared_positive_class_and_canonical_feature_order():
     model = _ReverseClassProbabilityModel()
     pipeline = _pipeline_with_test_model(model)

@@ -17,6 +17,54 @@ from iot_ids.features.canonical.flow_builder import CanonicalFlowBuilder, CANONI
 from iot_ids.experiments.preprocessing import FeaturePreprocessor
 from iot_ids.adaptation.alignment import UnsupervisedFeatureAligner
 from iot_ids.adaptation.calibration import TargetThresholdCalibrator
+from iot_ids.runtime.schema import validate_input_schema
+
+
+def _positive_class_probabilities(model: Any, features: np.ndarray) -> np.ndarray:
+    """Return validated probabilities for binary attack label 1.
+
+    Class labels are not probabilities, and probability-column order is defined
+    by the estimator's ``classes_`` attribute rather than by convention.
+    """
+    predict_proba = getattr(model, "predict_proba", None)
+    if not callable(predict_proba):
+        raise TypeError("IDS inference model must provide predict_proba for attack probabilities")
+
+    classes = np.asarray(getattr(model, "classes_", None))
+    if classes.ndim != 1 or classes.size != 2 or not np.array_equal(
+        np.sort(classes), np.array([0, 1])
+    ):
+        raise ValueError("IDS inference model classes_ must contain binary labels 0 and 1")
+    positive_index = int(np.flatnonzero(classes == 1)[0])
+
+    try:
+        raw_probabilities = np.asarray(predict_proba(features))
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("IDS model predict_proba output must be a rectangular numeric array") from exc
+    if (
+        not np.issubdtype(raw_probabilities.dtype, np.number)
+        or np.iscomplexobj(raw_probabilities)
+    ):
+        raise ValueError("IDS model predict_proba output must contain real numeric probabilities")
+    probabilities = raw_probabilities.astype(float)
+    expected_rows = len(features)
+    if probabilities.ndim != 2 or probabilities.shape != (expected_rows, 2):
+        raise ValueError("IDS model predict_proba output must have shape (n_samples, 2)")
+    if not np.isfinite(probabilities).all() or (
+        (probabilities < 0.0) | (probabilities > 1.0)
+    ).any():
+        raise ValueError("IDS model probabilities must be finite values within [0, 1]")
+    if not np.allclose(probabilities.sum(axis=1), 1.0, rtol=1e-5, atol=1e-7):
+        raise ValueError("IDS model probability rows must sum to one")
+    return probabilities[:, positive_index]
+
+
+def _validated_feature_frame(frame: pd.DataFrame, feature_names: List[str]) -> pd.DataFrame:
+    missing = [name for name in feature_names if name not in frame.columns]
+    if missing:
+        raise ValueError(f"Input is missing configured model features: {missing}")
+    ordered = frame.loc[:, feature_names]
+    return validate_input_schema(ordered, expected_feature_names=feature_names)
 
 
 @dataclass(frozen=True)
@@ -58,7 +106,25 @@ class IDSSystemPipeline:
         self.model = model
         self.preprocessor = preprocessor
         self.feature_profile = feature_profile
-        self.feature_names = feature_names or CANONICAL_18_FEATURE_NAMES
+        configured_features = list(
+            CANONICAL_18_FEATURE_NAMES if feature_names is None else feature_names
+        )
+        if (
+            not configured_features
+            or any(not isinstance(name, str) or not name.strip() for name in configured_features)
+            or len(configured_features) != len(set(configured_features))
+        ):
+            raise ValueError("feature_names must contain unique, non-empty feature names")
+        if isinstance(decision_threshold, (bool, np.bool_)) or not np.isscalar(decision_threshold):
+            raise ValueError("decision_threshold must be a finite number within [0, 1]")
+        try:
+            decision_threshold = float(decision_threshold)
+        except (TypeError, ValueError, OverflowError):
+            raise ValueError("decision_threshold must be a finite number within [0, 1]") from None
+        if not np.isfinite(decision_threshold) or not 0.0 <= decision_threshold <= 1.0:
+            raise ValueError("decision_threshold must be a finite number within [0, 1]")
+
+        self.feature_names = configured_features
         self.aligner = aligner
         self.calibrator = calibrator
         self.decision_threshold = decision_threshold
@@ -110,11 +176,7 @@ class IDSSystemPipeline:
             
         df_single = pd.DataFrame([flat_feats])
         
-        present_cols = [c for c in self.feature_names if c in df_single.columns]
-        if len(present_cols) == 0:
-            present_cols = [c for c in df_single.columns if c in CANONICAL_18_FEATURE_NAMES]
-            
-        X_df = df_single[present_cols]
+        X_df = _validated_feature_frame(df_single, self.feature_names)
         
         # 2. Preprocessing & Optional Alignment
         if self.aligner is not None and getattr(self.aligner, "is_fitted", False):
@@ -123,12 +185,7 @@ class IDSSystemPipeline:
             X_proc = self.preprocessor.transform(X_df)
             
         # 3. Model Prediction
-        if hasattr(self.model, "predict_proba"):
-            probs = self.model.predict_proba(X_proc)[:, 1]
-            prob = float(probs[0])
-        else:
-            decision = self.model.predict(X_proc)
-            prob = float(decision[0])
+        prob = float(_positive_class_probabilities(self.model, X_proc)[0])
             
         # 4. Threshold Calibration / Risk Score
         thresh = self.decision_threshold
@@ -150,7 +207,7 @@ class IDSSystemPipeline:
             risk_score=risk_score,
             risk_level=risk_level,
             feature_profile=self.feature_profile,
-            raw_features=flat_feats,
+            raw_features={name: flat_feats[name] for name in self.feature_names},
         )
         return alert_obj.to_dict()
 
@@ -158,18 +215,17 @@ class IDSSystemPipeline:
         """Batch processes a DataFrame of flow parameters or pre-extracted materialized features."""
         results = []
 
-        # Fast path: DataFrame already contains extracted feature columns
-        feat_match = [c for c in CANONICAL_18_FEATURE_NAMES if c in df_flows.columns]
-        if len(feat_match) >= 10:
+        # Materialized feature frames are detected by configured schema overlap,
+        # not an arbitrary minimum count; valid profiles may contain <10 features.
+        present_features = [name for name in self.feature_names if name in df_flows.columns]
+        if present_features:
+            df_features = _validated_feature_frame(df_flows, self.feature_names)
             if self.aligner is not None and getattr(self.aligner, "is_fitted", False):
-                X_proc = self.aligner.transform(df_flows)
+                X_proc = self.aligner.transform(df_features)
             else:
-                X_proc = self.preprocessor.transform(df_flows)
+                X_proc = self.preprocessor.transform(df_features)
 
-            if hasattr(self.model, "predict_proba"):
-                probs = self.model.predict_proba(X_proc)[:, 1]
-            else:
-                probs = self.model.predict(X_proc).astype(float)
+            probs = _positive_class_probabilities(self.model, X_proc)
 
             thresh = self.decision_threshold
             if self.calibrator is not None and getattr(self.calibrator, "calibrated_threshold", None) is not None:
@@ -193,7 +249,11 @@ class IDSSystemPipeline:
                     risk_score=r_score,
                     risk_level=r_level,
                     feature_profile=self.feature_profile,
-                    raw_features={c: float(row[c]) for c in feat_match if c in row and isinstance(row[c], (int, float, np.number))},
+                    raw_features={
+                        name: float(row[name])
+                        for name in self.feature_names
+                        if isinstance(row[name], (int, float, np.number))
+                    },
                 )
                 results.append(alert.to_dict())
             return results

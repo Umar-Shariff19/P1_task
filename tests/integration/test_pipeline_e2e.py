@@ -3,6 +3,7 @@
 Verifies raw telemetry -> FlowAggregator -> 18-feature extraction -> Preprocessor ->
 Model inference -> Threshold decision -> Structured alert output, including save/load round-trips.
 """
+import json
 import tempfile
 from pathlib import Path
 import pytest
@@ -13,7 +14,9 @@ from sklearn.ensemble import RandomForestClassifier
 from iot_ids.data.flow_object import CanonicalFlow
 from iot_ids.features.canonical.flow_builder import CANONICAL_18_FEATURE_NAMES
 from iot_ids.experiments.preprocessing import FeaturePreprocessor
+from iot_ids.experiments.evaluator import evaluate_predictions
 from iot_ids.pipeline.system import IDSSystemPipeline
+from iot_ids.runtime import STANDARDIZED_21_FEATURES
 from iot_ids.registry.manager import ModelRegistry
 from iot_ids.inference.predictor import IDSPredictor
 
@@ -150,3 +153,248 @@ def test_e2e_deterministic_inference(trained_pipeline):
 
     assert res1["prediction_prob"] == res2["prediction_prob"]
     assert res1["risk_score"] == res2["risk_score"]
+
+
+class _IdentityPreprocessor:
+    def transform(self, frame):
+        return frame.to_numpy(dtype=float)
+
+
+class _ReverseClassProbabilityModel:
+    classes_ = np.array([1, 0])
+
+    def predict_proba(self, features):
+        self.last_features = np.asarray(features).copy()
+        return np.tile(np.array([[0.8, 0.2]]), (len(features), 1))
+
+
+class _SyntheticThresholdModel:
+    classes_ = np.array([1, 0])
+
+    def predict_proba(self, features):
+        values = np.asarray(features, dtype=float)
+        self.last_features = values.copy()
+        positive_probability = np.where(values[:, 0] > 0.0, 0.9, 0.1)
+        return np.column_stack((positive_probability, 1.0 - positive_probability))
+
+
+def _pipeline_with_test_model(model, feature_names=None):
+    return IDSSystemPipeline(
+        model=model,
+        preprocessor=_IdentityPreprocessor(),
+        feature_profile="synthetic_test",
+        feature_names=list(feature_names or CANONICAL_18_FEATURE_NAMES),
+    )
+
+
+def test_batch_inference_uses_declared_positive_class_and_canonical_feature_order():
+    model = _ReverseClassProbabilityModel()
+    pipeline = _pipeline_with_test_model(model)
+    values = np.arange(len(CANONICAL_18_FEATURE_NAMES), dtype=float)
+    frame = pd.DataFrame(
+        [dict(zip(CANONICAL_18_FEATURE_NAMES, values))],
+        columns=list(reversed(CANONICAL_18_FEATURE_NAMES)),
+    )
+
+    alerts = pipeline.process_dataframe(frame)
+
+    assert model.last_features.tolist() == [values.tolist()]
+    assert alerts[0]["prediction_prob"] == pytest.approx(0.8)
+
+
+def test_batch_inference_preserves_configured_feature_subset():
+    model = _ReverseClassProbabilityModel()
+    selected_features = list(CANONICAL_18_FEATURE_NAMES[:10])
+    pipeline = _pipeline_with_test_model(model, feature_names=selected_features)
+    values = np.arange(len(CANONICAL_18_FEATURE_NAMES), dtype=float)
+    frame = pd.DataFrame(
+        [dict(zip(CANONICAL_18_FEATURE_NAMES, values))],
+        columns=list(reversed(CANONICAL_18_FEATURE_NAMES)),
+    )
+
+    pipeline.process_dataframe(frame)
+
+    expected = [[float(CANONICAL_18_FEATURE_NAMES.index(name)) for name in selected_features]]
+    assert model.last_features.tolist() == expected
+
+
+def test_synthetic_pipeline_to_metrics_record_end_to_end():
+    assert tuple(STANDARDIZED_21_FEATURES) == tuple(CANONICAL_18_FEATURE_NAMES)
+    selected_features = list(STANDARDIZED_21_FEATURES[:8])
+    training_values = np.zeros((8, len(selected_features)), dtype=float)
+    training_values[:, 0] = np.tile([0.0, 1.0], 4)
+    training_frame = pd.DataFrame(training_values, columns=selected_features)
+    preprocessor = FeaturePreprocessor(selected_features)
+    preprocessor.fit_transform(training_frame)
+
+    model = _SyntheticThresholdModel()
+    pipeline = IDSSystemPipeline(
+        model=model,
+        preprocessor=preprocessor,
+        feature_profile="synthetic_test_subset",
+        feature_names=selected_features,
+    )
+    labels = np.array([0, 1, 0, 1])
+    evaluation_values = np.zeros((4, len(STANDARDIZED_21_FEATURES)), dtype=float)
+    evaluation_values[:, 0] = [0.2, 0.8, 0.1, 0.9]
+    evaluation_frame = pd.DataFrame(
+        evaluation_values,
+        columns=STANDARDIZED_21_FEATURES,
+    )
+    evaluation_frame["label"] = labels
+    evaluation_frame = evaluation_frame[["label", *reversed(STANDARDIZED_21_FEATURES)]]
+
+    alerts = pipeline.process_dataframe(evaluation_frame)
+    probabilities = np.asarray([alert["prediction_prob"] for alert in alerts])
+    metrics = evaluate_predictions(labels, probabilities, threshold=0.5)
+    report_record = {
+        "designation": "SYNTHETIC_ONLY",
+        "interpretation": "TEST_FIXTURE_NOT_BENCHMARK_EVIDENCE",
+        "sample_count": len(labels),
+        "metrics": metrics,
+    }
+
+    assert model.last_features.shape == (len(labels), len(selected_features))
+    assert all(set(alert["raw_features"]) == set(selected_features) for alert in alerts)
+    expected_probabilities = [0.1, 0.9, 0.1, 0.9]
+    assert all(
+        alert["prediction_prob"] == expected
+        for alert, expected in zip(alerts, expected_probabilities)
+    )
+    assert metrics["result_status"] == "COMPLETE"
+    assert metrics["roc_auc"] == pytest.approx(1.0)
+    assert json.loads(json.dumps(report_record, allow_nan=False))["designation"] == "SYNTHETIC_ONLY"
+
+
+def test_materialized_subset_missing_a_configured_feature_fails_before_preprocessing():
+    selected_features = list(CANONICAL_18_FEATURE_NAMES[:8])
+    pipeline = _pipeline_with_test_model(
+        _SyntheticThresholdModel(), feature_names=selected_features
+    )
+    incomplete_frame = pd.DataFrame(
+        np.zeros((1, len(selected_features) - 1)),
+        columns=selected_features[:-1],
+    )
+
+    with pytest.raises(ValueError, match="missing configured model features"):
+        pipeline.process_dataframe(incomplete_frame)
+
+
+@pytest.mark.parametrize(
+    ("invalid_value", "message"),
+    [(np.nan, "contain NaN"), ("not-a-number", "real numeric values")],
+)
+def test_materialized_feature_schema_rejects_invalid_values(invalid_value, message):
+    selected_features = list(CANONICAL_18_FEATURE_NAMES[:8])
+    pipeline = _pipeline_with_test_model(
+        _SyntheticThresholdModel(), feature_names=selected_features
+    )
+    if isinstance(invalid_value, str):
+        values = np.zeros((1, len(selected_features)), dtype=object)
+        values[0, 0] = invalid_value
+        frame = pd.DataFrame(values, columns=selected_features)
+    else:
+        frame = pd.DataFrame(
+            np.zeros((1, len(selected_features))), columns=selected_features
+        )
+        frame.iloc[0, 0] = invalid_value
+
+    with pytest.raises(ValueError, match=message):
+        pipeline.process_dataframe(frame)
+
+
+def test_pipeline_rejects_invalid_feature_and_threshold_configuration():
+    with pytest.raises(ValueError, match="unique, non-empty"):
+        _pipeline_with_test_model(_SyntheticThresholdModel(), feature_names=["dup", "dup"])
+
+    with pytest.raises(ValueError, match="decision_threshold"):
+        IDSSystemPipeline(
+            model=_SyntheticThresholdModel(),
+            preprocessor=_IdentityPreprocessor(),
+            decision_threshold=float("nan"),
+        )
+
+
+def test_preprocessing_failure_propagates_without_model_success():
+    class FailingPreprocessor:
+        def transform(self, frame):
+            raise RuntimeError("synthetic preprocessing failure")
+
+    class MustNotRunModel:
+        classes_ = np.array([0, 1])
+
+        def predict_proba(self, features):
+            pytest.fail("model must not run after preprocessing fails")
+
+    pipeline = IDSSystemPipeline(
+        model=MustNotRunModel(),
+        preprocessor=FailingPreprocessor(),
+        feature_names=list(CANONICAL_18_FEATURE_NAMES[:8]),
+    )
+    frame = pd.DataFrame(
+        np.zeros((1, len(CANONICAL_18_FEATURE_NAMES[:8]))),
+        columns=CANONICAL_18_FEATURE_NAMES[:8],
+    )
+
+    with pytest.raises(RuntimeError, match="synthetic preprocessing failure"):
+        pipeline.process_dataframe(frame)
+
+
+def test_batch_inference_rejects_class_labels_masquerading_as_probabilities():
+    class LabelOnlyModel:
+        classes_ = np.array([0, 1])
+
+        def predict(self, features):
+            return np.ones(len(features), dtype=int)
+
+    pipeline = _pipeline_with_test_model(LabelOnlyModel())
+    frame = pd.DataFrame(
+        [np.zeros(len(CANONICAL_18_FEATURE_NAMES))],
+        columns=CANONICAL_18_FEATURE_NAMES,
+    )
+
+    with pytest.raises(TypeError, match="must provide predict_proba"):
+        pipeline.process_dataframe(frame)
+
+
+def test_batch_inference_rejects_non_finite_model_probabilities():
+    class InvalidProbabilityModel:
+        classes_ = np.array([0, 1])
+
+        def predict_proba(self, features):
+            return np.tile(np.array([[np.nan, np.nan]]), (len(features), 1))
+
+    pipeline = _pipeline_with_test_model(InvalidProbabilityModel())
+    frame = pd.DataFrame(
+        [np.zeros(len(CANONICAL_18_FEATURE_NAMES))],
+        columns=CANONICAL_18_FEATURE_NAMES,
+    )
+
+    with pytest.raises(ValueError, match="finite values within"):
+        pipeline.process_dataframe(frame)
+
+
+@pytest.mark.parametrize(
+    ("probabilities", "message"),
+    [
+        ([[1.1, -0.1]], "finite values within"),
+        ([[0.4]], "shape"),
+        ([[0.2, 0.2]], "sum to one"),
+        ([["0.9", "0.1"]], "real numeric probabilities"),
+    ],
+)
+def test_batch_inference_rejects_malformed_probability_rows(probabilities, message):
+    class InvalidProbabilityModel:
+        classes_ = np.array([0, 1])
+
+        def predict_proba(self, features):
+            return np.tile(np.asarray(probabilities), (len(features), 1))
+
+    pipeline = _pipeline_with_test_model(InvalidProbabilityModel())
+    frame = pd.DataFrame(
+        [np.zeros(len(CANONICAL_18_FEATURE_NAMES))],
+        columns=CANONICAL_18_FEATURE_NAMES,
+    )
+
+    with pytest.raises(ValueError, match=message):
+        pipeline.process_dataframe(frame)

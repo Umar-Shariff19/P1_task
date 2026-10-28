@@ -10,5 +10,11 @@ def test_feature_schema_levels_and_availability() -> None:
     assert "duration" in names
     assert "src_bytes" in names
     common = select_features(features, levels={"common"})
-    assert common
+    assert len(common) == 6
     assert all(feature.level == "common" for feature in common)
+    temporal = select_features(features, levels={"temporal"})
+    assert temporal
+    assert all(feature.level == "temporal" for feature in temporal)
+    cross_dataset = select_features(features, valid_for="cross_dataset")
+    assert cross_dataset
+    assert all(feature.valid_for in {"cross_dataset", "both"} for feature in cross_dataset)

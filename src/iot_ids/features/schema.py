@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-FeatureLevel = Literal["instant", "temporal", "behavioral"]
+FeatureLevel = Literal["common", "instant", "temporal", "behavioral"]
 FeatureValidity = Literal["cross_dataset", "in_domain", "both"]
 
 

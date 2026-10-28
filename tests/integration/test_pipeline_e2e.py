@@ -1,11 +1,10 @@
 """End-to-End Integration Tests for Multi-Level Operational Pipeline.
 
-Verifies raw telemetry -> FlowAggregator -> 18-feature extraction -> Preprocessor ->
-Model inference -> Threshold decision -> Structured alert output, including save/load round-trips.
+Verifies raw telemetry -> FlowAggregator -> 21-feature extraction -> Preprocessor ->
+Model inference -> Threshold decision -> Structured alert output. Registry persistence is
+tested separately for its fail-closed authorization behavior.
 """
 import json
-import tempfile
-from pathlib import Path
 import pytest
 import numpy as np
 import pandas as pd
@@ -18,7 +17,11 @@ from iot_ids.experiments.evaluator import evaluate_predictions
 from iot_ids.pipeline.system import IDSSystemPipeline
 from iot_ids.runtime import STANDARDIZED_21_FEATURES
 from iot_ids.registry.manager import ModelRegistry
-from iot_ids.inference.predictor import IDSPredictor
+import iot_ids.registry.manager as registry_manager
+from iot_ids.provenance.windows_access import (
+    AccessCode,
+    RealDataAuthorizationUnavailable,
+)
 
 
 @pytest.fixture
@@ -75,7 +78,7 @@ def create_sample_flow(timestamp=100.0, dst_host="10.0.0.1", label=0):
 
 
 def test_e2e_normal_flow_inference(trained_pipeline):
-    """Verifies flow -> 18 features -> preprocessor -> model -> alert dict."""
+    """Verifies flow -> 21 features -> preprocessor -> model -> alert dict."""
     flow = create_sample_flow()
     res = trained_pipeline.process_flow(flow)
 
@@ -109,24 +112,50 @@ def test_e2e_stateful_feature_evolution_and_reset(trained_pipeline):
     assert res1_after_reset["raw_features"]["behavioral_dst_diversity"] == div1
 
 
-def test_e2e_save_load_registry_roundtrip(trained_pipeline):
-    """Verifies pipeline save -> load -> predictor roundtrip reproducibility."""
-    flow = create_sample_flow()
-    res_orig = trained_pipeline.process_flow(flow)
+def test_registry_save_and_load_refuse_before_filesystem_access(tmp_path, monkeypatch):
+    """Registry persistence remains blocked before any filesystem or artifact I/O."""
+    save_path = tmp_path / "must_not_be_created"
+    load_path = tmp_path / "must_not_be_read"
+    filesystem_calls = []
 
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        save_path = Path(tmp_dir) / "pipeline_artifact"
-        ModelRegistry.save_pipeline(trained_pipeline, save_path, metadata={"version": "1.0"})
+    def track_path_construction(*args, **kwargs):
+        filesystem_calls.append("path_construction")
+        raise AssertionError("authorization refusal must precede path handling")
 
-        # Instantiate predictor from saved artifact
-        predictor = IDSPredictor.from_artifact(save_path)
-        predictor.reset_state()
-        
-        res_loaded = predictor.predict_flow(flow)
+    def track_io(operation):
+        def fail_if_called(*args, **kwargs):
+            filesystem_calls.append(operation)
+            raise AssertionError(f"authorization refusal must precede {operation}")
 
-        assert np.isclose(res_orig["prediction_prob"], res_loaded["prediction_prob"])
-        assert res_orig["is_anomaly"] == res_loaded["is_anomaly"]
-        assert res_orig["risk_level"] == res_loaded["risk_level"]
+        return fail_if_called
+
+    def refusal(operation, *args, **kwargs):
+        try:
+            operation(*args, **kwargs)
+        except RealDataAuthorizationUnavailable as exc:
+            assert exc.code is AccessCode.REAL_AUTHORIZATION_DISABLED
+            return
+        pytest.fail("registry operation did not enforce real-data authorization")
+
+    # The target paths are synthetic and absent. Instrument every I/O boundary
+    # reached by the current registry implementation after authorization.
+    with monkeypatch.context() as patch:
+        patch.setattr(registry_manager, "Path", track_path_construction)
+        patch.setattr(registry_manager, "open", track_io("metadata open"), raising=False)
+        patch.setattr(registry_manager.joblib, "dump", track_io("joblib dump"))
+        patch.setattr(registry_manager.joblib, "load", track_io("joblib load"))
+
+        refusal(
+            ModelRegistry.save_pipeline,
+            object(),
+            save_path,
+            metadata={"fixture": "synthetic-only"},
+        )
+        refusal(ModelRegistry.load_pipeline, load_path)
+
+    assert filesystem_calls == []
+    assert not save_path.exists()
+    assert not load_path.exists()
 
 
 def test_e2e_batch_dataframe_inference(trained_pipeline):

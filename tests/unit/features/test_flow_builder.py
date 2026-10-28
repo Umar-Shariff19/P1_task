@@ -1,12 +1,16 @@
-"""Unit tests for CanonicalFlowBuilder and 18-dimensional vector materialization."""
+"""Unit tests for CanonicalFlowBuilder and 21-dimensional vector materialization."""
 
 import pytest
 import numpy as np
 from iot_ids.data.flow_object import CanonicalFlow
-from iot_ids.features.canonical.flow_builder import CanonicalFlowBuilder, CANONICAL_18_FEATURE_NAMES
+from iot_ids.features.canonical.flow_builder import (
+    CANONICAL_18_FEATURE_NAMES,
+    CANONICAL_21_FEATURE_NAMES,
+    CanonicalFlowBuilder,
+)
 
 
-def test_flow_builder_18_dimensional_vector():
+def test_flow_builder_21_dimensional_vector():
     builder = CanonicalFlowBuilder()
 
     flow = CanonicalFlow(
@@ -31,7 +35,9 @@ def test_flow_builder_18_dimensional_vector():
 
     vec = builder.build_vector(flow)
     assert isinstance(vec, np.ndarray)
-    assert vec.shape == (21,)  # 11 Level A (8 core + 4 proto one-hot) + 5 Level B + 5 Level C
+    assert vec.shape == (21,)  # 11 instantaneous + 5 temporal + 5 behavioral
+    assert len(CANONICAL_21_FEATURE_NAMES) == 21
+    assert CANONICAL_18_FEATURE_NAMES is CANONICAL_21_FEATURE_NAMES
     assert not np.isnan(vec).any()
     assert not np.isinf(vec).any()
 

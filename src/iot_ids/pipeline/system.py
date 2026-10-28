@@ -1,7 +1,7 @@
 """Unified Multi-Level Operational IDS Pipeline.
 
 Composes tested pipeline components:
-FlowAggregator -> CanonicalFlowBuilder (18 Multi-Level Features) -> FeaturePreprocessor ->
+FlowAggregator -> CanonicalFlowBuilder (21 Multi-Level Features) -> FeaturePreprocessor ->
 Optional UnsupervisedFeatureAligner -> Trained Model -> TargetThresholdCalibrator -> Risk/Alert Output.
 """
 from __future__ import annotations
@@ -13,7 +13,7 @@ import pandas as pd
 
 from iot_ids.data.flow_object import CanonicalFlow
 from iot_ids.data.flow_aggregator import FlowAggregator
-from iot_ids.features.canonical.flow_builder import CanonicalFlowBuilder, CANONICAL_18_FEATURE_NAMES
+from iot_ids.features.canonical.flow_builder import CanonicalFlowBuilder, CANONICAL_21_FEATURE_NAMES
 from iot_ids.experiments.preprocessing import FeaturePreprocessor
 from iot_ids.adaptation.alignment import UnsupervisedFeatureAligner
 from iot_ids.adaptation.calibration import TargetThresholdCalibrator
@@ -107,7 +107,7 @@ class IDSSystemPipeline:
         self.preprocessor = preprocessor
         self.feature_profile = feature_profile
         configured_features = list(
-            CANONICAL_18_FEATURE_NAMES if feature_names is None else feature_names
+            CANONICAL_21_FEATURE_NAMES if feature_names is None else feature_names
         )
         if (
             not configured_features
@@ -167,7 +167,7 @@ class IDSSystemPipeline:
 
     def process_flow(self, flow: CanonicalFlow) -> Dict[str, Any]:
         """Processes a single CanonicalFlow object through the full multi-level inference pipeline."""
-        # 1. Feature Extraction (18 Semantic Features)
+        # 1. Feature extraction in the configured canonical feature order (21 by default).
         feats_dict = self.flow_builder.build_features(flow)
         
         flat_feats = {}
@@ -258,7 +258,7 @@ class IDSSystemPipeline:
                 results.append(alert.to_dict())
             return results
 
-        # Slow path: Raw flow fields needing CanonicalFlow construction & 18-feature extraction
+        # Slow path: Raw flow fields needing CanonicalFlow construction & 21-feature extraction
         for _, row in df_flows.iterrows():
             t_start = float(row.get("timestamp_start", 0.0))
             t_end = float(row.get("timestamp_end", t_start + 1.0))

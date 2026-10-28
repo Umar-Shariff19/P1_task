@@ -3,7 +3,11 @@
 from iot_ids.features.canonical.instant import InstantaneousFeatureExtractor, INSTANT_FEATURE_NAMES
 from iot_ids.features.canonical.temporal import TemporalFeatureExtractor, TEMPORAL_FEATURE_NAMES
 from iot_ids.features.canonical.behavioral import BehavioralFeatureExtractor, BEHAVIORAL_FEATURE_NAMES
-from iot_ids.features.canonical.flow_builder import CanonicalFlowBuilder, CANONICAL_18_FEATURE_NAMES
+from iot_ids.features.canonical.flow_builder import (
+    CANONICAL_18_FEATURE_NAMES,
+    CANONICAL_21_FEATURE_NAMES,
+    CanonicalFlowBuilder,
+)
 
 __all__ = [
     "InstantaneousFeatureExtractor",
@@ -14,4 +18,5 @@ __all__ = [
     "BEHAVIORAL_FEATURE_NAMES",
     "CanonicalFlowBuilder",
     "CANONICAL_18_FEATURE_NAMES",
+    "CANONICAL_21_FEATURE_NAMES",
 ]

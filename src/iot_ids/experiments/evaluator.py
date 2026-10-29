@@ -5,7 +5,10 @@ Calculates threshold-independent metrics (ROC-AUC, PR-AUC), threshold-dependent 
 """
 from __future__ import annotations
 
-from typing import Dict, Any
+import json
+from pathlib import Path
+import re
+from typing import Dict, Any, Union
 import numpy as np
 from sklearn.metrics import (
     roc_auc_score,
@@ -17,6 +20,297 @@ from sklearn.metrics import (
     f1_score,
     confusion_matrix,
 )
+
+_HEX_64_PATTERN = re.compile(r"^[0-9a-fA-F]{64}$")
+
+
+def load_evaluation_schema() -> Dict[str, Any]:
+    """Loads the real-data evaluation JSON schema from configs/real_data_evaluation_schema.json."""
+    from iot_ids.utils.paths import REPO_ROOT
+
+    schema_path = REPO_ROOT / "configs" / "real_data_evaluation_schema.json"
+    if schema_path.is_file():
+        try:
+            return json.loads(schema_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    # Embedded fallback to guarantee offline availability and closed failure mode
+    return {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "RealDataEvaluationArtifactSchema",
+        "type": "object",
+        "required": [
+            "evaluation_metadata",
+            "dataset_provenance",
+            "artifact_digests",
+            "feature_schema",
+            "split_provenance",
+            "model_configuration",
+            "performance_metrics",
+            "system_and_latency",
+        ],
+        "properties": {
+            "evaluation_metadata": {
+                "type": "object",
+                "required": [
+                    "timestamp_iso",
+                    "git_commit",
+                    "authorization_scope",
+                    "evaluation_type",
+                    "reproducible_command",
+                ],
+                "properties": {
+                    "timestamp_iso": {"type": "string"},
+                    "git_commit": {"type": "string"},
+                    "authorization_scope": {"type": "string"},
+                    "evaluation_type": {
+                        "type": "string",
+                        "enum": ["REAL_DATA_OFFICIAL", "SYNTHETIC_BENCHMARK_ONLY"],
+                    },
+                    "reproducible_command": {"type": "string"},
+                },
+            },
+            "dataset_provenance": {
+                "type": "object",
+                "required": ["dataset_id", "source_digest_sha256", "record_count", "class_balance"],
+                "properties": {
+                    "dataset_id": {
+                        "type": "string",
+                        "enum": [
+                            "Edge-IIoTset",
+                            "ToN-IoT",
+                            "NF-ToN-IoT-v2",
+                            "CICIoT2023",
+                            "CICIDS2017",
+                            "BoT-IoT",
+                            "N-BaIoT",
+                        ],
+                    },
+                    "source_digest_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+                    "record_count": {"type": "integer", "minimum": 1},
+                    "class_balance": {"type": "object"},
+                },
+            },
+            "artifact_digests": {
+                "type": "object",
+                "required": ["rf_model_sha256", "preprocessor_sha256"],
+                "properties": {
+                    "rf_model_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+                    "mlp_model_sha256": {"type": ["string", "null"]},
+                    "ae_model_sha256": {"type": ["string", "null"]},
+                    "preprocessor_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+                },
+            },
+            "feature_schema": {
+                "type": "object",
+                "required": ["profile_name", "feature_count", "canonical_feature_names"],
+                "properties": {
+                    "profile_name": {"type": "string"},
+                    "feature_count": {"type": "integer", "enum": [6, 13, 21]},
+                    "canonical_feature_names": {"type": "array", "items": {"type": "string"}},
+                },
+            },
+            "split_provenance": {
+                "type": "object",
+                "required": [
+                    "split_strategy",
+                    "train_indices_hash",
+                    "val_indices_hash",
+                    "test_indices_hash",
+                    "temporal_non_inversion_verified",
+                ],
+                "properties": {
+                    "split_strategy": {"type": "string", "enum": ["chronological", "stratified"]},
+                    "train_indices_hash": {"type": "string"},
+                    "val_indices_hash": {"type": "string"},
+                    "test_indices_hash": {"type": "string"},
+                    "temporal_non_inversion_verified": {"type": "boolean"},
+                },
+            },
+            "model_configuration": {
+                "type": "object",
+                "required": ["architecture", "fusion_weights", "decision_threshold"],
+                "properties": {
+                    "architecture": {"type": "string"},
+                    "fusion_weights": {"type": "object"},
+                    "decision_threshold": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                },
+            },
+            "performance_metrics": {
+                "type": "object",
+                "required": [
+                    "accuracy",
+                    "precision",
+                    "recall",
+                    "f1_score",
+                    "roc_auc",
+                    "pr_auc",
+                    "false_positive_rate",
+                    "confusion_matrix",
+                ],
+                "properties": {
+                    "accuracy": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                    "precision": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                    "recall": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                    "f1_score": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                    "roc_auc": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                    "pr_auc": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                    "false_positive_rate": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                    "confusion_matrix": {"type": "object"},
+                },
+            },
+            "system_and_latency": {
+                "type": "object",
+                "required": [
+                    "latency_p50_ms",
+                    "latency_p95_ms",
+                    "latency_p99_ms",
+                    "throughput_flows_per_sec",
+                    "peak_memory_mb",
+                    "python_version",
+                    "torch_version",
+                    "sklearn_version",
+                ],
+                "properties": {
+                    "latency_p50_ms": {"type": "number", "minimum": 0.0},
+                    "latency_p95_ms": {"type": "number", "minimum": 0.0},
+                    "latency_p99_ms": {"type": "number", "minimum": 0.0},
+                    "throughput_flows_per_sec": {"type": "number", "minimum": 0.0},
+                    "peak_memory_mb": {"type": "number", "minimum": 0.0},
+                    "python_version": {"type": "string"},
+                    "torch_version": {"type": "string"},
+                    "sklearn_version": {"type": "string"},
+                },
+            },
+        },
+    }
+
+
+def validate_evaluation_report(report: Union[Dict[str, Any], Path, str]) -> Dict[str, Any]:
+    """Validates an evaluation report against the real-data evaluation schema and domain rules.
+
+    Enforces:
+    1. Structural compliance with configs/real_data_evaluation_schema.json.
+    2. Strict bounds on performance metrics ([0.0, 1.0] for rate/score metrics).
+    3. Proper 64-character hex digests for models, preprocessor, and source datasets.
+    4. Prohibition of synthetic-as-real claims (rejects REAL_DATA_OFFICIAL when synthetic indicators are present).
+    5. Non-empty authorization scope when claiming REAL_DATA_OFFICIAL.
+
+    Returns the validated report dictionary or raises ValueError.
+    """
+    if isinstance(report, (str, Path)):
+        p = Path(report)
+        if not p.is_file():
+            raise ValueError(f"Report file not found: {p}")
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+        except Exception as exc:
+            raise ValueError(f"Failed to parse evaluation report JSON from {p}: {exc}") from exc
+    elif isinstance(report, dict):
+        data = report
+    else:
+        raise ValueError("Report must be a dictionary or a path to a valid JSON file.")
+
+    schema = load_evaluation_schema()
+    try:
+        import jsonschema
+
+        jsonschema.validate(instance=data, schema=schema)
+    except jsonschema.ValidationError as exc:
+        raise ValueError(f"Evaluation report schema validation failed: {exc.message}") from exc
+
+    metadata = data.get("evaluation_metadata", {})
+    eval_type = metadata.get("evaluation_type")
+    auth_scope = str(metadata.get("authorization_scope", "")).strip()
+
+    # Integrity rule: Cannot claim REAL_DATA_OFFICIAL if synthetic indicators are present
+    synthetic_indicators = [
+        data.get("synthetic_data"),
+        metadata.get("synthetic_data"),
+        data.get("is_synthetic"),
+        metadata.get("is_synthetic"),
+        data.get("dataset_provenance", {}).get("synthetic_data"),
+        data.get("dataset_provenance", {}).get("is_synthetic"),
+    ]
+    has_synthetic_flag = any(flag is True for flag in synthetic_indicators)
+    auth_scope_lower = auth_scope.lower()
+    suspicious_auth = any(
+        tok in auth_scope_lower for tok in ("synthetic", "mock", "dummy", "unauthorized", "none")
+    )
+
+    if eval_type == "REAL_DATA_OFFICIAL":
+        if has_synthetic_flag:
+            raise ValueError(
+                "Integrity violation: Report specifies evaluation_type='REAL_DATA_OFFICIAL' "
+                "but contains synthetic data indicators."
+            )
+        if not auth_scope or suspicious_auth:
+            raise ValueError(
+                f"Integrity violation: Report specifies evaluation_type='REAL_DATA_OFFICIAL' "
+                f"but has invalid or synthetic authorization_scope: '{auth_scope}'."
+            )
+
+    # Check metrics ranges
+    metrics = data.get("performance_metrics", {})
+    for metric_name in (
+        "accuracy",
+        "precision",
+        "recall",
+        "f1_score",
+        "roc_auc",
+        "pr_auc",
+        "false_positive_rate",
+    ):
+        val = metrics.get(metric_name)
+        if val is None or not isinstance(val, (int, float)) or isinstance(val, bool):
+            raise ValueError(f"Metric '{metric_name}' must be a numeric value, got: {type(val)}")
+        if not (0.0 <= float(val) <= 1.0):
+            raise ValueError(f"Metric '{metric_name}' must be within [0.0, 1.0], got: {val}")
+
+    # Check hex digests
+    provenance = data.get("dataset_provenance", {})
+    source_digest = provenance.get("source_digest_sha256", "")
+    if not _HEX_64_PATTERN.match(source_digest):
+        raise ValueError(f"Invalid SHA-256 digest for source dataset: '{source_digest}'")
+
+    digests = data.get("artifact_digests", {})
+    for key in ("rf_model_sha256", "preprocessor_sha256"):
+        digest_val = digests.get(key, "")
+        if not _HEX_64_PATTERN.match(str(digest_val)):
+            raise ValueError(f"Invalid SHA-256 digest for {key}: '{digest_val}'")
+
+    for opt_key in ("mlp_model_sha256", "ae_model_sha256"):
+        val = digests.get(opt_key)
+        if val is not None and not _HEX_64_PATTERN.match(str(val)):
+            raise ValueError(f"Invalid optional SHA-256 digest for {opt_key}: '{val}'")
+
+    return data
+
+
+def save_validated_evaluation_report(
+    report: Union[Dict[str, Any], Path, str],
+    output_path: Union[Path, str],
+) -> Path:
+    """Validates an evaluation report against the schema and atomically persists it.
+
+    Fails closed: if validation fails, the output file is NOT created or modified.
+    Returns the resolved output Path.
+    """
+    validated_data = validate_evaluation_report(report)
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    temp_file = out.with_suffix(f"{out.suffix}.tmp")
+    try:
+        temp_file.write_text(json.dumps(validated_data, indent=2), encoding="utf-8")
+        temp_file.replace(out)
+    finally:
+        if temp_file.exists():
+            try:
+                temp_file.unlink()
+            except OSError:
+                pass
+    return out
 
 
 def optimize_threshold_on_val(y_val: np.ndarray, val_probs: np.ndarray) -> float:

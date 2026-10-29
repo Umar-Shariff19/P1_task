@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RealDataEvaluationArtifactSchema",
+  "description": "Standardized schema for recording real-data evaluation runs when legitimate authorization is available.",
+  "type": "object",
+  "required": [
+    "evaluation_metadata",
+    "dataset_provenance",
+    "artifact_digests",
+    "feature_schema",
+    "split_provenance",
+    "model_configuration",
+    "performance_metrics",
+    "system_and_latency"
+  ],
+  "properties": {
+    "evaluation_metadata": {
+      "type": "object",
+      "required": [
+        "timestamp_iso",
+        "git_commit",
+        "authorization_scope",
+        "evaluation_type",
+        "reproducible_command"
+      ],
+      "properties": {
+        "timestamp_iso": { "type": "string", "format": "date-time" },
+        "git_commit": { "type": "string" },
+        "authorization_scope": { "type": "string" },
+        "evaluation_type": { "type": "string", "enum": ["REAL_DATA_OFFICIAL", "SYNTHETIC_BENCHMARK_ONLY"] },
+        "reproducible_command": { "type": "string" }
+      }
+    },
+    "dataset_provenance": {
+      "type": "object",
+      "required": ["dataset_id", "source_digest_sha256", "record_count", "class_balance"],
+      "properties": {
+        "dataset_id": { "type": "string", "enum": ["Edge-IIoTset", "ToN-IoT", "NF-ToN-IoT-v2", "CICIoT2023", "CICIDS2017", "BoT-IoT", "N-BaIoT"] },
+        "source_digest_sha256": { "type": "string", "pattern": "^[0-9a-fA-F]{64}$" },
+        "record_count": { "type": "integer", "minimum": 1 },
+        "class_balance": { "type": "object" }
+      }
+    },
+    "artifact_digests": {
+      "type": "object",
+      "required": ["rf_model_sha256", "preprocessor_sha256"],
+      "properties": {
+        "rf_model_sha256": { "type": "string", "pattern": "^[0-9a-fA-F]{64}$" },
+        "mlp_model_sha256": { "type": ["string", "null"] },
+        "ae_model_sha256": { "type": ["string", "null"] },
+        "preprocessor_sha256": { "type": "string", "pattern": "^[0-9a-fA-F]{64}$" }
+      }
+    },
+    "feature_schema": {
+      "type": "object",
+      "required": ["profile_name", "feature_count", "canonical_feature_names"],
+      "properties": {
+        "profile_name": { "type": "string" },
+        "feature_count": { "type": "integer", "enum": [6, 13, 21] },
+        "canonical_feature_names": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "split_provenance": {
+      "type": "object",
+      "required": ["split_strategy", "train_indices_hash", "val_indices_hash", "test_indices_hash", "temporal_non_inversion_verified"],
+      "properties": {
+        "split_strategy": { "type": "string", "enum": ["chronological", "stratified"] },
+        "train_indices_hash": { "type": "string" },
+        "val_indices_hash": { "type": "string" },
+        "test_indices_hash": { "type": "string" },
+        "temporal_non_inversion_verified": { "type": "boolean" }
+      }
+    },
+    "model_configuration": {
+      "type": "object",
+      "required": ["architecture", "fusion_weights", "decision_threshold"],
+      "properties": {
+        "architecture": { "type": "string" },
+        "fusion_weights": { "type": "object" },
+        "decision_threshold": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "performance_metrics": {
+      "type": "object",
+      "required": [
+        "accuracy",
+        "precision",
+        "recall",
+        "f1_score",
+        "roc_auc",
+        "pr_auc",
+        "false_positive_rate",
+        "confusion_matrix"
+      ],
+      "properties": {
+        "accuracy": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "precision": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "recall": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "f1_score": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "roc_auc": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "pr_auc": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "false_positive_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "confusion_matrix": { "type": "object" }
+      }
+    },
+    "system_and_latency": {
+      "type": "object",
+      "required": ["latency_p50_ms", "latency_p95_ms", "latency_p99_ms", "throughput_flows_per_sec", "peak_memory_mb", "python_version", "torch_version", "sklearn_version"],
+      "properties": {
+        "latency_p50_ms": { "type": "number", "minimum": 0.0 },
+        "latency_p95_ms": { "type": "number", "minimum": 0.0 },
+        "latency_p99_ms": { "type": "number", "minimum": 0.0 },
+        "throughput_flows_per_sec": { "type": "number", "minimum": 0.0 },
+        "peak_memory_mb": { "type": "number", "minimum": 0.0 },
+        "python_version": { "type": "string" },
+        "torch_version": { "type": "string" },
+        "sklearn_version": { "type": "string" }
+      }
+    }
+  }
+}

@@ -142,7 +142,7 @@ def test_synthetic_runtime_inference_xai_metrics_and_provenance() -> None:
     }
 
     with tempfile.TemporaryDirectory(
-        prefix="synthetic-runtime-", dir=Path(__file__).parent
+        prefix="synthetic-runtime-"
     ) as temporary:
         output_dir = Path(temporary)
         result_path = output_dir / "synthetic_result.json"

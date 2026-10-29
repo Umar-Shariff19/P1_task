@@ -15,8 +15,21 @@ perform_preflight_data_integrity_audit = benchmark_models.perform_preflight_data
 FEATURE_PROFILES = benchmark_models.FEATURE_PROFILES
 from iot_ids.experiments.preprocessing import FeaturePreprocessor
 from iot_ids.experiments.evaluator import optimize_threshold_on_val, evaluate_predictions
+from iot_ids.provenance.windows_access import (
+    RealDataAuthorizationUnavailable,
+    require_real_data_authorization,
+)
 
 
+def _is_real_data_authorized() -> bool:
+    try:
+        require_real_data_authorization()
+        return True
+    except RealDataAuthorizationUnavailable:
+        return False
+
+
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for data audit")
 def test_stage4_preflight_integrity_audit():
     data_dir = Path("data/processed/stage3")
     perform_preflight_data_integrity_audit(data_dir)

@@ -17,8 +17,8 @@ from iot_ids.data.path_policy import (
 
 @pytest.fixture
 def synthetic_root() -> Iterator[Path]:
-    """Create and remove one synthetic tree at a repo-root sibling of data/."""
-    with TemporaryDirectory(prefix=".synthetic-path-policy-", dir=Path.cwd()) as temp_dir:
+    """Create and remove one synthetic tree."""
+    with TemporaryDirectory(prefix=".synthetic-path-policy-") as temp_dir:
         yield Path(temp_dir)
 
 
@@ -222,3 +222,27 @@ def test_symlink_spelling_is_not_an_authorized_root(synthetic_root: Path) -> Non
 
     with pytest.raises(DatasetRootRejected, match="exact authorized root"):
         authorize_dataset_root("synthetic", str(alias), _policy(approved, protected))
+
+
+def test_unprivileged_identity_verifier_rejects_unverified_reparse_semantics(synthetic_root: Path) -> None:
+    """Verifies that authorize_dataset_root strictly rejects unverified reparse semantics without elevation."""
+    approved = synthetic_root / "approved"
+    protected = synthetic_root / "protected"
+    approved.mkdir()
+    protected.mkdir()
+
+    bad_identity = RootIdentityEvidence(
+        canonical_path=str(approved),
+        volume_identity="vol-1",
+        root_file_identity="id-1",
+        reparse_points_checked=False,  # Fails closed
+        case_semantics_checked=True,
+    )
+    custom_policy = DatasetAccessPolicy(
+        approved_roots={"synthetic": str(approved)},
+        protected_roots=(str(protected),),
+        identity_verifier=lambda s, a: bad_identity,
+    )
+    with pytest.raises(DatasetRootRejected, match="root identity is ambiguous or could not be verified"):
+        authorize_dataset_root("synthetic", str(approved), custom_policy)
+

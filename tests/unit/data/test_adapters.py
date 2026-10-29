@@ -8,6 +8,18 @@ from iot_ids.data.adapters.edge_iiotset import EdgeIIoTsetAggregatorAdapter
 from iot_ids.data.adapters.nf_ton_iot import NFToNIoTAdapter
 from iot_ids.data.adapters.ciciot2023 import CICIoT2023Adapter
 from iot_ids.data.flow_object import CanonicalFlow
+from iot_ids.provenance.windows_access import (
+    RealDataAuthorizationUnavailable,
+    require_real_data_authorization,
+)
+
+
+def _is_real_data_authorized() -> bool:
+    try:
+        require_real_data_authorization()
+        return True
+    except RealDataAuthorizationUnavailable:
+        return False
 
 
 def test_adapters_instantiation():
@@ -24,6 +36,7 @@ def test_adapters_instantiation():
     assert ciciot.name == "CICIoT2023"
 
 
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for dataset access")
 def test_ton_adapter_streaming_sample():
     raw_path = Path("data/raw/ToN-IoT")
     if not (raw_path / "train_test_network.csv").exists():

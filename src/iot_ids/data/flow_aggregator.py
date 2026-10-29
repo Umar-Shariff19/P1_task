@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import math
 from numbers import Integral, Real
-from typing import Dict, List, Optional, Tuple
+import threading
+from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 
 from iot_ids.data.flow_object import CanonicalFlow
@@ -138,6 +139,7 @@ class FlowAggregator:
         self.max_flow_duration = max_flow_duration
         self.max_active_flows = max_active_flows
         self.active_flows: Dict[FiveTuple, ActiveFlowState] = {}
+        self._lock = threading.RLock()
 
     def _evict_oldest_flow_if_full(self) -> Optional[CanonicalFlow]:
         """Evicts the oldest flow if the active flow memory limit is reached."""
@@ -149,24 +151,26 @@ class FlowAggregator:
 
     def clear(self) -> None:
         """Clears all active flows from internal state buffer."""
-        self.active_flows.clear()
+        with self._lock:
+            self.active_flows.clear()
 
     def add_packet(self, packet_dict: Dict[str, Any]) -> Optional[CanonicalFlow]:
         """Convenience method wrapping process_frame for dictionary packet records."""
-        return self.process_frame(
-            timestamp=float(packet_dict.get("timestamp", 0.0)),
-            src_ip=str(packet_dict.get("src_ip", packet_dict.get("src_host", "0.0.0.0"))),
-            dst_ip=str(packet_dict.get("dst_ip", packet_dict.get("dst_host", "0.0.0.0"))),
-            src_port=int(packet_dict.get("src_port", 0)),
-            dst_port=int(packet_dict.get("dst_port", 0)),
-            proto=str(packet_dict.get("protocol", packet_dict.get("proto", "tcp"))).lower(),
-            length=int(packet_dict.get("length", packet_dict.get("bytes", 0))),
-            syn=int(packet_dict.get("syn", 0)),
-            ack=int(packet_dict.get("ack", 0)),
-            rst=int(packet_dict.get("rst", 0)),
-            label=int(packet_dict.get("label", 0)),
-            attack_category=str(packet_dict.get("attack_category", "Normal")),
-        )
+        with self._lock:
+            return self.process_frame(
+                timestamp=float(packet_dict.get("timestamp", 0.0)),
+                src_ip=str(packet_dict.get("src_ip", packet_dict.get("src_host", "0.0.0.0"))),
+                dst_ip=str(packet_dict.get("dst_ip", packet_dict.get("dst_host", "0.0.0.0"))),
+                src_port=int(packet_dict.get("src_port", 0)),
+                dst_port=int(packet_dict.get("dst_port", 0)),
+                proto=str(packet_dict.get("protocol", packet_dict.get("proto", "tcp"))).lower(),
+                length=int(packet_dict.get("length", packet_dict.get("bytes", 0))),
+                syn=int(packet_dict.get("syn", 0)),
+                ack=int(packet_dict.get("ack", 0)),
+                rst=int(packet_dict.get("rst", 0)),
+                label=int(packet_dict.get("label", 0)),
+                attack_category=str(packet_dict.get("attack_category", "Normal")),
+            )
 
     def process_frame(
         self,
@@ -184,31 +188,33 @@ class FlowAggregator:
         attack_category: str = "Normal",
     ) -> Optional[CanonicalFlow]:
         """Ingests a single packet frame and returns a finalized CanonicalFlow if expired."""
-        key, is_forward = normalize_5tuple(src_ip, dst_ip, src_port, dst_port, proto)
-        expired_flow: Optional[CanonicalFlow] = None
+        with self._lock:
+            key, is_forward = normalize_5tuple(src_ip, dst_ip, src_port, dst_port, proto)
+            expired_flow: Optional[CanonicalFlow] = None
 
-        if key in self.active_flows:
-            flow = self.active_flows[key]
-            idle_time = timestamp - flow.timestamp_end
-            active_time = timestamp - flow.timestamp_start
+            if key in self.active_flows:
+                flow = self.active_flows[key]
+                idle_time = timestamp - flow.timestamp_end
+                active_time = timestamp - flow.timestamp_start
 
-            if idle_time > self.inactivity_timeout or active_time > self.max_flow_duration:
-                expired_flow = flow.finalize()
-                # Initialize new flow state for current frame
+                if idle_time > self.inactivity_timeout or active_time > self.max_flow_duration:
+                    expired_flow = flow.finalize()
+                    # Initialize new flow state for current frame
+                    self.active_flows[key] = ActiveFlowState(key, timestamp, label, attack_category)
+                    self.active_flows[key].update(timestamp, is_forward, length, syn, ack, rst)
+                else:
+                    flow.update(timestamp, is_forward, length, syn, ack, rst)
+            else:
+                if len(self.active_flows) >= self.max_active_flows:
+                    expired_flow = self._evict_oldest_flow_if_full()
                 self.active_flows[key] = ActiveFlowState(key, timestamp, label, attack_category)
                 self.active_flows[key].update(timestamp, is_forward, length, syn, ack, rst)
-            else:
-                flow.update(timestamp, is_forward, length, syn, ack, rst)
-        else:
-            if len(self.active_flows) >= self.max_active_flows:
-                expired_flow = self._evict_oldest_flow_if_full()
-            self.active_flows[key] = ActiveFlowState(key, timestamp, label, attack_category)
-            self.active_flows[key].update(timestamp, is_forward, length, syn, ack, rst)
 
-        return expired_flow
+            return expired_flow
 
     def flush(self) -> List[CanonicalFlow]:
         """Flushes all remaining active flows into finalized CanonicalFlow records."""
-        finalized = [flow.finalize() for flow in self.active_flows.values()]
-        self.active_flows.clear()
-        return finalized
+        with self._lock:
+            finalized = [flow.finalize() for flow in self.active_flows.values()]
+            self.active_flows.clear()
+            return finalized

@@ -24,6 +24,9 @@ class IDSPredictor:
         dataset: str = "ToN-IoT",
         models_base_dir: Optional[str] = None,
         decision_threshold: float = 0.5,
+        *,
+        authorization_provider: Optional[Any] = None,
+        policy_document: Optional[Dict[str, Any]] = None,
     ) -> IDSPredictor:
         """Instantiates an IDSPredictor from profile and dataset identifiers."""
         engine = InferenceEngine(
@@ -31,21 +34,20 @@ class IDSPredictor:
             dataset=dataset,
             models_base_dir=models_base_dir,
             decision_threshold=decision_threshold,
+            authorization_provider=authorization_provider,
+            policy_document=policy_document,
         )
         return cls(engine=engine)
 
     def health_check(self) -> Dict[str, Any]:
-        """Returns runtime health inspection metadata."""
-        return {
-            "status": "HEALTHY",
-            "profile": self.engine.profile,
-            "dataset": self.engine.dataset,
-            "feature_dimension": self.engine.expected_dim,
+        """Returns engine readiness checks without asserting model quality."""
+        health = self.engine.health_check()
+        health.update({
             "rf_model_loaded": self.engine.rf_model is not None,
             "robust_mlp_loaded": self.engine.robust_mlp_model is not None,
             "preprocessor_loaded": self.engine.preprocessor is not None,
-            "decision_threshold": self.engine.decision_threshold,
-        }
+        })
+        return health
 
     def predict_flow(self, flow: Dict[str, Any]) -> Dict[str, Any]:
         """Runs inference on a single flow dictionary."""

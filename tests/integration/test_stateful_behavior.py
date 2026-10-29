@@ -10,6 +10,18 @@ from iot_ids.features.canonical.flow_builder import CanonicalFlowBuilder
 from iot_ids.pipeline.system import IDSSystemPipeline
 from iot_ids.inference.predictor import IDSPredictor
 from iot_ids.registry.manager import ModelRegistry
+from iot_ids.provenance.windows_access import (
+    RealDataAuthorizationUnavailable,
+    require_real_data_authorization,
+)
+
+
+def _is_real_data_authorized() -> bool:
+    try:
+        require_real_data_authorization()
+        return True
+    except RealDataAuthorizationUnavailable:
+        return False
 
 
 def test_aggregator_packet_expiration_and_flushing():
@@ -68,6 +80,7 @@ def test_multi_host_fanout_and_port_entropy():
     assert div2 > div1, f"Destination diversity should increase (div1={div1}, div2={div2})"
 
 
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
 def test_real_artifact_loading_reproducibility():
     """Verifies loading real exported model artifact from models/final/deployable_artifact."""
     artifact_dir = Path("models/final/deployable_artifact")

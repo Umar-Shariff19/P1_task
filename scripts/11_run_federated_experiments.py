@@ -350,7 +350,7 @@ def main():
         f1 = fl3_results.get(f"{ds['name']}_f1", "N/A")
         md_content += f"- **{ds['name']}**: AUC={auc:.4f}, F1={f1:.4f}\n"
 
-    md_content += f"""
+    md_content += rf"""
 ---
 
 ## 4. Privacy & Leakage Guarantees

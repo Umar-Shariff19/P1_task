@@ -91,9 +91,8 @@ def validate_edge_deployment():
     reader.close()
 
     # Flush remaining active flows at EOF
-    flushed = predictor.pipeline.flow_aggregator.flush()
-    for flow in flushed:
-        alert = predictor.predict_flow(flow)
+    finalized = predictor.finalize_pending_flows()
+    for alert in finalized.alerts:
         multi_sink.write_alert(alert)
         alerts_emitted.append(alert)
 

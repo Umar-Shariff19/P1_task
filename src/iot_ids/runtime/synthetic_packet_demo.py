@@ -9,7 +9,12 @@ import argparse
 import json
 import math
 import sys
+from pathlib import Path
 from typing import Any, Sequence
+
+_src_root = Path(__file__).resolve().parents[2]
+if str(_src_root) not in sys.path and (_src_root / "iot_ids").is_dir():
+    sys.path.insert(0, str(_src_root))
 
 import numpy as np
 

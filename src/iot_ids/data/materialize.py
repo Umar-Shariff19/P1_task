@@ -9,7 +9,6 @@ import psutil
 
 from iot_ids.data.adapters import build_default_adapters
 from iot_ids.data.cache import cache_fingerprint
-from iot_ids.features.canonical.builder import build_canonical_features
 from iot_ids.features.temporal.causal import add_causal_rolling_count
 from iot_ids.features.behavioral.network import add_historical_destination_diversity
 
@@ -27,6 +26,7 @@ def materialize_dataset(
 ) -> dict[str, object]:
     from iot_ids.provenance.windows_access import require_real_data_authorization
     require_real_data_authorization()
+    from iot_ids.features.canonical.builder import build_canonical_features
     adapters = {adapter.name: adapter for adapter in build_default_adapters(data_root)}
     if dataset not in adapters:
         raise ValueError(f"Dataset {dataset} not registered in active production adapters.")

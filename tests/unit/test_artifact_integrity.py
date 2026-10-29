@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 from pathlib import Path
 import tempfile
 
@@ -19,7 +20,7 @@ _REPO_ROOT = Path(__file__).parents[1]
 
 @pytest.fixture
 def synthetic_tree():
-    with tempfile.TemporaryDirectory(prefix=".synthetic-artifact-integrity-", dir=_REPO_ROOT) as temp_dir:
+    with tempfile.TemporaryDirectory(prefix=".synthetic-artifact-integrity-") as temp_dir:
         yield Path(temp_dir)
 
 
@@ -116,3 +117,36 @@ def test_symlink_escape_is_rejected_when_supported(synthetic_tree: Path) -> None
             expected_digest="0" * 64,
             base_dir=base,
         )
+
+
+def test_reparse_point_rejection_without_elevation(synthetic_tree: Path) -> None:
+    """Deterministically verifies that verify_artifact_digest rejects reparse points even without elevation."""
+    import stat
+    from unittest.mock import patch, MagicMock
+
+    base = synthetic_tree / "base_reparse"
+    base.mkdir()
+    target_file = base / "artifact.bin"
+    target_file.write_bytes(b"deterministic content")
+
+    orig_lstat = os.lstat
+
+    def mock_lstat(path):
+        st = orig_lstat(path)
+        if "artifact.bin" in str(path):
+            mock_stat = MagicMock()
+            mock_stat.st_mode = st.st_mode
+            # Inject Windows FILE_ATTRIBUTE_REPARSE_POINT (0x400)
+            mock_stat.st_file_attributes = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+            return mock_stat
+        return st
+
+    with patch("os.lstat", side_effect=mock_lstat):
+        with pytest.raises(ArtifactIntegrityError, match="symlink or reparse"):
+            verify_artifact_digest(
+                "artifact.bin",
+                algorithm="sha256",
+                expected_digest="0" * 64,
+                base_dir=base,
+            )
+

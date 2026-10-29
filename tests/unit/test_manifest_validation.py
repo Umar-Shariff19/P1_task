@@ -27,7 +27,7 @@ def _positive_example() -> dict:
 
 
 def _temp_directory() -> tempfile.TemporaryDirectory[str]:
-    return tempfile.TemporaryDirectory(prefix=".synthetic-manifest-", dir=_REPO_ROOT)
+    return tempfile.TemporaryDirectory(prefix=".synthetic-manifest-")
 
 
 def test_valid_synthetic_manifest_is_only_structurally_valid() -> None:

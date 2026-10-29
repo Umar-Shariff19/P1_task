@@ -140,24 +140,77 @@ class IDSSystemPipeline:
         return float(self.decision_threshold)
 
     def health_check(self) -> Dict[str, Any]:
-        """Performs production health inspection of the pipeline and loaded artifacts."""
-        has_model = self.model is not None
-        has_preproc = self.preprocessor is not None
+        """Check component interfaces without implying model-quality validation."""
+        model_loaded = self.model is not None
+        model_interface = model_loaded and callable(getattr(self.model, "predict_proba", None))
+        classes_present = model_loaded and getattr(self.model, "classes_", None) is not None
+        try:
+            classes = np.asarray(getattr(self.model, "classes_", [])) if model_loaded else np.asarray([])
+            model_classes_valid = classes.shape == (2,) and np.array_equal(
+                np.sort(classes), np.array([0, 1])
+            )
+        except (TypeError, ValueError):
+            model_classes_valid = False
+        preprocessor_loaded = self.preprocessor is not None
+        preprocessor_interface = preprocessor_loaded and callable(
+            getattr(self.preprocessor, "transform", None)
+        )
+        preprocessor_features = getattr(self.preprocessor, "feature_names", None) if preprocessor_loaded else None
+        if preprocessor_loaded and preprocessor_features is None:
+            preprocessor_features = getattr(self.preprocessor, "numeric_cols", None)
+        try:
+            feature_order_valid = (
+                preprocessor_features is not None
+                and list(preprocessor_features) == self.feature_names
+            )
+        except (TypeError, ValueError):
+            feature_order_valid = False
         has_aligner = self.aligner is not None and getattr(self.aligner, "is_fitted", False)
+        aligner_interface_valid = not has_aligner or callable(getattr(self.aligner, "transform", None))
         has_calibrator = self.calibrator is not None and getattr(self.calibrator, "calibrated_threshold", None) is not None
+        try:
+            threshold = float(
+                self.calibrator.calibrated_threshold
+                if has_calibrator else self.decision_threshold
+            )
+            threshold_valid = bool(np.isfinite(threshold) and 0.0 <= threshold <= 1.0)
+        except (AttributeError, TypeError, ValueError, OverflowError):
+            threshold = None
+            threshold_valid = False
 
-        status = "HEALTHY" if (has_model and has_preproc) else "UNHEALTHY"
+        components = {
+            "model": "READY" if model_interface and model_classes_valid else (
+                "MISSING" if not model_loaded else
+                "INVALID" if not model_interface else
+                "UNVERIFIED" if not classes_present else "INVALID"
+            ),
+            "preprocessor": (
+                "MISSING" if not preprocessor_loaded else
+                "INVALID" if not preprocessor_interface else
+                "UNVERIFIED" if preprocessor_features is None else
+                "READY" if feature_order_valid else "INVALID"
+            ),
+            "aligner": "READY" if aligner_interface_valid else "INVALID",
+            "threshold": "READY" if threshold_valid else "INVALID",
+        }
+        reasons = [name for name, component_status in components.items() if component_status != "READY"]
+        status = "HEALTHY" if not reasons else "NOT_READY"
 
         return {
             "status": status,
-            "model_loaded": has_model,
-            "preprocessor_loaded": has_preproc,
+            "components": components,
+            "not_ready_reasons": reasons,
+            "readiness_scope": "component_interface_and_configuration_only",
+            "model_training_state": "UNKNOWN",
+            "detection_performance_validated": False,
+            "model_loaded": model_loaded,
+            "preprocessor_loaded": preprocessor_loaded,
             "aligner_fitted": has_aligner,
             "calibrator_fitted": has_calibrator,
             "feature_profile": self.feature_profile,
             "num_feature_names": len(self.feature_names),
             "active_flows_in_memory": len(self.flow_aggregator.active_flows),
-            "decision_threshold": self.effective_decision_threshold,
+            "decision_threshold": threshold,
         }
 
     def reset_state(self) -> None:

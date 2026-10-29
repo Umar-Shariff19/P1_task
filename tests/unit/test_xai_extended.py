@@ -89,4 +89,4 @@ def test_local_xai_explanation(xai_setup):
     for item in local_exp["top_k_features"]:
         assert "feature" in item
         assert "direction" in item
-        assert item["direction"] in ["PUSHE_ATTACK", "PUSHES_BENIGN"]
+        assert item["direction"] in ["PUSHES_ATTACK", "PUSHES_BENIGN"]

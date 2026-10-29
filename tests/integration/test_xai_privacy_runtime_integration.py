@@ -4,8 +4,21 @@ import numpy as np
 
 from iot_ids.runtime.engine import InferenceEngine
 from iot_ids.runtime.schema import STANDARDIZED_21_FEATURES
+from iot_ids.provenance.windows_access import (
+    RealDataAuthorizationUnavailable,
+    require_real_data_authorization,
+)
 
 
+def _is_real_data_authorized() -> bool:
+    try:
+        require_real_data_authorization()
+        return True
+    except RealDataAuthorizationUnavailable:
+        return False
+
+
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
 def test_inference_engine_xai_integration():
     engine = InferenceEngine(profile="standardized_21", dataset="ToN-IoT")
 

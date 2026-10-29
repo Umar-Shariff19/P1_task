@@ -108,20 +108,35 @@ def main():
     p_daemon.add_argument("--duration", type=float, default=None, help="Maximum runtime duration in seconds")
     p_daemon.add_argument("--limit", type=int, default=None, help="Maximum packet limit")
 
+    # -------------------------------------------------------------------------
+    # Subcommand: run-platform
+    # -------------------------------------------------------------------------
+    p_platform = subparsers.add_parser("run-platform", help="Launch interactive IoT IDS & Adversarial Platform dashboard")
+    p_platform.add_argument("--host", type=str, default="127.0.0.1", help="Host interface (default: 127.0.0.1)")
+    p_platform.add_argument("--port", type=int, default=8501, help="Port to bind (default: 8501)")
+    p_platform.add_argument("--seed", type=int, default=42, help="Deterministic seed (default: 42)")
+    p_platform.add_argument("--interval", type=float, default=0.25, help="Seconds between generator batches (default: 0.25)")
+    p_platform.add_argument("--auto-start", action="store_true", help="Automatically start simulation on launch")
+
     args = parser.parse_args()
-    from iot_ids.provenance.windows_access import (
-        RealDataAuthorizationUnavailable,
-        require_real_data_authorization,
-    )
-    try:
-        require_real_data_authorization()
-    except RealDataAuthorizationUnavailable as exc:
-        print(f"{exc.code.value}: {exc}", file=sys.stderr)
-        raise SystemExit(2) from None
 
     if not args.subcommand:
         parser.print_help()
         sys.exit(1)
+
+    if args.subcommand == "run-platform":
+        from iot_ids.dashboard.cli import run_dashboard_server
+        run_dashboard_server(
+            host=args.host,
+            port=args.port,
+            seed=args.seed,
+            traffic_interval=args.interval,
+            auto_start=args.auto_start,
+        )
+        return
+
+    from iot_ids.provenance.windows_access import require_real_data_authorization
+    require_real_data_authorization()
 
     # Dispatch Subcommands
     if args.subcommand == "train":
@@ -232,16 +247,20 @@ def main():
                     try:
                         packets.append(json.loads(line))
                     except json.JSONDecodeError:
-                        continue
+                        print("Invalid JSON packet record in input stream.", file=sys.stderr)
+                        raise SystemExit(2) from None
 
-        alerts_emitted = 0
-        for pkt in packets:
-            alert = predictor.process_raw_packet(pkt)
-            if alert is not None:
-                logger.log_alert(alert)
-                alerts_emitted += 1
+        try:
+            alerts = predictor.process_packet_stream(packets, on_alert=logger.log_alert)
+        except Exception as exc:
+            # Do not echo packet contents or model exception details to the CLI.
+            print(
+                f"Packet stream processing failed ({type(exc).__name__}).",
+                file=sys.stderr,
+            )
+            raise SystemExit(2) from None
 
-        print(f"Streaming finished. Emitted {alerts_emitted} flow alerts.")
+        print(f"Streaming finished. Emitted {len(alerts)} flow alerts.")
 
     elif args.subcommand == "predict-live":
         artifact_path = Path(args.artifact_dir)
@@ -325,4 +344,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    from iot_ids.provenance.windows_access import RealDataAuthorizationUnavailable
+    try:
+        main()
+    except RealDataAuthorizationUnavailable as exc:
+        print(f"{exc.code.value}: {exc}", file=sys.stderr)
+        sys.exit(2)

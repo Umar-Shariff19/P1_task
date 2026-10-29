@@ -13,6 +13,7 @@ from sklearn.metrics import (
 )
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+from iot_ids.experiments.evaluator import save_validated_evaluation_report
 from iot_ids.models.ensemble.risk_layer import RiskLayer
 from iot_ids.preprocessing.pipeline import PreprocessingPipeline
 from iot_ids.utils.paths import REPO_ROOT

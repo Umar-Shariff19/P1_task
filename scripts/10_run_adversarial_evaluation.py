@@ -139,7 +139,7 @@ def main():
 
     # Export Markdown evidence report
     md_path = adv_reports_dir / "FINAL_ADVERSARIAL_EVIDENCE.md"
-    md_content = """# FINAL ADVERSARIAL ROBUSTNESS & DEFENSIVE DIVERSITY REPORT
+    md_content = r"""# FINAL ADVERSARIAL ROBUSTNESS & DEFENSIVE DIVERSITY REPORT
 
 > [!IMPORTANT]
 > **VERDICT: ADVERSARIAL FORENSIC GATE — PASS**
@@ -158,7 +158,7 @@ def main():
     for row in adv_summary_data:
         md_content += f"| **{row['dataset']}** | {row['attack']} | {row['epsilon']:.2f} | {row['n_attacked']:,} | **{row['attack_success_rate']*100:.2f}%** | {row['benign_evaded_count']:,} | {row['suspicious_evaded_count']:,} | **{row['ae_catch_rate']*100:.2f}%** | {row['mean_p_sup_clean']:.4f} | {row['mean_p_sup_adv']:.4f} |\n"
 
-    md_content += """
+    md_content += r"""
 ---
 
 ## 2. DEFENSIVE DIVERSITY & RISK LAYER MECHANISM

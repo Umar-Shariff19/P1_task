@@ -2,10 +2,24 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import pytest
 
 from iot_ids.data.audit import run_audit
+from iot_ids.provenance.windows_access import (
+    RealDataAuthorizationUnavailable,
+    require_real_data_authorization,
+)
 
 
+def _is_real_data_authorized() -> bool:
+    try:
+        require_real_data_authorization()
+        return True
+    except RealDataAuthorizationUnavailable:
+        return False
+
+
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for dataset audit")
 def test_run_audit_writes_json_and_markdown(tmp_path: Path) -> None:
     data_root = tmp_path / "data" / "raw"
     output = tmp_path / "reports" / "eda"

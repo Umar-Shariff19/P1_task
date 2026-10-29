@@ -12,10 +12,24 @@ from iot_ids.inference.predictor import IDSPredictor
 from iot_ids.data.flow_aggregator import FlowAggregator
 from iot_ids.utils.metrics import MetricsCollector
 from iot_ids.utils.sinks import JSONLFileSink, ConsoleAlertSink, MultiAlertSink
+from iot_ids.provenance.windows_access import (
+    RealDataAuthorizationUnavailable,
+    require_real_data_authorization,
+)
+
+
+def _is_real_data_authorized() -> bool:
+    try:
+        require_real_data_authorization()
+        return True
+    except RealDataAuthorizationUnavailable:
+        return False
 
 
 @pytest.fixture
 def deployable_predictor():
+    if not _is_real_data_authorized():
+        pytest.skip("Real-data authorization required for checkpoint loading")
     artifact_dir = Path("models/final/deployable_artifact")
     if not artifact_dir.exists():
         pytest.skip(f"Deployable artifact directory not found: {artifact_dir}")

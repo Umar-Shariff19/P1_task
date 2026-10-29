@@ -55,11 +55,25 @@ class InferenceEngine:
         models_base_dir: Optional[Union[str, Path]] = None,
         decision_threshold: float = 0.5,
         *,
+        expected_digests: Optional[Dict[str, str]] = None,
+        require_trusted_digests: bool = False,
         _synthetic_components: Optional[tuple[Any, Any, Any]] = None,
+        authorization_provider: Optional[Any] = None,
+        policy_document: Optional[Dict[str, Any]] = None,
     ):
         if _synthetic_components is None:
             from iot_ids.provenance.windows_access import require_real_data_authorization
-            require_real_data_authorization()
+            if authorization_provider is not None or policy_document is not None:
+                base_dir = Path(models_base_dir) if models_base_dir else REPO_ROOT / "models" / ("standardized" if profile == "standardized_21" else "final")
+                target_path = (base_dir / dataset).resolve() if dataset != "STANDALONE" else base_dir.resolve()
+            else:
+                target_path = None
+            require_real_data_authorization(
+                operation="read_checkpoint",
+                target_path=target_path,
+                provider=authorization_provider,
+                policy=policy_document,
+            )
         elif (
             profile != "standardized_21"
             or dataset != "SYNTHETIC_ONLY"
@@ -73,6 +87,8 @@ class InferenceEngine:
         self.profile = profile
         self.dataset = dataset
         self.decision_threshold = float(decision_threshold)
+        self.expected_digests = expected_digests
+        self.require_trusted_digests = require_trusted_digests
 
         if _synthetic_components is not None:
             if (
@@ -185,6 +201,81 @@ class InferenceEngine:
             if input_dim is not None and int(input_dim) != self.expected_dim:
                 raise ValueError("Inference MLP input dimension does not match the runtime schema.")
 
+    def health_check(self) -> Dict[str, Any]:
+        """Report interface readiness, not training quality or detection validity."""
+        preprocessor_present = self.preprocessor is not None
+        rf_present = self.rf_model is not None
+        mlp_required = self.profile == "standardized_21"
+        mlp_present = self.robust_mlp_model is not None
+
+        preprocessor_ok = preprocessor_present and callable(
+            getattr(self.preprocessor, "transform", None)
+        )
+        expected_features = getattr(self, "feature_names", None)
+        actual_features = getattr(self.preprocessor, "feature_names", None) if preprocessor_present else None
+        if preprocessor_present and actual_features is None:
+            actual_features = getattr(self.preprocessor, "numeric_cols", None)
+        if actual_features is None:
+            preprocessor_ok = False
+        else:
+            try:
+                actual_order = list(actual_features)
+                preprocessor_ok = preprocessor_ok and len(actual_order) == self.expected_dim
+                if expected_features is not None:
+                    preprocessor_ok = preprocessor_ok and actual_order == list(expected_features)
+            except (TypeError, ValueError):
+                preprocessor_ok = False
+
+        rf_ok = rf_present and callable(getattr(self.rf_model, "predict_proba", None))
+        classes = getattr(self.rf_model, "classes_", None) if rf_present else None
+        try:
+            classes_ok = np.asarray(classes).shape == (2,) and np.array_equal(
+                np.asarray(classes), np.array([0, 1])
+            )
+        except (TypeError, ValueError):
+            classes_ok = False
+        rf_ok = bool(rf_ok and classes_ok)
+        mlp_ok = not mlp_required or (isinstance(self.robust_mlp_model, nn.Module)
+                                      and callable(getattr(self.robust_mlp_model, "forward", None)))
+
+        try:
+            threshold = float(self.decision_threshold)
+            threshold_ok = bool(np.isfinite(threshold) and 0.0 <= threshold <= 1.0)
+        except (TypeError, ValueError, OverflowError):
+            threshold = None
+            threshold_ok = False
+
+        components = {
+            "preprocessor": (
+                "MISSING" if not preprocessor_present else
+                "INVALID" if not callable(getattr(self.preprocessor, "transform", None)) else
+                "UNVERIFIED" if actual_features is None else
+                "READY" if preprocessor_ok else "INVALID"
+            ),
+            "rf_model": (
+                "MISSING" if not rf_present else
+                "INVALID" if not callable(getattr(self.rf_model, "predict_proba", None)) else
+                "UNVERIFIED" if classes is None else
+                "READY" if rf_ok else "INVALID"
+            ),
+            "mlp_model": "READY" if mlp_ok else ("MISSING" if mlp_required and not mlp_present else "INVALID"),
+            "decision_threshold": "READY" if threshold_ok else "INVALID",
+        }
+        reasons = [name for name, value in components.items() if value != "READY"]
+        return {
+            "status": "HEALTHY" if not reasons else "NOT_READY",
+            "components": components,
+            "not_ready_reasons": reasons,
+            "profile": self.profile,
+            "dataset": self.dataset,
+            "feature_dimension": self.expected_dim,
+            "initialization_mode": getattr(self, "initialization_mode", "UNINITIALIZED"),
+            "readiness_scope": "component_interface_and_configuration_only",
+            "model_training_state": "UNKNOWN",
+            "detection_performance_validated": False,
+            "decision_threshold": threshold,
+        }
+
     def _transform_preprocessor_frozen(self, df_canonical: pd.DataFrame) -> np.ndarray:
         """Transform once, then enforce the model input shape and finite-value contract."""
         if not callable(getattr(self.preprocessor, "transform", None)):
@@ -221,6 +312,72 @@ class InferenceEngine:
             raise ValueError("Classifier probability rows must sum to 1.")
         return probabilities[:, 1]
 
+    @staticmethod
+    def _load_mlp_checkpoint(
+        mlp_path: Path,
+        expected_dim: int,
+        expected_digest: Optional[str] = None,
+        base_dir: Optional[Path] = None,
+    ) -> MLPModule:
+        """Safely load and validate an MLP state dictionary artifact.
+
+        Enforces weights_only=True fail-closed deserialization. Rejects full-model pickles,
+        unsupported formats, dimension mismatches, and key incompatibilities.
+        If expected_digest is provided, verifies SHA-256 before deserializing.
+        """
+        import io
+        if expected_digest is not None:
+            from iot_ids.provenance.artifact_integrity import verify_and_read_artifact
+            effective_base = base_dir or mlp_path.parent
+            content = verify_and_read_artifact(
+                mlp_path.name, expected_digest=expected_digest, base_dir=effective_base
+            )
+            load_target = io.BytesIO(content)
+        else:
+            load_target = mlp_path
+
+        try:
+            mlp_state = torch.load(load_target, weights_only=True)
+        except Exception as exc:
+            raise TypeError(
+                f"InferenceEngine Error: Failed to safely load MLP state dictionary from '{mlp_path.name}': {type(exc).__name__}"
+            ) from exc
+
+        if not isinstance(mlp_state, dict):
+            raise TypeError(
+                f"InferenceEngine Error: MLP artifact at '{mlp_path}' must be a state dictionary, "
+                f"got {type(mlp_state).__name__}."
+            )
+
+        if "net.0.weight" not in mlp_state:
+            raise KeyError(
+                f"InferenceEngine Error: MLP state dictionary at '{mlp_path}' missing required key 'net.0.weight'."
+            )
+
+        weight_tensor = mlp_state["net.0.weight"]
+        if not isinstance(weight_tensor, torch.Tensor) or weight_tensor.ndim != 2:
+            raise ValueError(
+                f"InferenceEngine Error: 'net.0.weight' must be a 2-D tensor in '{mlp_path}'."
+            )
+
+        mlp_in_dim = weight_tensor.shape[1]
+        if mlp_in_dim != expected_dim:
+            raise ValueError(
+                f"InferenceEngine Dimension Mismatch: Robust MLP input_dim={mlp_in_dim}, "
+                f"expected {expected_dim}."
+            )
+
+        model = MLPModule(input_dim=expected_dim)
+        try:
+            model.load_state_dict(mlp_state, strict=True)
+        except Exception as exc:
+            raise ValueError(
+                f"InferenceEngine Error: Incompatible state dictionary keys in '{mlp_path}': {exc}"
+            ) from exc
+
+        model.eval()
+        return model
+
     def _load_and_validate_artifacts(self) -> None:
         """Loads model artifacts and validates feature input dimensions fail-fast."""
         if not self.model_dir.exists():
@@ -238,8 +395,36 @@ class InferenceEngine:
             if not mlp_path.exists():
                 raise FileNotFoundError(f"Missing Adversarial MLP artifact: {mlp_path}")
 
-            self.preprocessor = joblib.load(prep_path)
-            self.rf_model = joblib.load(rf_path)
+            if self.expected_digests is not None:
+                from iot_ids.provenance.artifact_integrity import (
+                    ArtifactIntegrityError,
+                    load_verified_joblib,
+                )
+                prep_digest = self.expected_digests.get(prep_path.name)
+                rf_digest = self.expected_digests.get(rf_path.name)
+                mlp_digest = self.expected_digests.get(mlp_path.name)
+                if not prep_digest:
+                    raise ArtifactIntegrityError(f"Missing expected digest for '{prep_path.name}'")
+                if not rf_digest:
+                    raise ArtifactIntegrityError(f"Missing expected digest for '{rf_path.name}'")
+                self.preprocessor = load_verified_joblib(
+                    prep_path.name, expected_digest=prep_digest, base_dir=self.model_dir
+                )
+                self.rf_model = load_verified_joblib(
+                    rf_path.name, expected_digest=rf_digest, base_dir=self.model_dir
+                )
+                self.robust_mlp_model = self._load_mlp_checkpoint(
+                    mlp_path, self.expected_dim, expected_digest=mlp_digest, base_dir=self.model_dir
+                )
+            elif self.require_trusted_digests:
+                from iot_ids.provenance.artifact_integrity import ArtifactIntegrityError
+                raise ArtifactIntegrityError(
+                    f"Trusted digest verification required for '{self.model_dir}', but no expected_digests was provided."
+                )
+            else:
+                self.preprocessor = joblib.load(prep_path)
+                self.rf_model = joblib.load(rf_path)
+                self.robust_mlp_model = self._load_mlp_checkpoint(mlp_path, self.expected_dim)
 
             # Dimension Validation
             prep_feats = getattr(self.preprocessor, "feature_names", None)
@@ -256,19 +441,6 @@ class InferenceEngine:
                     f"expected {self.expected_dim} for profile '{self.profile}'."
                 )
 
-            # Load PyTorch Adversarial MLP
-            mlp_state = torch.load(mlp_path, weights_only=True)
-            mlp_in_dim = mlp_state["net.0.weight"].shape[1]
-            if mlp_in_dim != self.expected_dim:
-                raise ValueError(
-                    f"InferenceEngine Dimension Mismatch: Robust MLP input_dim={mlp_in_dim}, "
-                    f"expected {self.expected_dim} for profile '{self.profile}'."
-                )
-
-            self.robust_mlp_model = MLPModule(input_dim=self.expected_dim)
-            self.robust_mlp_model.load_state_dict(mlp_state)
-            self.robust_mlp_model.eval()
-
         else:
             # Historical 13-feature profile loading
             prep_path = self.model_dir / "prep_indomain.joblib"
@@ -279,8 +451,31 @@ class InferenceEngine:
             if not rf_path.exists():
                 raise FileNotFoundError(f"Missing historical Random Forest artifact: {rf_path}")
 
-            self.preprocessor = joblib.load(prep_path)
-            self.rf_model = joblib.load(rf_path)
+            if self.expected_digests is not None:
+                from iot_ids.provenance.artifact_integrity import (
+                    ArtifactIntegrityError,
+                    load_verified_joblib,
+                )
+                prep_digest = self.expected_digests.get(prep_path.name)
+                rf_digest = self.expected_digests.get(rf_path.name)
+                if not prep_digest:
+                    raise ArtifactIntegrityError(f"Missing expected digest for '{prep_path.name}'")
+                if not rf_digest:
+                    raise ArtifactIntegrityError(f"Missing expected digest for '{rf_path.name}'")
+                self.preprocessor = load_verified_joblib(
+                    prep_path.name, expected_digest=prep_digest, base_dir=self.model_dir
+                )
+                self.rf_model = load_verified_joblib(
+                    rf_path.name, expected_digest=rf_digest, base_dir=self.model_dir
+                )
+            elif self.require_trusted_digests:
+                from iot_ids.provenance.artifact_integrity import ArtifactIntegrityError
+                raise ArtifactIntegrityError(
+                    f"Trusted digest verification required for '{self.model_dir}', but no expected_digests was provided."
+                )
+            else:
+                self.preprocessor = joblib.load(prep_path)
+                self.rf_model = joblib.load(rf_path)
 
             hist_feats = getattr(self.preprocessor, "numeric_cols", getattr(self.preprocessor, "feature_names", None))
             if hist_feats is not None:

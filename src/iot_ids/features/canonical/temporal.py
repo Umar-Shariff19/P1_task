@@ -45,15 +45,15 @@ class HostTemporalState:
             self.iat_mean += self.alpha * diff
             self.iat_variance = (1.0 - self.alpha) * (self.iat_variance + self.alpha * (diff ** 2))
 
-            curr_flow_rate = 1.0 / (delta_t + 1e-6)
+            curr_flow_rate = (1.0 / delta_t) if delta_t > 0.0 else 0.0
             self.flow_rate_ewma = (1.0 - self.alpha) * self.flow_rate_ewma + self.alpha * curr_flow_rate
         else:
             self.iat_mean = 0.0
             self.iat_variance = 0.0
-            self.flow_rate_ewma = 1.0 / (duration + 1e-6)
+            self.flow_rate_ewma = (1.0 / duration) if duration > 0.0 else 0.0
 
         self.last_timestamp = timestamp
-        curr_byte_rate = total_bytes / (duration + 1e-6)
+        curr_byte_rate = (total_bytes / duration) if duration > 0.0 else 0.0
         self.byte_rate_ewma = (1.0 - self.alpha) * self.byte_rate_ewma + self.alpha * curr_byte_rate
 
         curr_syn_flag = 1.0 if syn_count > 0 else 0.0

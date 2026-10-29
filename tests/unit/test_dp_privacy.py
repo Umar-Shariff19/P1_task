@@ -69,3 +69,6 @@ def test_dp_sgd_training_loop():
     assert res["privacy_epsilon"] > 0.0
     assert res["privacy_delta"] == 1e-5
     assert len(res["history"]) == 2
+    assert res["guarantee_status"] == "EXPERIMENTAL_UNVERIFIED_ESTIMATE"
+    assert res["is_formal_dp_guarantee"] is False
+    assert "Option C" in res["notes"]

@@ -108,7 +108,7 @@ def explain_local_sample(
     for idx in abs_indices:
         val = float(x_2d[0, idx])
         attr_val = float(option_c_attr[idx])
-        direction = "PUSHE_ATTACK" if attr_val > 0 else "PUSHES_BENIGN"
+        direction = "PUSHES_ATTACK" if attr_val > 0 else "PUSHES_BENIGN"
         
         top_k_features.append({
             "feature": feature_names[idx],

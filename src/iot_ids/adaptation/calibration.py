@@ -48,13 +48,20 @@ class TargetThresholdCalibrator:
 
         best_tau = 0.50
         best_f1 = -1.0
+        candidate_taus: list[float] = []
         thresholds = np.linspace(0.01, 0.99, 99)
 
         for tau in thresholds:
             preds = (budget_probs >= tau).astype(int)
             macro_f1 = float(f1_score(y_budget, preds, average="macro", zero_division=0))
-            if macro_f1 > best_f1:
+            if macro_f1 > best_f1 + 1e-9:
                 best_f1 = macro_f1
-                best_tau = float(tau)
+                candidate_taus = [float(tau)]
+            elif abs(macro_f1 - best_f1) <= 1e-9:
+                candidate_taus.append(float(tau))
+
+        if candidate_taus:
+            # Pick the candidate closest to 0.50 (maximum classification margin)
+            best_tau = min(candidate_taus, key=lambda t: (abs(t - 0.50), -t))
 
         return float(best_tau)

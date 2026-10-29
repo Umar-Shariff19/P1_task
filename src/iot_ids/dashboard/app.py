@@ -182,27 +182,78 @@ def create_app(state: Optional[PlatformStateManager] = None) -> Starlette:
         except Exception:
             return JSONResponse({"error": "Invalid request body"}, status_code=400)
 
-        # Lookup by flow_id or accept direct raw_features
+        # Lookup by flow_id or accept direct raw_features or fallback to latest flow
         features = body.get("features")
         flow_id = body.get("flow_id")
+        flow_record = None
 
         if features is None and flow_id:
             with app_state._lock:
                 for f in reversed(app_state.recent_flows):
                     if f.get("flow_id") == flow_id:
+                        flow_record = f
                         features = f.get("raw_features")
                         break
+                if flow_record is None:
+                    for f in reversed(app_state.recent_alerts):
+                        if f.get("flow_id") == flow_id:
+                            flow_record = f
+                            features = f.get("raw_features")
+                            break
 
-        if features is None:
-            # Fallback to the latest flow's raw features
+            # If flow_id was explicitly requested but not found, fail-closed with 404 (do not silently fall back)
+            if flow_record is None:
+                return JSONResponse(
+                    {"error": f"Flow '{flow_id}' not found in active telemetry buffer"},
+                    status_code=404,
+                )
+
+        elif features is None:
+            # Empty body or no flow_id/features provided: Explain latest recorded flow
             with app_state._lock:
-                if app_state.recent_flows:
-                    features = app_state.recent_flows[-1].get("raw_features")
+                if not app_state.recent_flows:
+                    return JSONResponse(
+                        {"error": "No network flows recorded yet. Run simulation to generate traffic."},
+                        status_code=404,
+                    )
+                flow_record = app_state.recent_flows[-1]
+                features = flow_record.get("raw_features")
+                flow_id = flow_record.get("flow_id")
 
         if features is None:
             return JSONResponse({"error": "No features provided or available for explanation"}, status_code=400)
 
-        res = app_state.explain_flow(features)
+        try:
+            res = app_state.explain_flow(features)
+        except Exception as e:
+            return JSONResponse({"error": f"Explanation computation failed: {e}"}, status_code=500)
+
+        # Enrich response schema with flow context, ground truth, and provenance
+        res["flow_id"] = flow_id
+        if flow_record is not None:
+            res["ground_truth"] = flow_record.get("ground_truth")
+            res["scenario"] = flow_record.get("scenario")
+            res["prediction_prob"] = flow_record.get("prediction_prob")
+            res["risk_score"] = flow_record.get("risk_score")
+            res["risk_level"] = flow_record.get("risk_level")
+            res["source_device"] = flow_record.get("source_device")
+        else:
+            res["ground_truth"] = None
+            res["scenario"] = "CUSTOM"
+            res["prediction_prob"] = None
+            res["risk_score"] = None
+            res["risk_level"] = None
+            res["source_device"] = "N/A"
+
+        res["decision_threshold"] = 0.50
+        status_info = app_state.get_status()
+        res["model_suite_type"] = status_info.get("provenance", {}).get("model_suite_type", "SYNTHETIC_REFERENCE")
+
+        # Double check attribution alias on all returned features
+        for feat in res.get("top_k_features", []):
+            if "attribution" not in feat and "weighted_attribution" in feat:
+                feat["attribution"] = feat["weighted_attribution"]
+
         return JSONResponse(res)
 
     async def api_experiments(request) -> JSONResponse:

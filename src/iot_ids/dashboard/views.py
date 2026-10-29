@@ -553,6 +553,11 @@ def render_dashboard_html() -> str:
             flex-wrap: wrap;
             gap: 8px;
         }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -810,11 +815,18 @@ def render_dashboard_html() -> str:
 
             <div class="panel-grid">
                 <div class="card">
-                    <div class="card-header">Top Influential Features Driving Prediction</div>
-                    <div id="xaiWaterfallContainer" style="margin-top: 14px;">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Top Influential Features Driving Prediction</span>
+                        <span id="xaiFlowBadge" class="badge" style="font-family: monospace; font-size: 0.75rem; display: none;"></span>
+                    </div>
+                    <div id="xaiWaterfallContainer" style="margin-top: 14px; transition: opacity 0.2s ease;">
                         <p style="color: var(--text-muted); font-size: 0.85rem;">Click 'Explain' on any flow in the Telemetry tab, or click the button below to inspect the latest flow.</p>
                     </div>
-                    <button class="btn btn-primary" onclick="requestLatestExplanation()" style="margin-top: 14px;">Explain Latest Network Flow</button>
+                    <div style="display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; align-items: center;">
+                        <button id="btnExplainLatest" class="btn btn-primary" onclick="requestLatestExplanation()">Explain Latest Network Flow</button>
+                        <button id="btnExplainLatestAlert" class="btn" onclick="requestLatestAlertExplanation()">Explain Latest Alert</button>
+                    </div>
+                    <div id="xaiLastRefreshed" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;"></div>
                 </div>
 
                 <div class="card">
@@ -823,6 +835,18 @@ def render_dashboard_html() -> str:
                         <div>
                             <div class="metric-label">Ensemble Decision:</div>
                             <div id="xaiDecision" style="font-size: 1.4rem; font-weight: 700; color: var(--accent-green);">UNKNOWN</div>
+                        </div>
+                        <div>
+                            <div class="metric-label">Target Flow ID:</div>
+                            <div id="xaiTargetFlow" style="font-size: 0.95rem; font-family: monospace; color: var(--accent-blue); word-break: break-all;">-</div>
+                        </div>
+                        <div>
+                            <div class="metric-label">Ground Truth / Scenario:</div>
+                            <div id="xaiMetadata" style="font-size: 0.85rem; color: var(--text-secondary);">-</div>
+                        </div>
+                        <div>
+                            <div class="metric-label">Model Provenance:</div>
+                            <div id="xaiProvenance" style="font-size: 0.75rem; color: var(--text-secondary);">-</div>
                         </div>
                         <div>
                             <div class="metric-label">Option C Combined Probability:</div>
@@ -859,6 +883,7 @@ def render_dashboard_html() -> str:
                         <tr>
                             <th>Alert Timestamp</th>
                             <th>Target Endpoint</th>
+                            <th>Ground Truth</th>
                             <th>Anomaly Confidence</th>
                             <th>Risk Score</th>
                             <th>Severity</th>
@@ -867,7 +892,7 @@ def render_dashboard_html() -> str:
                         </tr>
                     </thead>
                     <tbody id="alertsTable">
-                        <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No security alerts recorded. Baseline network is operating normally.</td></tr>
+                        <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No security alerts recorded. Baseline network is operating normally.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1044,21 +1069,32 @@ def render_dashboard_html() -> str:
         function renderAlertsTable() {
             const tbody = document.getElementById('alertsTable');
             if (!recentAlertsList.length) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No security alerts recorded. Baseline network is operating normally.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No security alerts recorded. Baseline network is operating normally.</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = recentAlertsList.slice(0, 30).map(a => `
+            tbody.innerHTML = recentAlertsList.slice(0, 30).map(a => {
+                const isAttack = a.ground_truth === 1;
+                const gtBadge = isAttack
+                    ? `<span class="badge badge-threat">ATTACK (TP)</span>`
+                    : `<span class="badge badge-live">BENIGN (FP)</span>`;
+                const scBadge = a.scenario && a.scenario.startsWith('BENIGN')
+                    ? `<span class="badge badge-live">${a.scenario}</span>`
+                    : `<span class="badge badge-threat">${a.scenario || 'UNKNOWN'}</span>`;
+
+                return `
                 <tr>
                     <td style="color: var(--text-muted); font-family: monospace;">${new Date(a.timestamp * 1000).toLocaleTimeString()}</td>
                     <td><strong>${a.dst_ip}</strong> (${a.flow_id})</td>
+                    <td>${gtBadge}</td>
                     <td style="color: var(--accent-red); font-weight: 600;">${(a.prediction_prob * 100).toFixed(1)}%</td>
                     <td>${a.risk_score.toFixed(2)}</td>
                     <td><span class="badge pill-${a.risk_level.toLowerCase()}">${a.risk_level}</span></td>
-                    <td><span class="badge badge-threat">${a.scenario}</span></td>
+                    <td>${scBadge}</td>
                     <td><button class="btn" style="padding: 2px 8px; font-size: 0.75rem;" onclick="explainFlowObj('${a.flow_id}')">Inspect Features</button></td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
         }
 
         // Simulation Controls
@@ -1201,6 +1237,27 @@ def render_dashboard_html() -> str:
         // Explainability (XAI)
         async function explainFlowObj(flowId) {
             switchTab('explainability');
+            const container = document.getElementById('xaiWaterfallContainer');
+            const narrativeEl = document.getElementById('xaiNarrative');
+            const badgeEl = document.getElementById('xaiFlowBadge');
+            const targetFlowEl = document.getElementById('xaiTargetFlow');
+
+            if (badgeEl) {
+                badgeEl.innerText = flowId;
+                badgeEl.style.display = 'inline-block';
+            }
+            if (targetFlowEl) {
+                targetFlowEl.innerText = flowId;
+            }
+
+            container.innerHTML = `
+                <div style="color: var(--text-muted); padding: 18px 0; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 16px; height: 16px; border: 2px solid var(--border-color); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                    <span>Calculating TreeSHAP and gradient feature attributions for <strong>${flowId}</strong>...</span>
+                </div>
+            `;
+            if (narrativeEl) narrativeEl.innerText = 'Calculating feature contributions...';
+
             try {
                 const res = await fetch('/api/explain', {
                     method: 'POST',
@@ -1208,13 +1265,44 @@ def render_dashboard_html() -> str:
                     body: JSON.stringify({ flow_id: flowId })
                 });
                 const xai = await res.json();
-                renderXAIWaterfall(xai);
+                if (!res.ok || xai.error) {
+                    container.innerHTML = `
+                        <div style="color: var(--accent-red); padding: 14px; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--accent-red); border-radius: 6px;">
+                            ⚠️ <strong>Explanation Error:</strong> ${xai.error || ('Server returned HTTP ' + res.status)}
+                        </div>
+                    `;
+                    if (narrativeEl) narrativeEl.innerText = 'Unable to explain requested flow.';
+                    return;
+                }
+                renderXAIWaterfall(xai, flowId);
             } catch (e) {
                 console.error('XAI error:', e);
+                container.innerHTML = `
+                    <div style="color: var(--accent-red); padding: 14px; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--accent-red); border-radius: 6px;">
+                        ⚠️ <strong>Network / Client Error:</strong> ${e.message}
+                    </div>
+                `;
+                if (narrativeEl) narrativeEl.innerText = 'Client error during explanation request.';
             }
         }
 
         async function requestLatestExplanation() {
+            const btn = document.getElementById('btnExplainLatest');
+            const container = document.getElementById('xaiWaterfallContainer');
+            const narrativeEl = document.getElementById('xaiNarrative');
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = '⏳ Explaining Latest Flow...';
+            }
+            container.innerHTML = `
+                <div style="color: var(--text-muted); padding: 18px 0; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 16px; height: 16px; border: 2px solid var(--border-color); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                    <span>Computing feature attributions for the most recent network flow...</span>
+                </div>
+            `;
+            if (narrativeEl) narrativeEl.innerText = 'Analyzing latest flow...';
+
             try {
                 const res = await fetch('/api/explain', {
                     method: 'POST',
@@ -1222,51 +1310,148 @@ def render_dashboard_html() -> str:
                     body: JSON.stringify({})
                 });
                 const xai = await res.json();
-                renderXAIWaterfall(xai);
+                if (!res.ok || xai.error) {
+                    container.innerHTML = `
+                        <div style="color: var(--accent-yellow); padding: 14px; background: rgba(245, 158, 11, 0.1); border: 1px solid var(--accent-yellow); border-radius: 6px;">
+                            ℹ️ <strong>Cannot Explain Flow:</strong> ${xai.error || ('Server returned HTTP ' + res.status)}
+                            <div style="margin-top: 10px;">
+                                <button class="btn btn-primary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="controlSim('step').then(() => setTimeout(requestLatestExplanation, 600))">⚡ Step 10 &amp; Explain</button>
+                            </div>
+                        </div>
+                    `;
+                    if (narrativeEl) narrativeEl.innerText = xai.error || 'No flow available to explain.';
+                    return;
+                }
+                renderXAIWaterfall(xai, xai.flow_id || 'Latest Flow');
             } catch (e) {
                 console.error('XAI error:', e);
+                container.innerHTML = `
+                    <div style="color: var(--accent-red); padding: 14px; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--accent-red); border-radius: 6px;">
+                        ⚠️ <strong>Network / Client Error:</strong> ${e.message}
+                    </div>
+                `;
+                if (narrativeEl) narrativeEl.innerText = 'Network error fetching explanation.';
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'Explain Latest Network Flow';
+                }
             }
         }
 
-        function renderXAIWaterfall(xai) {
-            const decEl = document.getElementById('xaiDecision');
-            decEl.innerText = xai.final_decision;
-            decEl.style.color = xai.final_decision === 'ATTACK' ? 'var(--accent-red)' : 'var(--accent-green)';
+        async function requestLatestAlertExplanation() {
+            const btn = document.getElementById('btnExplainLatestAlert');
+            const container = document.getElementById('xaiWaterfallContainer');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = '⏳ Finding Latest Alert...';
+            }
+            try {
+                const res = await fetch('/api/alerts?limit=1');
+                const data = await res.json();
+                if (!data.alerts || !data.alerts.length) {
+                    container.innerHTML = `
+                        <div style="color: var(--accent-yellow); padding: 14px; background: rgba(245, 158, 11, 0.1); border: 1px solid var(--accent-yellow); border-radius: 6px;">
+                            ℹ️ <strong>No Alerts Recorded:</strong> No security alerts currently recorded in the triage buffer. Launch an attack scenario or step traffic to generate alerts.
+                        </div>
+                    `;
+                    return;
+                }
+                const latestAlert = data.alerts[0];
+                await explainFlowObj(latestAlert.flow_id);
+            } catch (e) {
+                console.error('Alert explain error:', e);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'Explain Latest Alert';
+                }
+            }
+        }
 
-            document.getElementById('xaiOptCProb').innerText = `${((xai.option_c_probability || 0.5) * 100).toFixed(1)}%`;
-            document.getElementById('xaiRFProb').innerText = `${((xai.rf_probability || 0.5) * 100).toFixed(1)}%`;
-            document.getElementById('xaiMLPProb').innerText = `${((xai.mlp_probability || 0.5) * 100).toFixed(1)}%`;
+        function renderXAIWaterfall(xai, flowId) {
+            const decEl = document.getElementById('xaiDecision');
+            const decision = xai.final_decision || 'UNKNOWN';
+            decEl.innerText = decision;
+            decEl.style.color = decision === 'ATTACK' ? 'var(--accent-red)' : 'var(--accent-green)';
+
+            const flowDisplay = xai.flow_id || flowId || '-';
+            const targetFlowEl = document.getElementById('xaiTargetFlow');
+            if (targetFlowEl) targetFlowEl.innerText = flowDisplay;
+
+            const badgeEl = document.getElementById('xaiFlowBadge');
+            if (badgeEl) {
+                badgeEl.innerText = flowDisplay;
+                badgeEl.style.display = 'inline-block';
+            }
+
+            const metaEl = document.getElementById('xaiMetadata');
+            if (metaEl) {
+                const gtText = xai.ground_truth === 1 ? 'ATTACK' : (xai.ground_truth === 0 ? 'BENIGN' : 'UNKNOWN');
+                const scText = xai.scenario || 'N/A';
+                metaEl.innerText = `Ground Truth: ${gtText} | Scenario: ${scText}`;
+            }
+
+            const provEl = document.getElementById('xaiProvenance');
+            if (provEl) {
+                provEl.innerText = `${xai.model_suite_type || 'SYNTHETIC_REFERENCE'} (Decision Threshold: 0.50)`;
+            }
+
+            const refreshEl = document.getElementById('xaiLastRefreshed');
+            if (refreshEl) {
+                refreshEl.innerHTML = `✓ Refreshed at <span style="color: var(--text-primary); font-family: monospace;">${new Date().toLocaleTimeString()}</span>`;
+            }
+
+            const optCProb = typeof xai.option_c_probability === 'number' ? xai.option_c_probability : 0.5;
+            const rfProb = typeof xai.rf_probability === 'number' ? xai.rf_probability : 0.5;
+            const mlpProb = typeof xai.robust_mlp_probability === 'number' ? xai.robust_mlp_probability : (typeof xai.mlp_probability === 'number' ? xai.mlp_probability : 0.5);
+
+            document.getElementById('xaiOptCProb').innerText = `${(optCProb * 100).toFixed(1)}%`;
+            document.getElementById('xaiRFProb').innerText = `${(rfProb * 100).toFixed(1)}%`;
+            document.getElementById('xaiMLPProb').innerText = `${(mlpProb * 100).toFixed(1)}%`;
 
             const feats = xai.top_k_features || [];
             const container = document.getElementById('xaiWaterfallContainer');
 
             if (!feats.length) {
-                container.innerHTML = '<p>No feature attributions returned.</p>';
+                container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No feature attributions returned for this flow.</p>';
                 return;
             }
 
-            const maxAbs = Math.max(...feats.map(f => Math.abs(f.attribution)), 0.001);
+            // Visual pulse to confirm update
+            container.style.opacity = '0.35';
+            setTimeout(() => { container.style.opacity = '1'; }, 120);
+
+            const getAttr = f => (typeof f.attribution === 'number' ? f.attribution : (typeof f.weighted_attribution === 'number' ? f.weighted_attribution : 0.0));
+            const maxAbs = Math.max(...feats.map(f => Math.abs(getAttr(f))), 0.001);
 
             container.innerHTML = feats.map(f => {
-                const widthPct = Math.min((Math.abs(f.attribution) / maxAbs) * 100, 100);
-                const isPos = f.attribution >= 0;
+                const attrVal = getAttr(f);
+                const widthPct = Math.min((Math.abs(attrVal) / maxAbs) * 100, 100);
+                const isPos = attrVal >= 0;
+                const rawVal = typeof f.raw_value === 'number' ? f.raw_value.toFixed(2) : '-';
                 return `
                     <div class="waterfall-bar">
-                        <div class="waterfall-label" title="${f.feature}">${f.feature}</div>
+                        <div class="waterfall-label" title="${f.feature} (raw: ${rawVal})">${f.feature}</div>
                         <div class="waterfall-track">
                             <div class="waterfall-fill ${isPos ? 'positive' : 'negative'}" style="width: ${widthPct}%;"></div>
                         </div>
                         <div class="waterfall-score" style="color: ${isPos ? 'var(--accent-red)' : 'var(--accent-green)'}">
-                            ${isPos ? '+' : ''}${f.attribution.toFixed(3)}
+                            ${isPos ? '+' : ''}${attrVal.toFixed(3)}
                         </div>
                     </div>
                 `;
             }).join('');
 
             const topF = feats[0];
-            document.getElementById('xaiNarrative').innerText =
-                `Decision was most heavily influenced by feature '${topF.feature}' (${topF.direction > 0 ? 'pushing towards ATTACK' : 'supporting BENIGN'}). ` +
-                `Combined dual-stream confidence is ${((xai.option_c_probability || 0.5) * 100).toFixed(1)}%.`;
+            const topAttr = getAttr(topF);
+            const isPushAttack = topF.direction === 'PUSHES_ATTACK' || topAttr > 0;
+            const narrativeEl = document.getElementById('xaiNarrative');
+            if (narrativeEl) {
+                narrativeEl.innerText =
+                    `Decision was most heavily influenced by feature '${topF.feature}' (${isPushAttack ? 'pushing towards ATTACK' : 'supporting BENIGN'}). ` +
+                    `Combined dual-stream confidence is ${(optCProb * 100).toFixed(1)}% (Decision Threshold: 50.0%).`;
+            }
         }
 
         // Export JSON

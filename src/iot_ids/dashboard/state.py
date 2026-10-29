@@ -529,6 +529,10 @@ class PlatformStateManager:
                 rf_background_X=suite.X_train[:40],
                 mlp_background_X=suite.X_train[:40],
             )
+            # Ensure attribution alias is populated for frontend compatibility
+            for feat in explanation.get("top_k_features", []):
+                if "attribution" not in feat and "weighted_attribution" in feat:
+                    feat["attribution"] = feat["weighted_attribution"]
             return explanation
 
     # -------------------------------------------------------------------------

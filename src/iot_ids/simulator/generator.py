@@ -222,12 +222,10 @@ class IoTSimulator:
         if dev.device_type == DeviceType.ENVIRONMENTAL_SENSOR:
             # Periodic MQTT telemetry (QoS 0 or 1)
             dst_ip = gw_ip
-            dst_port = 1883
-            src_port = int(self.rng.choice(dev.typical_ports) if dev.typical_ports else 50000)
+            dst_port = int(self.rng.choice(dev.typical_ports) if dev.typical_ports else 1883)
+            src_port = int(self.rng.integers(49152, 65535))
             length = int(self.rng.integers(64, 180))
             payload = f'{{"device":"{dev.device_id}","temp":{self.rng.uniform(20.0, 24.5):.2f},"humidity":{self.rng.uniform(45.0, 55.0):.1f}}}'
-            is_syn = int(self.rng.random() < 0.05)
-            is_ack = 1 if not is_syn else 0
             return GeneratedPacket(
                 timestamp=timestamp,
                 src_ip=dev.ip_address,
@@ -236,8 +234,8 @@ class IoTSimulator:
                 dst_port=dst_port,
                 proto="tcp",
                 length=length,
-                syn=is_syn,
-                ack=is_ack,
+                syn=0,
+                ack=1,
                 payload=payload,
                 ground_truth=0,
                 scenario_name=self.scenario.scenario_type.value,

@@ -38,9 +38,19 @@ def normalize_5tuple(
 class ActiveFlowState:
     """Internal mutable tracking buffer for an ongoing bi-directional flow."""
 
-    def __init__(self, key: FiveTuple, first_timestamp: float, label: int, attack_category: str):
+    def __init__(
+        self,
+        key: FiveTuple,
+        first_timestamp: float,
+        label: int,
+        attack_category: str,
+        initiator: Optional[FiveTuple] = None,
+    ):
         self.key = key
-        self.src_host, self.dst_host, self.src_port, self.dst_port, self.protocol = key
+        if initiator is not None:
+            self.src_host, self.dst_host, self.src_port, self.dst_port, self.protocol = initiator
+        else:
+            self.src_host, self.dst_host, self.src_port, self.dst_port, self.protocol = key
         self.timestamp_start = first_timestamp
         self.timestamp_end = first_timestamp
         self.bytes_src = 0
@@ -189,7 +199,8 @@ class FlowAggregator:
     ) -> Optional[CanonicalFlow]:
         """Ingests a single packet frame and returns a finalized CanonicalFlow if expired."""
         with self._lock:
-            key, is_forward = normalize_5tuple(src_ip, dst_ip, src_port, dst_port, proto)
+            key, _ = normalize_5tuple(src_ip, dst_ip, src_port, dst_port, proto)
+            frame_tuple: FiveTuple = (src_ip, dst_ip, src_port, dst_port, proto)
             expired_flow: Optional[CanonicalFlow] = None
 
             if key in self.active_flows:
@@ -200,15 +211,23 @@ class FlowAggregator:
                 if idle_time > self.inactivity_timeout or active_time > self.max_flow_duration:
                     expired_flow = flow.finalize()
                     # Initialize new flow state for current frame
-                    self.active_flows[key] = ActiveFlowState(key, timestamp, label, attack_category)
-                    self.active_flows[key].update(timestamp, is_forward, length, syn, ack, rst)
+                    flow = ActiveFlowState(key, timestamp, label, attack_category, initiator=frame_tuple)
+                    self.active_flows[key] = flow
+                    flow.update(timestamp, True, length, syn, ack, rst)
                 else:
+                    is_forward = (
+                        src_ip == flow.src_host
+                        and dst_ip == flow.dst_host
+                        and src_port == flow.src_port
+                        and dst_port == flow.dst_port
+                    )
                     flow.update(timestamp, is_forward, length, syn, ack, rst)
             else:
                 if len(self.active_flows) >= self.max_active_flows:
                     expired_flow = self._evict_oldest_flow_if_full()
-                self.active_flows[key] = ActiveFlowState(key, timestamp, label, attack_category)
-                self.active_flows[key].update(timestamp, is_forward, length, syn, ack, rst)
+                flow = ActiveFlowState(key, timestamp, label, attack_category, initiator=frame_tuple)
+                self.active_flows[key] = flow
+                flow.update(timestamp, True, length, syn, ack, rst)
 
             return expired_flow
 

@@ -241,7 +241,7 @@ def generate_synthetic_reference_dataset(
     """Generates synthetic network flow records following canonical 21-feature schemas.
 
     Produces realistic feature distributions for benign IoT telemetry and simulated attack traffic
-    (Floods, Scans, Malicious Command Injection, and Exfiltration).
+    (Floods, Scans, Malicious Command Injection, and Exfiltration) matching canonical multi-level extractors.
     """
     rng = np.random.default_rng(seed)
     n_attacks = int(n_samples * attack_ratio)
@@ -249,48 +249,85 @@ def generate_synthetic_reference_dataset(
 
     features: Dict[str, np.ndarray] = {}
 
-    # 1. Flow Duration
-    dur_benign = rng.exponential(scale=3.0, size=n_benign) + 0.1
-    dur_attack = np.concatenate([
-        rng.exponential(scale=0.2, size=n_attacks // 2) + 0.01,  # Fast flood / probe
-        rng.exponential(scale=25.0, size=n_attacks - (n_attacks // 2)) + 10.0,  # Slowloris / exfil
-    ])
-    features["flow_duration"] = np.concatenate([dur_benign, dur_attack])
+    # In IoT environments:
+    # Benign telemetry includes sensors, video streaming, controllers, and gateways.
+    # Single-packet frames or flows flushed at step boundaries have flow_duration = 0.0.
+    is_single_b = rng.random(size=n_benign) < 0.40
+    is_camera_b = rng.random(size=n_benign) < 0.30
 
-    # 2. Flow Rate Metrics
-    features["flow_bytes_per_sec"] = np.concatenate([
+    # Attack traffic includes single-packet SYN floods & port scans (duration = 0.0),
+    # as well as multi-packet high-rate exfiltration or DoS.
+    is_flood_scan_a = rng.random(size=n_attacks) < 0.65
+
+    # 1. Flow Duration (Level A Instantaneous)
+    dur_b = np.where(is_single_b, 0.0, rng.exponential(scale=2.5, size=n_benign) + 0.1)
+    dur_a = np.where(is_flood_scan_a, 0.0, rng.exponential(scale=15.0, size=n_attacks) + 1.0)
+    features["flow_duration"] = np.concatenate([dur_b, dur_a])
+
+    # 2. Flow Rate Metrics (0.0 if duration <= 0.0 per instant.py contract)
+    bytes_rate_b = np.where(
+        is_single_b,
+        0.0,
         rng.normal(loc=1500.0, scale=400.0, size=n_benign).clip(50.0, 50000.0),
+    )
+    bytes_rate_a = np.where(
+        is_flood_scan_a,
+        0.0,
         rng.normal(loc=45000.0, scale=12000.0, size=n_attacks).clip(200.0, 500000.0),
-    ])
+    )
+    features["flow_bytes_per_sec"] = np.concatenate([bytes_rate_b, bytes_rate_a])
 
-    features["flow_pkts_per_sec"] = np.concatenate([
+    pkts_rate_b = np.where(
+        is_single_b,
+        0.0,
         rng.normal(loc=10.0, scale=4.0, size=n_benign).clip(0.5, 50.0),
+    )
+    pkts_rate_a = np.where(
+        is_flood_scan_a,
+        0.0,
         rng.normal(loc=450.0, scale=100.0, size=n_attacks).clip(2.0, 3000.0),
-    ])
+    )
+    features["flow_pkts_per_sec"] = np.concatenate([pkts_rate_b, pkts_rate_a])
 
-    features["mean_pkt_size"] = np.concatenate([
-        rng.normal(loc=120.0, scale=30.0, size=n_benign).clip(40.0, 1500.0),
-        rng.normal(loc=64.0, scale=15.0, size=n_attacks).clip(40.0, 1500.0),
-    ])
+    # 3. Mean Packet Size
+    # Benign cameras send 800-1460 bytes; sensors send 60-180 bytes.
+    # Mirai flood sends 60-byte SYN frames; bulk exfil sends 1200-1500 bytes.
+    size_b = np.where(
+        is_camera_b,
+        rng.uniform(800.0, 1460.0, size=n_benign),
+        rng.normal(loc=100.0, scale=30.0, size=n_benign).clip(50.0, 250.0),
+    )
+    size_a = np.where(
+        is_flood_scan_a,
+        rng.normal(loc=60.0, scale=4.0, size=n_attacks).clip(54.0, 70.0),
+        rng.normal(loc=1200.0, scale=200.0, size=n_attacks).clip(60.0, 1500.0),
+    )
+    features["mean_pkt_size"] = np.concatenate([size_b, size_a])
 
-    features["payload_byte_ratio"] = np.concatenate([
-        rng.uniform(0.5, 0.9, size=n_benign),
-        rng.uniform(0.0, 0.3, size=n_attacks),  # floods have tiny payloads
-    ])
+    # 4. Directionality: payload_byte_ratio (bytes_src / total_bytes) & pkt_count_ratio (pkts_src / total_pkts)
+    # Bounded in [0.0, 1.0]. Unidirectional flows (SYN floods, port scans, push frames) have ratio = 1.0.
+    # Benign bidirectional traffic has ratio ~0.35-0.75.
+    pbr_b = np.where(is_single_b | is_camera_b, 1.0, rng.uniform(0.35, 0.75, size=n_benign))
+    pbr_a = np.where(is_flood_scan_a, 1.0, rng.uniform(0.85, 1.0, size=n_attacks))
+    features["payload_byte_ratio"] = np.concatenate([pbr_b, pbr_a])
 
-    features["pkt_count_ratio"] = np.concatenate([
-        rng.normal(loc=1.0, scale=0.2, size=n_benign).clip(0.1, 5.0),
-        rng.normal(loc=0.05, scale=0.05, size=n_attacks).clip(0.01, 10.0),
-    ])
+    pcr_b = np.where(is_single_b | is_camera_b, 1.0, rng.uniform(0.35, 0.75, size=n_benign))
+    pcr_a = np.where(is_flood_scan_a, 1.0, rng.uniform(0.85, 1.0, size=n_attacks))
+    features["pkt_count_ratio"] = np.concatenate([pcr_b, pcr_a])
 
-    features["tcp_syn_ratio"] = np.concatenate([
-        rng.beta(1.0, 10.0, size=n_benign).clip(0.0, 0.3),  # Benign low syn
-        rng.beta(8.0, 1.5, size=n_attacks).clip(0.4, 1.0),   # Attack high syn
-    ])
+    # 5. TCP SYN Ratio (syn_src / total_pkts) in [0.0, 1.0]
+    # Benign flows have no SYN in data phase. SYN flood / scan flows have syn_ratio = 1.0.
+    syn_b = np.zeros(n_benign)
+    syn_a = np.where(
+        is_flood_scan_a,
+        rng.uniform(0.85, 1.0, size=n_attacks),
+        rng.uniform(0.0, 0.1, size=n_attacks),
+    )
+    features["tcp_syn_ratio"] = np.concatenate([syn_b, syn_a])
 
-    # Protocol flags (one-hot)
+    # 6. Protocol flags (one-hot)
     proto_choices_b = rng.choice(["tcp", "udp"], size=n_benign, p=[0.75, 0.25])
-    proto_choices_a = rng.choice(["tcp", "udp"], size=n_attacks, p=[0.85, 0.15])
+    proto_choices_a = rng.choice(["tcp", "udp"], size=n_attacks, p=[0.90, 0.10])
     all_protos = np.concatenate([proto_choices_b, proto_choices_a])
 
     features["proto_tcp"] = (all_protos == "tcp").astype(float)
@@ -298,56 +335,84 @@ def generate_synthetic_reference_dataset(
     features["proto_icmp"] = np.zeros(n_samples, dtype=float)
     features["proto_other"] = np.zeros(n_samples, dtype=float)
 
-    # Temporal Metrics
-    features["temporal_iat_mean"] = np.concatenate([
-        rng.exponential(scale=0.5, size=n_benign) + 0.05,
-        rng.exponential(scale=0.01, size=n_attacks) + 0.001,
-    ])
+    # 7. Temporal Metrics (Level B Causal Temporal)
+    iat_mean_b = rng.exponential(scale=0.3, size=n_benign) + 0.05
+    iat_mean_a = np.where(
+        is_flood_scan_a,
+        rng.exponential(scale=0.005, size=n_attacks) + 0.001,
+        rng.exponential(scale=1.0, size=n_attacks) + 0.1,
+    )
+    features["temporal_iat_mean"] = np.concatenate([iat_mean_b, iat_mean_a])
 
     features["temporal_iat_cv"] = np.concatenate([
-        rng.uniform(0.1, 0.8, size=n_benign),
-        rng.uniform(0.0, 0.2, size=n_attacks),  # Automated bursts are regular
+        rng.uniform(0.2, 2.0, size=n_benign),
+        rng.uniform(0.5, 3.5, size=n_attacks),
     ])
 
-    features["temporal_flow_rate_ewma"] = np.concatenate([
-        rng.normal(loc=5.0, scale=1.5, size=n_benign).clip(0.1, 20.0),
-        rng.normal(loc=120.0, scale=30.0, size=n_attacks).clip(5.0, 500.0),
-    ])
+    flow_rate_b = rng.normal(loc=8.0, scale=4.0, size=n_benign).clip(0.5, 35.0)
+    flow_rate_a = np.where(
+        is_flood_scan_a,
+        rng.normal(loc=250.0, scale=60.0, size=n_attacks).clip(60.0, 500.0),
+        rng.normal(loc=25.0, scale=8.0, size=n_attacks).clip(2.0, 50.0),
+    )
+    features["temporal_flow_rate_ewma"] = np.concatenate([flow_rate_b, flow_rate_a])
 
-    features["temporal_byte_rate_ewma"] = np.concatenate([
+    byte_rate_b = np.where(
+        is_single_b,
+        0.0,
         rng.normal(loc=2000.0, scale=500.0, size=n_benign).clip(100.0, 20000.0),
+    )
+    byte_rate_a = np.where(
+        is_flood_scan_a,
+        0.0,
         rng.normal(loc=60000.0, scale=15000.0, size=n_attacks).clip(1000.0, 500000.0),
-    ])
+    )
+    features["temporal_byte_rate_ewma"] = np.concatenate([byte_rate_b, byte_rate_a])
 
-    features["temporal_syn_rate_ewma"] = np.concatenate([
-        rng.normal(loc=0.5, scale=0.2, size=n_benign).clip(0.0, 5.0),
-        rng.normal(loc=80.0, scale=20.0, size=n_attacks).clip(1.0, 400.0),
-    ])
+    # temporal_syn_rate_ewma: EWMA of binary SYN indicator, mathematically bounded to [0.0, 1.0] per temporal.py
+    syn_ewma_b = np.zeros(n_benign)
+    syn_ewma_a = np.where(
+        is_flood_scan_a,
+        rng.uniform(0.6, 1.0, size=n_attacks),
+        rng.uniform(0.0, 0.1, size=n_attacks),
+    )
+    features["temporal_syn_rate_ewma"] = np.concatenate([syn_ewma_b, syn_ewma_a])
 
-    # Behavioral Multi-Host Metrics
+    # 8. Behavioral Multi-Host Metrics (Level C Causal Behavioral)
+    # Benign IoT hosts contact 1 to 3 distinct destinations
     features["behavioral_dst_diversity"] = np.concatenate([
         rng.integers(1, 4, size=n_benign).astype(float),
-        rng.integers(5, 50, size=n_attacks).astype(float),
+        rng.integers(1, 10, size=n_attacks).astype(float),
     ])
 
-    features["behavioral_port_entropy"] = np.concatenate([
-        rng.uniform(0.05, 0.5, size=n_benign),
-        rng.uniform(0.8, 2.5, size=n_attacks),
-    ])
+    # Benign hosts communicate on fixed service ports (port entropy near 0)
+    # Port scans span diverse destination ports (port entropy high: 1.2 to 2.8)
+    port_ent_b = rng.uniform(0.0, 0.25, size=n_benign)
+    port_ent_a = np.where(
+        is_flood_scan_a,
+        rng.uniform(1.2, 2.8, size=n_attacks),
+        rng.uniform(0.0, 0.5, size=n_attacks),
+    )
+    features["behavioral_port_entropy"] = np.concatenate([port_ent_b, port_ent_a])
 
-    features["behavioral_fanout_ratio"] = np.concatenate([
-        rng.uniform(0.0, 0.15, size=n_benign),
-        rng.uniform(0.4, 0.95, size=n_attacks),
-    ])
+    fanout_b = rng.uniform(0.05, 0.35, size=n_benign)
+    fanout_a = np.where(
+        is_flood_scan_a,
+        rng.uniform(0.02, 0.20, size=n_attacks),  # Targeted flood/scan against single host has low fanout
+        rng.uniform(0.1, 0.6, size=n_attacks),
+    )
+    features["behavioral_fanout_ratio"] = np.concatenate([fanout_b, fanout_a])
 
+    # Unanswered connection ratio: in [0.0, 1.0]
     features["behavioral_unanswered_ratio"] = np.concatenate([
-        rng.uniform(0.0, 0.1, size=n_benign),
-        rng.uniform(0.5, 0.99, size=n_attacks),
+        rng.uniform(0.0, 0.95, size=n_benign),
+        rng.uniform(0.80, 1.0, size=n_attacks),
     ])
 
+    # behavioral_src_activity_ewma: EWMA of event activity, strictly in [0.0, 1.0] per behavioral.py
     features["behavioral_src_activity_ewma"] = np.concatenate([
-        rng.normal(loc=3.0, scale=1.0, size=n_benign).clip(0.5, 10.0),
-        rng.normal(loc=50.0, scale=15.0, size=n_attacks).clip(5.0, 200.0),
+        rng.uniform(0.1, 0.70, size=n_benign),
+        rng.uniform(0.70, 1.0, size=n_attacks),
     ])
 
     # Construct DataFrame and label Series
@@ -462,6 +527,7 @@ def train_synthetic_model_suite(
     calibrator.fit(val_probs, y_val)
 
     metadata = {
+        "version": 2,
         "seed": seed,
         "n_train": n_train,
         "n_val": n_val,
@@ -509,7 +575,9 @@ def get_default_model_suite(seed: int = 42) -> SyntheticModelSuite:
                 meta_file = DEFAULT_CACHE_DIR / "metadata.json"
                 if meta_file.exists():
                     try:
-                        _GLOBAL_MODEL_SUITE = SyntheticModelSuite.load(DEFAULT_CACHE_DIR)
+                        cached_meta = json.loads(meta_file.read_text(encoding="utf-8"))
+                        if cached_meta.get("version") == 2:
+                            _GLOBAL_MODEL_SUITE = SyntheticModelSuite.load(DEFAULT_CACHE_DIR)
                     except Exception:
                         _GLOBAL_MODEL_SUITE = None
 

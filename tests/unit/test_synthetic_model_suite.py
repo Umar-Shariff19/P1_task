@@ -88,3 +88,24 @@ def test_invalid_model_name_raises():
     suite = get_default_model_suite()
     with pytest.raises(ValueError, match="Unknown model name"):
         suite.get_model("unsupported_model_family")
+
+
+def test_synthetic_model_detects_mirai_botnet_flood():
+    """Regression test ensuring synthetic reference models detect simulated live Mirai botnet flood flows."""
+    from iot_ids.dashboard.state import PlatformStateManager
+    from iot_ids.simulator.scenarios import ScenarioType
+
+    manager = PlatformStateManager(seed=42)
+    manager.set_scenario(ScenarioType.MIRAI_BOTNET_FLOOD)
+    manager.step_simulation(count=25)
+
+    attack_flows = [f for f in manager.recent_flows if f["ground_truth"] == 1]
+    assert len(attack_flows) > 0, "No attack flows recorded from Mirai scenario"
+
+    detected_alerts = [f for f in attack_flows if f["is_anomaly"]]
+    assert len(detected_alerts) > 0, "Mirai attack flows not detected by active model suite"
+
+    for flow in detected_alerts:
+        assert flow["prediction_prob"] >= 0.50
+        assert flow["risk_score"] >= 0.50
+

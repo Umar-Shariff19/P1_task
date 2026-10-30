@@ -1,7 +1,7 @@
 """Unified Multi-Level Operational IDS Pipeline.
 
 Composes tested pipeline components:
-FlowAggregator -> CanonicalFlowBuilder (18 Multi-Level Features) -> FeaturePreprocessor ->
+FlowAggregator -> CanonicalFlowBuilder (21 Multi-Level Features) -> FeaturePreprocessor ->
 Optional UnsupervisedFeatureAligner -> Trained Model -> TargetThresholdCalibrator -> Risk/Alert Output.
 """
 from __future__ import annotations
@@ -13,7 +13,7 @@ import pandas as pd
 
 from iot_ids.data.flow_object import CanonicalFlow
 from iot_ids.data.flow_aggregator import FlowAggregator
-from iot_ids.features.canonical.flow_builder import CanonicalFlowBuilder, CANONICAL_18_FEATURE_NAMES
+from iot_ids.features.canonical.flow_builder import CanonicalFlowBuilder, CANONICAL_21_FEATURE_NAMES
 from iot_ids.experiments.preprocessing import FeaturePreprocessor
 from iot_ids.adaptation.alignment import UnsupervisedFeatureAligner
 from iot_ids.adaptation.calibration import TargetThresholdCalibrator
@@ -107,7 +107,7 @@ class IDSSystemPipeline:
         self.preprocessor = preprocessor
         self.feature_profile = feature_profile
         configured_features = list(
-            CANONICAL_18_FEATURE_NAMES if feature_names is None else feature_names
+            CANONICAL_21_FEATURE_NAMES if feature_names is None else feature_names
         )
         if (
             not configured_features
@@ -140,24 +140,77 @@ class IDSSystemPipeline:
         return float(self.decision_threshold)
 
     def health_check(self) -> Dict[str, Any]:
-        """Performs production health inspection of the pipeline and loaded artifacts."""
-        has_model = self.model is not None
-        has_preproc = self.preprocessor is not None
+        """Check component interfaces without implying model-quality validation."""
+        model_loaded = self.model is not None
+        model_interface = model_loaded and callable(getattr(self.model, "predict_proba", None))
+        classes_present = model_loaded and getattr(self.model, "classes_", None) is not None
+        try:
+            classes = np.asarray(getattr(self.model, "classes_", [])) if model_loaded else np.asarray([])
+            model_classes_valid = classes.shape == (2,) and np.array_equal(
+                np.sort(classes), np.array([0, 1])
+            )
+        except (TypeError, ValueError):
+            model_classes_valid = False
+        preprocessor_loaded = self.preprocessor is not None
+        preprocessor_interface = preprocessor_loaded and callable(
+            getattr(self.preprocessor, "transform", None)
+        )
+        preprocessor_features = getattr(self.preprocessor, "feature_names", None) if preprocessor_loaded else None
+        if preprocessor_loaded and preprocessor_features is None:
+            preprocessor_features = getattr(self.preprocessor, "numeric_cols", None)
+        try:
+            feature_order_valid = (
+                preprocessor_features is not None
+                and list(preprocessor_features) == self.feature_names
+            )
+        except (TypeError, ValueError):
+            feature_order_valid = False
         has_aligner = self.aligner is not None and getattr(self.aligner, "is_fitted", False)
+        aligner_interface_valid = not has_aligner or callable(getattr(self.aligner, "transform", None))
         has_calibrator = self.calibrator is not None and getattr(self.calibrator, "calibrated_threshold", None) is not None
+        try:
+            threshold = float(
+                self.calibrator.calibrated_threshold
+                if has_calibrator else self.decision_threshold
+            )
+            threshold_valid = bool(np.isfinite(threshold) and 0.0 <= threshold <= 1.0)
+        except (AttributeError, TypeError, ValueError, OverflowError):
+            threshold = None
+            threshold_valid = False
 
-        status = "HEALTHY" if (has_model and has_preproc) else "UNHEALTHY"
+        components = {
+            "model": "READY" if model_interface and model_classes_valid else (
+                "MISSING" if not model_loaded else
+                "INVALID" if not model_interface else
+                "UNVERIFIED" if not classes_present else "INVALID"
+            ),
+            "preprocessor": (
+                "MISSING" if not preprocessor_loaded else
+                "INVALID" if not preprocessor_interface else
+                "UNVERIFIED" if preprocessor_features is None else
+                "READY" if feature_order_valid else "INVALID"
+            ),
+            "aligner": "READY" if aligner_interface_valid else "INVALID",
+            "threshold": "READY" if threshold_valid else "INVALID",
+        }
+        reasons = [name for name, component_status in components.items() if component_status != "READY"]
+        status = "HEALTHY" if not reasons else "NOT_READY"
 
         return {
             "status": status,
-            "model_loaded": has_model,
-            "preprocessor_loaded": has_preproc,
+            "components": components,
+            "not_ready_reasons": reasons,
+            "readiness_scope": "component_interface_and_configuration_only",
+            "model_training_state": "UNKNOWN",
+            "detection_performance_validated": False,
+            "model_loaded": model_loaded,
+            "preprocessor_loaded": preprocessor_loaded,
             "aligner_fitted": has_aligner,
             "calibrator_fitted": has_calibrator,
             "feature_profile": self.feature_profile,
             "num_feature_names": len(self.feature_names),
             "active_flows_in_memory": len(self.flow_aggregator.active_flows),
-            "decision_threshold": self.effective_decision_threshold,
+            "decision_threshold": threshold,
         }
 
     def reset_state(self) -> None:
@@ -167,7 +220,7 @@ class IDSSystemPipeline:
 
     def process_flow(self, flow: CanonicalFlow) -> Dict[str, Any]:
         """Processes a single CanonicalFlow object through the full multi-level inference pipeline."""
-        # 1. Feature Extraction (18 Semantic Features)
+        # 1. Feature extraction in the configured canonical feature order (21 by default).
         feats_dict = self.flow_builder.build_features(flow)
         
         flat_feats = {}
@@ -258,7 +311,7 @@ class IDSSystemPipeline:
                 results.append(alert.to_dict())
             return results
 
-        # Slow path: Raw flow fields needing CanonicalFlow construction & 18-feature extraction
+        # Slow path: Raw flow fields needing CanonicalFlow construction & 21-feature extraction
         for _, row in df_flows.iterrows():
             t_start = float(row.get("timestamp_start", 0.0))
             t_end = float(row.get("timestamp_end", t_start + 1.0))

@@ -80,7 +80,7 @@ class _SyntheticHandle:
 
 
 def test_native_observation_reports_synthetic_directory_as_unverified() -> None:
-    with tempfile.TemporaryDirectory(prefix="synthetic-root-", dir=Path(__file__).parent) as raw:
+    with tempfile.TemporaryDirectory(prefix="synthetic-root-") as raw:
         with _SyntheticHandle(Path(raw), directory=True) as handle:
             result = observe_directory_handle(handle.value)
             assert result.status is RootIdentityStatus.OBSERVED_UNVERIFIED
@@ -94,7 +94,7 @@ def test_invalid_and_non_directory_handles_are_rejected() -> None:
     invalid = observe_directory_handle(-1)
     assert invalid.status is RootIdentityStatus.REJECTED
     assert invalid.error_code is RootIdentityCode.INVALID_HANDLE
-    with tempfile.TemporaryDirectory(prefix="synthetic-file-", dir=Path(__file__).parent) as raw:
+    with tempfile.TemporaryDirectory(prefix="synthetic-file-") as raw:
         file_path = Path(raw) / "synthetic.txt"
         file_path.write_text("synthetic only", encoding="utf-8")
         with _SyntheticHandle(file_path, directory=False) as handle:
@@ -104,7 +104,7 @@ def test_invalid_and_non_directory_handles_are_rejected() -> None:
 
 
 def test_final_directory_symlink_handle_is_rejected_when_supported() -> None:
-    with tempfile.TemporaryDirectory(prefix="synthetic-reparse-root-", dir=Path(__file__).parent) as raw:
+    with tempfile.TemporaryDirectory(prefix="synthetic-reparse-root-") as raw:
         parent = Path(raw)
         target = parent / "target"
         target.mkdir()
@@ -120,7 +120,7 @@ def test_final_directory_symlink_handle_is_rejected_when_supported() -> None:
 
 
 def test_api_failure_is_sanitized_and_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
-    with tempfile.TemporaryDirectory(prefix="synthetic-api-failure-", dir=Path(__file__).parent) as raw:
+    with tempfile.TemporaryDirectory(prefix="synthetic-api-failure-") as raw:
         with _SyntheticHandle(Path(raw), directory=True) as handle:
             def fail(_handle: int):
                 raise OSError("mocked inaccessible handle with private path details")
@@ -133,7 +133,7 @@ def test_api_failure_is_sanitized_and_fails_closed(monkeypatch: pytest.MonkeyPat
 
 
 def test_handle_observation_stays_bound_after_synthetic_directory_rename() -> None:
-    with tempfile.TemporaryDirectory(prefix="synthetic-rename-", dir=Path(__file__).parent) as raw:
+    with tempfile.TemporaryDirectory(prefix="synthetic-rename-") as raw:
         parent = Path(raw)
         original = parent / "root"
         original.mkdir()
@@ -190,7 +190,7 @@ def test_root_acquisition_provider_fails_closed_without_coercing_or_opening_inpu
 
 
 def test_identity_from_replaced_synthetic_root_does_not_authorize_other_root() -> None:
-    with tempfile.TemporaryDirectory(prefix="synthetic-mismatch-", dir=Path(__file__).parent) as raw:
+    with tempfile.TemporaryDirectory(prefix="synthetic-mismatch-") as raw:
         parent = Path(raw)
         first = parent / "first"
         second = parent / "second"
@@ -213,7 +213,7 @@ def test_identity_from_replaced_synthetic_root_does_not_authorize_other_root() -
 
 
 def test_handle_is_closed_when_observation_raises(monkeypatch: pytest.MonkeyPatch) -> None:
-    with tempfile.TemporaryDirectory(prefix="synthetic-close-", dir=Path(__file__).parent) as raw:
+    with tempfile.TemporaryDirectory(prefix="synthetic-close-") as raw:
         handle = _SyntheticHandle(Path(raw), directory=True)
         value = handle.value
         monkeypatch.setattr(

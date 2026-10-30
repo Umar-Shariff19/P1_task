@@ -1,7 +1,7 @@
 """Canonical Multi-Level Feature Representation Builder.
 
 Coordinates Level A Instantaneous, Level B Causal Temporal, and Level C Causal Behavioral
-extractors to generate the candidate 18-dimensional feature vector.
+extractors to generate the 21-dimensional feature vector.
 
 Preserves semantic feature grouping and enforces state resets across split/domain boundaries.
 """
@@ -15,9 +15,12 @@ from iot_ids.features.canonical.instant import InstantaneousFeatureExtractor, IN
 from iot_ids.features.canonical.temporal import TemporalFeatureExtractor, TEMPORAL_FEATURE_NAMES
 from iot_ids.features.canonical.behavioral import BehavioralFeatureExtractor, BEHAVIORAL_FEATURE_NAMES
 
-CANONICAL_18_FEATURE_NAMES = (
+CANONICAL_21_FEATURE_NAMES = (
     INSTANT_FEATURE_NAMES + TEMPORAL_FEATURE_NAMES + BEHAVIORAL_FEATURE_NAMES
 )
+# Backward-compatible name retained for callers that imported the old symbol.
+# The current concatenation is 21 features; this alias does not denote an 18-feature schema.
+CANONICAL_18_FEATURE_NAMES = CANONICAL_21_FEATURE_NAMES
 
 
 class CanonicalFlowBuilder:
@@ -49,7 +52,7 @@ class CanonicalFlowBuilder:
         }
 
     def build_vector(self, flow: CanonicalFlow) -> np.ndarray:
-        """Returns 18-dimensional continuous numpy array matching CANONICAL_18_FEATURE_NAMES."""
+        """Returns a 21-dimensional float64 vector in canonical feature order."""
         instant_vec = self.instant_extractor.extract_vector(flow)
         temporal_vec = self.temporal_extractor.extract_vector(flow)
         behavioral_vec = self.behavioral_extractor.extract_vector(flow)

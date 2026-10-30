@@ -8,16 +8,16 @@ from __future__ import annotations
 from typing import List, Dict, Any
 import numpy as np
 import pandas as pd
-from iot_ids.features.canonical.flow_builder import CANONICAL_18_FEATURE_NAMES
+from iot_ids.features.canonical.flow_builder import CANONICAL_21_FEATURE_NAMES
 
 
 # Feature groupings for shortcut ablation diagnostics
 PROTOCOL_FEATURES = ["proto_tcp", "proto_udp", "proto_icmp", "proto_other"]
 RAW_RATE_FEATURES = ["flow_bytes_per_sec", "flow_pkts_per_sec"]
 
-FULL_MULTILEVEL_NO_PROTO = [f for f in CANONICAL_18_FEATURE_NAMES if f not in PROTOCOL_FEATURES]
-FULL_MULTILEVEL_NO_RATES = [f for f in CANONICAL_18_FEATURE_NAMES if f not in RAW_RATE_FEATURES]
-SEMANTIC_FEATURES_ONLY = [f for f in CANONICAL_18_FEATURE_NAMES if f not in PROTOCOL_FEATURES and f not in RAW_RATE_FEATURES]
+FULL_MULTILEVEL_NO_PROTO = [f for f in CANONICAL_21_FEATURE_NAMES if f not in PROTOCOL_FEATURES]
+FULL_MULTILEVEL_NO_RATES = [f for f in CANONICAL_21_FEATURE_NAMES if f not in RAW_RATE_FEATURES]
+SEMANTIC_FEATURES_ONLY = [f for f in CANONICAL_21_FEATURE_NAMES if f not in PROTOCOL_FEATURES and f not in RAW_RATE_FEATURES]
 
 
 def apply_holm_bonferroni_correction(p_values: List[float]) -> List[bool]:

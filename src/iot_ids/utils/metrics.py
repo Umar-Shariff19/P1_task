@@ -5,6 +5,7 @@ error counts, and active memory footprints for production observability.
 """
 from __future__ import annotations
 
+import threading
 import time
 from dataclasses import dataclass, field, asdict
 from typing import Dict, Any, List
@@ -32,6 +33,7 @@ class MetricsCollector:
     """Thread-safe operational metrics tracking collector."""
 
     def __init__(self, max_latency_samples: int = 10000):
+        self._lock = threading.Lock()
         self.start_time: float = time.time()
         self.packets_processed: int = 0
         self.flows_completed: int = 0
@@ -43,38 +45,51 @@ class MetricsCollector:
 
     def reset(self) -> None:
         """Resets all metrics counters."""
-        self.start_time = time.time()
-        self.packets_processed = 0
-        self.flows_completed = 0
-        self.alerts_emitted = 0
-        self.errors_encountered = 0
-        self.active_flows_in_memory = 0
-        self.latency_samples_ms.clear()
+        with self._lock:
+            self.start_time = time.time()
+            self.packets_processed = 0
+            self.flows_completed = 0
+            self.alerts_emitted = 0
+            self.errors_encountered = 0
+            self.active_flows_in_memory = 0
+            self.latency_samples_ms.clear()
 
     def record_packet(self) -> None:
-        self.packets_processed += 1
+        with self._lock:
+            self.packets_processed += 1
 
     def record_flow(self) -> None:
-        self.flows_completed += 1
+        with self._lock:
+            self.flows_completed += 1
 
     def record_alert(self) -> None:
-        self.alerts_emitted += 1
+        with self._lock:
+            self.alerts_emitted += 1
 
     def record_error(self) -> None:
-        self.errors_encountered += 1
+        with self._lock:
+            self.errors_encountered += 1
 
     def record_latency(self, latency_ms: float) -> None:
-        if len(self.latency_samples_ms) >= self.max_latency_samples:
-            self.latency_samples_ms.pop(0)
-        self.latency_samples_ms.append(float(latency_ms))
+        with self._lock:
+            if len(self.latency_samples_ms) >= self.max_latency_samples:
+                self.latency_samples_ms.pop(0)
+            self.latency_samples_ms.append(float(latency_ms))
 
     def update_active_flows(self, count: int) -> None:
-        self.active_flows_in_memory = count
+        with self._lock:
+            self.active_flows_in_memory = count
 
     def get_summary(self) -> OperationalMetricsSummary:
         """Returns a snapshot summary of current operational metrics."""
-        uptime = time.time() - self.start_time
-        samples = self.latency_samples_ms
+        with self._lock:
+            uptime = time.time() - self.start_time
+            samples = list(self.latency_samples_ms)
+            packets = self.packets_processed
+            flows = self.flows_completed
+            alerts = self.alerts_emitted
+            errors = self.errors_encountered
+            active_flows = self.active_flows_in_memory
 
         if samples:
             arr = np.array(samples)
@@ -86,11 +101,11 @@ class MetricsCollector:
             l_mean = l_min = l_max = l_p95 = 0.0
 
         return OperationalMetricsSummary(
-            packets_processed=self.packets_processed,
-            flows_completed=self.flows_completed,
-            alerts_emitted=self.alerts_emitted,
-            errors_encountered=self.errors_encountered,
-            active_flows_in_memory=self.active_flows_in_memory,
+            packets_processed=packets,
+            flows_completed=flows,
+            alerts_emitted=alerts,
+            errors_encountered=errors,
+            active_flows_in_memory=active_flows,
             latency_count=len(samples),
             latency_mean_ms=l_mean,
             latency_min_ms=l_min,

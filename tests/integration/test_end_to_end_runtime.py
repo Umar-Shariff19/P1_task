@@ -29,14 +29,27 @@ sys.path.insert(0, str(repo_root / "src"))
 from iot_ids.runtime.schema import validate_input_schema, STANDARDIZED_21_FEATURES
 from iot_ids.runtime.engine import InferenceEngine, MLPModule
 from iot_ids.runtime.predictor import IDSPredictor
+from iot_ids.provenance.windows_access import (
+    RealDataAuthorizationUnavailable,
+    require_real_data_authorization,
+)
 
 DATASETS = ["ToN-IoT", "Edge-IIoTset", "NF-ToN-IoT-v2", "CICIoT2023"]
+
+
+def _is_real_data_authorized() -> bool:
+    try:
+        require_real_data_authorization()
+        return True
+    except RealDataAuthorizationUnavailable:
+        return False
 
 
 # ---------------------------------------------------------------------------
 # Test 1: Historical 13-feature Profile End-to-End Integration
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
 def test_1_historical_profile_end_to_end():
     """Verifies that historical 13-feature profile operates cleanly with 100% backward compatibility."""
     engine = InferenceEngine(profile="historical_13", dataset="ToN-IoT")
@@ -61,6 +74,7 @@ def test_1_historical_profile_end_to_end():
 # Test 2: Standardized 21-feature Execution Across All 4 Datasets
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
 @pytest.mark.parametrize("ds_name", DATASETS)
 def test_2_standardized_execution_all_datasets(ds_name: str):
     """Verifies standardized 21-feature runtime execution across all four datasets."""
@@ -88,6 +102,7 @@ def test_2_standardized_execution_all_datasets(ds_name: str):
 # Test 3: Single-Sample vs Batch Prediction Parity
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
 @pytest.mark.parametrize("ds_name", DATASETS)
 def test_3_single_vs_batch_parity(ds_name: str):
     """Verifies that single-sample inference produces identical outputs to batch inference."""
@@ -114,6 +129,7 @@ def test_3_single_vs_batch_parity(ds_name: str):
 # Test 4: Dataset Routing & Isolation
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
 def test_4_dataset_routing_and_isolation():
     """Verifies that InferenceEngine enforces dataset isolation and prevents cross-dataset mixing."""
     engine_ton = InferenceEngine(profile="standardized_21", dataset="ToN-IoT")
@@ -156,6 +172,7 @@ def test_5_failure_path_feature_mismatch():
 # Test 6: Failure Path — Invalid Profile & Dataset Rejection
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
 def test_6_failure_path_invalid_profile_dataset():
     """Verifies fail-fast rejection of invalid profile and dataset names."""
     with pytest.raises(ValueError, match="Unsupported profile"):
@@ -186,6 +203,7 @@ def test_7_failure_path_nan_inf_rejection():
 # Test 8: Preprocessor Immutability (TRANSFORM ONLY)
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
 def test_8_preprocessor_immutability(monkeypatch):
     """Guarantees that inference never invokes fit() or fit_transform()."""
     engine = InferenceEngine(profile="standardized_21", dataset="NF-ToN-IoT-v2")
@@ -210,6 +228,7 @@ def test_8_preprocessor_immutability(monkeypatch):
 # Test 9: Output Contract & Option C Ensemble Formula Verification
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
 @pytest.mark.parametrize("ds_name", DATASETS)
 def test_9_output_contract_and_ensemble_arithmetic(ds_name: str):
     """Verifies exact Option C ensemble formula (P_ensemble = 0.7*P_RF + 0.3*P_MLP_Adv)."""
@@ -238,6 +257,7 @@ def test_9_output_contract_and_ensemble_arithmetic(ds_name: str):
 # Test 10: Direct Model Inference vs Runtime Engine Parity
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
 @pytest.mark.parametrize("ds_name", DATASETS)
 def test_10_direct_model_vs_runtime_parity(ds_name: str):
     """Verifies 100% numerical parity between direct offline model execution and InferenceEngine."""

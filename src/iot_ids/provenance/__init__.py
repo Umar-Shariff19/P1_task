@@ -14,7 +14,9 @@ from iot_ids.provenance.manifest_validation import (
 from iot_ids.provenance.artifact_integrity import (
     ArtifactIntegrityError,
     ArtifactIntegrityResult,
+    load_verified_joblib,
     validate_digest_declaration,
+    verify_and_read_artifact,
     verify_artifact_digest,
 )
 from iot_ids.provenance.preflight import (
@@ -35,6 +37,7 @@ from iot_ids.provenance.preflight import (
 )
 from iot_ids.provenance.windows_access import (
     AccessCode,
+    CryptographicPolicyAuthorizationProvider,
     LexicalPathResult,
     PolicyConfigurationResult,
     StageStatus,
@@ -45,6 +48,9 @@ from iot_ids.provenance.windows_access import (
     lexical_protected_overlap,
     validate_policy_configuration,
     validate_windows_path_lexically,
+    set_active_policy_authorization,
+    get_active_policy_authorization,
+    scoped_policy_authorization,
 )
 from iot_ids.provenance.windows_handle import (
     HandleObjectIdentity,
@@ -63,7 +69,9 @@ __all__ = [
     "validate_manifest_json",
     "ArtifactIntegrityError",
     "ArtifactIntegrityResult",
+    "load_verified_joblib",
     "validate_digest_declaration",
+    "verify_and_read_artifact",
     "verify_artifact_digest",
     "ArtifactEvidence",
     "AuthorizationDecision",
@@ -87,6 +95,10 @@ __all__ = [
     "WindowsAuthorizationProvider",
     "RealDataAuthorizationUnavailable",
     "require_real_data_authorization",
+    "CryptographicPolicyAuthorizationProvider",
+    "set_active_policy_authorization",
+    "get_active_policy_authorization",
+    "scoped_policy_authorization",
     "lexical_protected_overlap",
     "validate_policy_configuration",
     "validate_windows_path_lexically",

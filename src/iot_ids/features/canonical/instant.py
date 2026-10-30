@@ -32,14 +32,20 @@ class InstantaneousFeatureExtractor:
         
         No future info, no host state memory, no dataset labels used.
         """
-        dur = max(0.0, flow.duration)
+        dur = max(0.0, float(flow.duration))
         eps = 1e-6
 
         total_bytes = float(flow.total_bytes)
         total_pkts = float(flow.total_pkts)
 
-        bytes_per_sec = total_bytes / (dur + eps)
-        pkts_per_sec = total_pkts / (dur + eps)
+        # Zero-duration flows (e.g. single packet flows) must not produce
+        # absurd instantaneous rates due to division by infinitesimal epsilon.
+        if dur <= 0.0:
+            bytes_per_sec = 0.0
+            pkts_per_sec = 0.0
+        else:
+            bytes_per_sec = total_bytes / dur
+            pkts_per_sec = total_pkts / dur
         mean_size = total_bytes / (total_pkts + eps)
 
         byte_ratio = float(flow.bytes_src) / (total_bytes + eps)

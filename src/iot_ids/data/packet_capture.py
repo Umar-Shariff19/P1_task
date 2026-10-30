@@ -118,9 +118,8 @@ class PacketCaptureEngine:
             raise RuntimeError(f"Error reading PCAP file {pcap_path}: {e}") from e
 
         # Flush remaining active flows at end of PCAP replay
-        flushed_flows = self.predictor.pipeline.flow_aggregator.flush()
-        for flow in flushed_flows:
-            alert = self.predictor.predict_flow(flow)
+        finalized = self.predictor.finalize_pending_flows()
+        for alert in finalized.alerts:
             logged = self.logger.log_alert(alert)
             emitted_alerts.append(logged)
 
@@ -162,9 +161,8 @@ class PacketCaptureEngine:
             print(f"Live capture error on interface {interface}: {e}")
 
         # Flush active flows on capture shutdown
-        flushed_flows = self.predictor.pipeline.flow_aggregator.flush()
-        for flow in flushed_flows:
-            alert = self.predictor.predict_flow(flow)
+        finalized = self.predictor.finalize_pending_flows()
+        for alert in finalized.alerts:
             logged = self.logger.log_alert(alert)
             emitted_alerts.append(logged)
 

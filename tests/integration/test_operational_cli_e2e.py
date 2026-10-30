@@ -15,8 +15,21 @@ from iot_ids.training.train import train_and_export_pipeline
 from iot_ids.inference.predictor import IDSPredictor
 from iot_ids.utils.logging import IDSAlertLogger
 from iot_ids.data.flow_aggregator import FlowAggregator
+from iot_ids.provenance.windows_access import (
+    RealDataAuthorizationUnavailable,
+    require_real_data_authorization,
+)
 
 
+def _is_real_data_authorized() -> bool:
+    try:
+        require_real_data_authorization()
+        return True
+    except RealDataAuthorizationUnavailable:
+        return False
+
+
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for training and dataset access")
 def test_e2e_training_export_load_batch_pipeline():
     """Verifies end-to-end train -> export -> load -> batch inference cycle."""
     stage3_dir = Path("data/processed/stage3")
@@ -52,6 +65,7 @@ def test_e2e_training_export_load_batch_pipeline():
         assert "is_anomaly" in alerts[0]
 
 
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
 def test_streaming_raw_telemetry_aggregation_e2e():
     """Verifies raw packet -> FlowAggregator -> 18 features -> pipeline -> alert."""
     art_dir = Path("models/final/deployable_artifact")
@@ -111,6 +125,7 @@ def test_structured_alert_logging():
         assert "logged_at" in data
 
 
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
 def test_error_handling_missing_artifacts():
     """Verifies clear error reporting for non-existent artifact directories."""
     non_existent = Path("models/final/non_existent_dir_12345")

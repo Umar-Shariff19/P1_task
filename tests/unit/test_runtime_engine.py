@@ -14,19 +14,33 @@ from pathlib import Path
 import pytest
 import numpy as np
 import pandas as pd
+import torch
+import torch.nn as nn
 
 repo_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(repo_root / "src"))
 
 from iot_ids.runtime.schema import validate_input_schema, STANDARDIZED_21_FEATURES
-from iot_ids.runtime.engine import InferenceEngine
+from iot_ids.runtime.engine import InferenceEngine, MLPModule
 from iot_ids.runtime.predictor import IDSPredictor
 
+
+def _is_real_data_authorized() -> bool:
+    from iot_ids.provenance.windows_access import (
+        RealDataAuthorizationUnavailable,
+        require_real_data_authorization,
+    )
+    try:
+        require_real_data_authorization()
+        return True
+    except RealDataAuthorizationUnavailable:
+        return False
 
 # ---------------------------------------------------------------------------
 # Test Group A: Standardized Artifact Loading & Dimension Checks
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
 @pytest.mark.parametrize("dataset_name", ["ToN-IoT", "Edge-IIoTset", "NF-ToN-IoT-v2", "CICIoT2023"])
 def test_group_a_artifact_loading(dataset_name: str):
     """Verifies that InferenceEngine loads all required artifacts and validates 21 dimensions."""
@@ -44,6 +58,7 @@ def test_group_a_artifact_loading(dataset_name: str):
 # Test Group B: Standardized Inference & Ensemble Arithmetic
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
 @pytest.mark.parametrize("dataset_name", ["ToN-IoT", "Edge-IIoTset", "NF-ToN-IoT-v2", "CICIoT2023"])
 def test_group_b_standardized_inference_and_arithmetic(dataset_name: str):
     """Verifies Option C probability ensemble arithmetic (P_ensemble = 0.7*P_RF + 0.3*P_MLP_Adv)."""
@@ -73,10 +88,52 @@ def test_group_b_standardized_inference_and_arithmetic(dataset_name: str):
         assert res["prediction"] == int(res["probability"] >= 0.5)
 
 
+def test_synthetic_ensemble_arithmetic():
+    """Verifies Option C ensemble arithmetic (P_ensemble = 0.7*P_RF + 0.3*P_MLP_Adv) with synthetic components."""
+    class ConstantRF:
+        classes_ = np.array([0, 1])
+        n_features_in_ = 21
+        def predict_proba(self, X):
+            n = len(X)
+            # P_RF = 0.4
+            return np.column_stack([np.full(n, 0.6), np.full(n, 0.4)])
+
+    class ConstantMLP(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.net = nn.Sequential(nn.Linear(21, 1))
+
+        def forward(self, x):
+            # Sigmoid(1.38629436) ~= 0.8 => P_MLP = 0.8
+            return torch.full((x.shape[0],), 1.38629436, dtype=torch.float32)
+
+    class ConstantPreprocessor:
+        feature_names = list(STANDARDIZED_21_FEATURES)
+        def transform(self, X):
+            return np.ones((len(X), 21), dtype=np.float32)
+
+    engine = InferenceEngine.for_synthetic_components(
+        preprocessor=ConstantPreprocessor(),
+        rf_model=ConstantRF(),
+        mlp_model=ConstantMLP(),
+    )
+
+    dict_sample = {col: 1.0 for col in STANDARDIZED_21_FEATURES}
+    res = engine.predict(dict_sample)
+
+    assert isinstance(res, dict)
+    np.testing.assert_allclose(res["rf_probability"], 0.4, atol=1e-5)
+    np.testing.assert_allclose(res["robust_mlp_probability"], 0.8, atol=1e-5)
+    # Expected: 0.7 * 0.4 + 0.3 * 0.8 = 0.28 + 0.24 = 0.52
+    np.testing.assert_allclose(res["probability"], 0.52, atol=1e-5)
+    assert res["prediction"] == 1
+
+
 # ---------------------------------------------------------------------------
 # Test Group C: Historical 13-Feature Compatibility
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
 def test_group_c_historical_compatibility():
     """Verifies that profile='historical_13' successfully loads 13-feature legacy pipeline."""
     engine = InferenceEngine(profile="historical_13", dataset="ToN-IoT")
@@ -100,8 +157,9 @@ def test_group_c_historical_compatibility():
 # Test Group D: Fail-Fast Schema Validation
 # ---------------------------------------------------------------------------
 
-def test_group_d_schema_validation():
-    """Tests schema validator failure cases (missing/extra columns, invalid profile/dataset)."""
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
+def test_group_d_engine_constructor_validation():
+    """Tests schema validator failure cases on InferenceEngine constructor."""
     # 1. Invalid Profile
     with pytest.raises(ValueError, match="Unsupported profile"):
         InferenceEngine(profile="invalid_profile", dataset="ToN-IoT")
@@ -110,6 +168,9 @@ def test_group_d_schema_validation():
     with pytest.raises(ValueError, match="Dataset 'invalid_dataset' is not supported"):
         InferenceEngine(profile="standardized_21", dataset="invalid_dataset")
 
+
+def test_group_d_schema_validation():
+    """Tests schema validator failure cases (missing/extra columns, NaN/Inf)."""
     # 3. Feature count mismatch (20 features instead of 21)
     df_20 = pd.DataFrame([{col: 1.0 for col in STANDARDIZED_21_FEATURES[:20]}])
     with pytest.raises(ValueError, match="requires exactly 21 canonical features"):
@@ -144,27 +205,40 @@ def test_group_d_schema_validation():
 # Test Group E: Preprocessor Immutability (NO FIT)
 # ---------------------------------------------------------------------------
 
-def test_group_e_preprocessor_immutability(monkeypatch):
+def test_group_e_preprocessor_immutability():
     """Demonstrates that runtime inference never calls fit() or fit_transform()."""
-    engine = InferenceEngine(profile="standardized_21", dataset="ToN-IoT")
-
     fit_called = False
     fit_transform_called = False
 
-    def forbidden_fit(*args, **kwargs):
-        nonlocal fit_called
-        fit_called = True
-        raise RuntimeError("FORBIDDEN: fit() called during runtime inference!")
+    class SpyPreprocessor:
+        feature_names = list(STANDARDIZED_21_FEATURES)
 
-    def forbidden_fit_transform(*args, **kwargs):
-        nonlocal fit_transform_called
-        fit_transform_called = True
-        raise RuntimeError("FORBIDDEN: fit_transform() called during runtime inference!")
+        def transform(self, X):
+            return np.ones((len(X), 21), dtype=np.float32)
 
-    if hasattr(engine.preprocessor, "fit"):
-        monkeypatch.setattr(engine.preprocessor, "fit", forbidden_fit)
-    if hasattr(engine.preprocessor, "fit_transform"):
-        monkeypatch.setattr(engine.preprocessor, "fit_transform", forbidden_fit_transform)
+        def fit(self, *args, **kwargs):
+            nonlocal fit_called
+            fit_called = True
+            raise RuntimeError("FORBIDDEN: fit() called during runtime inference!")
+
+        def fit_transform(self, *args, **kwargs):
+            nonlocal fit_transform_called
+            fit_transform_called = True
+            raise RuntimeError("FORBIDDEN: fit_transform() called during runtime inference!")
+
+    class DummyRF:
+        classes_ = np.array([0, 1])
+        n_features_in_ = 21
+
+        def predict_proba(self, X):
+            n = len(X)
+            return np.column_stack([np.full(n, 0.8), np.full(n, 0.2)])
+
+    engine = InferenceEngine.for_synthetic_components(
+        preprocessor=SpyPreprocessor(),
+        rf_model=DummyRF(),
+        mlp_model=MLPModule(input_dim=21),
+    )
 
     # Execute prediction
     dict_sample = {col: 1.0 for col in STANDARDIZED_21_FEATURES}
@@ -172,13 +246,15 @@ def test_group_e_preprocessor_immutability(monkeypatch):
 
     assert not fit_called, "fit() was improperly called during inference!"
     assert not fit_transform_called, "fit_transform() was improperly called during inference!"
-    assert res["probability"] >= 0.0
+    assert isinstance(res, dict)
+    assert 0.0 <= res["probability"] <= 1.0
 
 
 # ---------------------------------------------------------------------------
 # Test IDSPredictor Wrapper API
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for checkpoint loading")
 def test_ids_predictor_api():
     """Tests high-level IDSPredictor wrapper API."""
     predictor = IDSPredictor.from_profile_and_dataset(profile="standardized_21", dataset="CICIoT2023")

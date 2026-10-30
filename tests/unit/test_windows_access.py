@@ -235,7 +235,7 @@ class _TestOnlySyntheticPolicy:
 
 def test_test_local_synthetic_policy_permits_and_denies_only_temp_paths() -> None:
     with tempfile.TemporaryDirectory(
-        prefix="synthetic-auth-", dir=Path(__file__).parent
+        prefix="synthetic-auth-"
     ) as directory:
         base = Path(directory)
         approved = base / "approved"
@@ -255,7 +255,7 @@ def test_test_local_synthetic_policy_permits_and_denies_only_temp_paths() -> Non
 
 def test_synthetic_symlink_alias_is_denied_by_test_local_fixture() -> None:
     with tempfile.TemporaryDirectory(
-        prefix="synthetic-alias-", dir=Path(__file__).parent
+        prefix="synthetic-alias-"
     ) as directory:
         base = Path(directory)
         approved = base / "approved"
@@ -273,7 +273,7 @@ def test_synthetic_symlink_alias_is_denied_by_test_local_fixture() -> None:
 
 def test_native_handle_relative_open_reads_only_named_synthetic_child() -> None:
     with tempfile.TemporaryDirectory(
-        prefix="synthetic-handle-", dir=Path(__file__).parent
+        prefix="synthetic-handle-"
     ) as directory:
         root = Path(directory)
         (root / "metric.txt").write_bytes(b"SYNTHETIC_METRIC=0.125; NOT IDS PERFORMANCE")
@@ -287,7 +287,7 @@ def test_native_handle_relative_open_reads_only_named_synthetic_child() -> None:
 
 def test_native_handle_open_rejects_traversal_and_missing_child() -> None:
     with tempfile.TemporaryDirectory(
-        prefix="synthetic-handle-invalid-", dir=Path(__file__).parent
+        prefix="synthetic-handle-invalid-"
     ) as directory:
         with _SyntheticDirectoryHandle(Path(directory)) as handle:
             with pytest.raises(WindowsHandlePrimitiveError) as traversal:
@@ -300,7 +300,7 @@ def test_native_handle_open_rejects_traversal_and_missing_child() -> None:
 
 def test_native_handle_keeps_open_object_across_synthetic_path_replacement() -> None:
     with tempfile.TemporaryDirectory(
-        prefix="synthetic-handle-race-", dir=Path(__file__).parent
+        prefix="synthetic-handle-race-"
     ) as directory:
         root = Path(directory)
         target = root / "value.txt"
@@ -318,7 +318,7 @@ def test_native_handle_keeps_open_object_across_synthetic_path_replacement() -> 
 
 def test_native_handle_rejects_synthetic_hardlink_when_supported() -> None:
     with tempfile.TemporaryDirectory(
-        prefix="synthetic-hardlink-", dir=Path(__file__).parent
+        prefix="synthetic-hardlink-"
     ) as directory:
         root = Path(directory)
         outside = root / "outside.txt"
@@ -336,7 +336,7 @@ def test_native_handle_rejects_synthetic_hardlink_when_supported() -> None:
 
 def test_native_handle_rejects_synthetic_leaf_symlink_when_supported() -> None:
     with tempfile.TemporaryDirectory(
-        prefix="synthetic-reparse-", dir=Path(__file__).parent
+        prefix="synthetic-reparse-"
     ) as directory:
         root = Path(directory) / "root"
         root.mkdir()

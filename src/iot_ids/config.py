@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 from typing import Dict, Any, Optional
 
-from iot_ids.features.canonical.flow_builder import CANONICAL_18_FEATURE_NAMES
+from iot_ids.features.canonical.flow_builder import CANONICAL_21_FEATURE_NAMES
 
 
 @dataclass
@@ -25,7 +25,7 @@ class PipelineConfig:
     model_family: str = "RandomForest"
     n_estimators: int = 100
     max_depth: Optional[int] = 12
-    feature_names: list[str] = field(default_factory=lambda: list(CANONICAL_18_FEATURE_NAMES))
+    feature_names: list[str] = field(default_factory=lambda: list(CANONICAL_21_FEATURE_NAMES))
     inactivity_timeout: float = 15.0
     window_seconds: float = 30.0
     max_active_flows: int = 10000

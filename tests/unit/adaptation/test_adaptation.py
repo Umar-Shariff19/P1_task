@@ -105,3 +105,13 @@ def test_adaptation_experiment_zero_shot_and_alignment():
     )
     assert res_align["adaptation_method"] == "unsupervised_alignment"
     assert res_align["macro_f1"] > 0.80
+
+
+def test_target_threshold_calibrator_supervised_limited_plateau_tie_breaker():
+    # When all thresholds between 0.01 and 0.99 achieve perfect separation (plateau),
+    # calibrator should select 0.50 (maximum margin) rather than defaulting to 0.01.
+    y_budget = np.array([0, 0, 0, 1, 1, 1])
+    budget_probs = np.array([0.0001, 0.0002, 0.0001, 0.9998, 0.9999, 0.9997])
+
+    tau = TargetThresholdCalibrator.calibrate_supervised_limited(y_budget, budget_probs)
+    assert abs(tau - 0.50) < 0.05, f"Expected threshold near 0.50 for wide margin plateau, got {tau}"

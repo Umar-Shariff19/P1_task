@@ -1,7 +1,7 @@
 """[DEPRECATED] Legacy Feature Builder Module.
 
 DEPRECATION NOTICE: This module is retained for backwards compatibility with pre-Stage 1 exploratory scripts.
-For production multi-level 18-feature extraction, use `iot_ids.features.canonical.flow_builder.CanonicalFlowBuilder`.
+For production multi-level extraction, use `iot_ids.features.canonical.flow_builder.CanonicalFlowBuilder`.
 """
 from __future__ import annotations
 

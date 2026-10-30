@@ -210,7 +210,7 @@ def test_stage4_shared_runner_lifecycle_preserves_partial_metrics_and_aggregatio
 
     # JSON round-trip keeps null distinct from a numeric fallback; aggregation
     # uses the production Stage 4 helper and leaves missing groups absent.
-    with tempfile.TemporaryDirectory(prefix=".synthetic-stage4-", dir=Path.cwd()) as temp:
+    with tempfile.TemporaryDirectory(prefix=".synthetic-stage4-") as temp:
         result_path = Path(temp) / "synthetic_results.json"
         result_path.write_text(json.dumps([complete, incomplete], allow_nan=False), encoding="utf-8")
         restored = json.loads(result_path.read_text(encoding="utf-8"))
@@ -423,7 +423,7 @@ def test_stage4_entrypoints_refuse_before_dataset_discovery(monkeypatch):
 
     # Direct calls to the leaf audit/load helpers also stop before touching
     # even a missing synthetic fixture path.
-    with tempfile.TemporaryDirectory(prefix=".synthetic-stage4-blocked-", dir=Path.cwd()) as temp:
+    with tempfile.TemporaryDirectory(prefix=".synthetic-stage4-blocked-") as temp:
         synthetic_root = Path(temp)
         with pytest.raises(_BENCHMARK_MODULE.Stage4ReportError) as audit_error:
             _BENCHMARK_MODULE.perform_preflight_data_integrity_audit(synthetic_root)

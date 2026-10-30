@@ -8,8 +8,21 @@ import pytest
 from iot_ids.config import PipelineConfig
 from iot_ids.registry.manager import ModelRegistry
 from iot_ids.utils.sinks import JSONLFileSink
+from iot_ids.provenance.windows_access import (
+    RealDataAuthorizationUnavailable,
+    require_real_data_authorization,
+)
 
 
+def _is_real_data_authorized() -> bool:
+    try:
+        require_real_data_authorization()
+        return True
+    except RealDataAuthorizationUnavailable:
+        return False
+
+
+@pytest.mark.skipif(not _is_real_data_authorized(), reason="Real-data authorization required for registry load")
 def test_registry_security_validations():
     """Verifies ModelRegistry validates artifact paths and metadata integrity securely."""
     with tempfile.TemporaryDirectory() as tmp_dir:

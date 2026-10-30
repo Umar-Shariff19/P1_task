@@ -72,21 +72,26 @@ class IDSRuntimeDaemon:
         """Processes a single raw packet through the daemon pipeline with exception isolation."""
         try:
             canon_pkt = scapy_to_canonical_packet(pkt)
-            if canon_pkt is None:
-                return None
-
-            alert = self.predictor.process_raw_packet(canon_pkt)
-            if alert is not None:
-                try:
-                    self.sink.write_alert(alert)
-                except Exception as sink_err:
-                    print(f"[DAEMON WARNING] Alert sink write error: {sink_err}", file=sys.stderr)
-                return alert
-            return None
         except Exception as err:
             self.predictor.metrics.record_error()
+            print(f"[DAEMON ERROR] Packet conversion failed: {err}", file=sys.stderr)
+            return None
+        if canon_pkt is None:
+            return None
+
+        try:
+            alert = self.predictor.process_raw_packet(canon_pkt)
+        except Exception as err:
+            # The predictor records packet/inference failures; do not double-count here.
             print(f"[DAEMON ERROR] Isolated packet processing error: {err}", file=sys.stderr)
             return None
+        if alert is not None:
+            try:
+                self.sink.write_alert(alert)
+            except Exception as sink_err:
+                print(f"[DAEMON WARNING] Alert sink write error: {sink_err}", file=sys.stderr)
+            return alert
+        return None
 
     def run(self, max_packets: Optional[int] = None, duration: Optional[float] = None) -> OperationalMetricsSummary:
         """Executes the long-running operational capture and prediction daemon loop."""
@@ -164,9 +169,8 @@ class IDSRuntimeDaemon:
         """Flushes remaining active flows and outputs final operational summary."""
         print("\n[DAEMON] Flushing remaining active flow buffers...")
         try:
-            flushed_flows = self.predictor.pipeline.flow_aggregator.flush()
-            for flow in flushed_flows:
-                alert = self.predictor.predict_flow(flow)
+            finalized = self.predictor.finalize_pending_flows()
+            for alert in finalized.alerts:
                 try:
                     self.sink.write_alert(alert)
                 except Exception as sink_err:

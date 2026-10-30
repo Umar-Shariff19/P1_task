@@ -1,5 +1,6 @@
 {
   "version": "final-features-v2",
+  "metadata_scope": "The features array is the existing shared-feature registry for the F_COMMON/in-domain profile family; it is not a complete metadata inventory for every profile. Code-level STANDARDIZED_21 metadata is maintained separately in standardized_21_metadata.json.",
   "strategy": {
     "cross_dataset_primary": "Strict 6-feature F_common (100% semantically harmonized physical network quantities)",
     "ablation_groups": ["common", "temporal", "behavioral", "dataset_specific"]

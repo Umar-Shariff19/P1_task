@@ -248,4 +248,7 @@ def train_robust_mlp_dp(
         "sampling_rate": sample_rate,
         "epochs": dp_config.epochs,
         "history": history,
+        "guarantee_status": "EXPERIMENTAL_UNVERIFIED_ESTIMATE",
+        "is_formal_dp_guarantee": False,
+        "notes": "Operational Option C model does not use this DP model.",
     }

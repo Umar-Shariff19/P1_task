@@ -65,7 +65,7 @@ def _authorized_policy() -> _SyntheticOnlyPolicy:
 
 
 def _tree() -> tempfile.TemporaryDirectory[str]:
-    return tempfile.TemporaryDirectory(prefix=".synthetic-preflight-", dir=_TEST_ROOT)
+    return tempfile.TemporaryDirectory(prefix=".synthetic-preflight-")
 
 
 def test_valid_synthetic_manifest_and_artifact_allow_only_synthetic_operation() -> None:

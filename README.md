@@ -24,6 +24,12 @@ Optional model and explainability dependencies are in the `models` and `xai` ext
 python -m pytest tests/unit/data/test_flow_aggregator.py -q
 ```
 
+To run the deterministic end-to-end synthetic packet demonstration (which exercises packet parsing, flow aggregation, 21-feature extraction, decision thresholding, risk scoring, and JSON alert output without requiring real data authorization or loading model checkpoints):
+
+```powershell
+python src/iot_ids/runtime/synthetic_packet_demo.py --seed 2026 --flows 3
+```
+
 Do not run dataset-wide scans or pipelines as a substitute for reviewing data access. BoT-IoT file 4 is prohibited. The previously exposed ToN-IoT test split and prohibited BCL evaluator must not be accessed or run.
 
 ## Workflows and artifacts

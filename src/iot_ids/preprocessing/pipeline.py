@@ -19,8 +19,8 @@ def get_model_feature_columns(dataset: str, profile: str = "in_domain", levels: 
     
     Args:
         dataset: Dataset name (Edge-IIoTset, ToN-IoT).
-        profile: 'in_domain' for full multi-level features, 'cross_domain' for
-                 the strict 8-feature F_common profile.
+        profile: 'in_domain' for the dataset-specific 13-feature profiles,
+                 'cross_domain' for the strict 6-feature F_COMMON profile.
         levels: Optional list of semantic levels (e.g., ["common", "temporal"]).
     """
     schema_path = Path(__file__).resolve().parents[3] / "configs" / "features" / "canonical_schema.json"

@@ -113,6 +113,7 @@ class IoTSimulator:
 
         # Ephemeral active connection states
         self._active_sessions: Dict[str, Dict[str, Any]] = {}
+        self._packet_buffer: List[GeneratedPacket] = []
 
     @property
     def running(self) -> bool:
@@ -129,6 +130,9 @@ class IoTSimulator:
                 self.scenario = get_scenario(scenario)
             else:
                 self.scenario = scenario
+            self._packet_buffer.clear()
+            self._active_sessions.clear()
+            self.traffic_intensity = float(self.scenario.traffic_multiplier)
             return self.scenario
 
     def set_seed(self, seed: int) -> None:
@@ -162,8 +166,10 @@ class IoTSimulator:
             self.packets_generated = 0
             self.flows_generated = 0
             self._active_sessions.clear()
+            self._packet_buffer.clear()
             self.rng = np.random.default_rng(self.seed)
             self.scenario = get_scenario(ScenarioType.BENIGN_NORMAL)
+            self.traffic_intensity = 1.0
 
     def step(self, dt_seconds: float = 1.0) -> List[GeneratedPacket]:
         """Generates synthetic packets for a specified time step dt."""
@@ -178,14 +184,12 @@ class IoTSimulator:
     def generate_batch(self, count: int = 50) -> List[GeneratedPacket]:
         """Generates a discrete batch of packets under the current scenario."""
         with self._lock:
-            packets: List[GeneratedPacket] = []
-            curr_t = self.sim_time
-            while len(packets) < count:
-                step_pkts = self._generate_window_packets(curr_t, curr_t + 1.0)
-                curr_t += 1.0
-                packets.extend(step_pkts)
-            result = packets[:count]
-            self.sim_time = curr_t
+            while len(self._packet_buffer) < count:
+                step_pkts = self._generate_window_packets(self.sim_time, self.sim_time + 1.0)
+                self.sim_time += 1.0
+                self._packet_buffer.extend(step_pkts)
+            result = self._packet_buffer[:count]
+            self._packet_buffer = self._packet_buffer[count:]
             self.packets_generated += len(result)
             return result
 
@@ -194,9 +198,12 @@ class IoTSimulator:
         packets: List[GeneratedPacket] = []
         duration = t_end - t_start
 
-        # 1. Generate Benign Baseline Traffic for all active online devices
+        # 1. Generate Benign Baseline Traffic for non-attacker online devices
         for dev in self.devices:
             if dev.status != "ONLINE":
+                continue
+            if self.scenario.ground_truth_label == 1 and dev.device_id in self.scenario.attacker_devices:
+                # Compromised device dedicated to attack execution during malicious scenario
                 continue
 
             rate = dev.nominal_rate_pps * self.traffic_intensity
@@ -220,18 +227,24 @@ class IoTSimulator:
         """Synthesizes a realistic protocol-compliant benign packet from a specific IoT device."""
         gw_ip = "192.168.1.1"
 
+        sess = self._active_sessions.setdefault(dev.device_id, {
+            "src_port": int(self.rng.integers(49152, 65535)),
+            "dst_port": int(self.rng.choice(dev.typical_ports) if dev.typical_ports else 1883),
+            "pkt_count": 0,
+        })
+        sess["pkt_count"] += 1
+
         if dev.device_type == DeviceType.ENVIRONMENTAL_SENSOR:
             # Periodic MQTT telemetry (QoS 0 or 1)
             dst_ip = gw_ip
-            dst_port = int(self.rng.choice(dev.typical_ports) if dev.typical_ports else 1883)
-            src_port = int(self.rng.integers(49152, 65535))
+            dst_port = sess["dst_port"]
             length = int(self.rng.integers(64, 180))
             payload = f'{{"device":"{dev.device_id}","temp":{self.rng.uniform(20.0, 24.5):.2f},"humidity":{self.rng.uniform(45.0, 55.0):.1f}}}'
             return GeneratedPacket(
                 timestamp=timestamp,
                 src_ip=dev.ip_address,
                 dst_ip=dst_ip,
-                src_port=src_port,
+                src_port=sess["src_port"],
                 dst_port=dst_port,
                 proto="tcp",
                 length=length,
@@ -247,14 +260,13 @@ class IoTSimulator:
             # RTSP / TCP high-bandwidth video frame packets
             dst_ip = "192.168.1.50"  # NVR Server
             dst_port = 554
-            src_port = int(self.rng.integers(50000, 60000))
             length = int(self.rng.integers(800, 1460))
-            payload = f"RTSP/1.0 DATA seq={self.packets_generated} frame_chunk={self.rng.integers(1, 100)}"
+            payload = f"RTSP/1.0 DATA seq={sess['pkt_count']} frame_chunk={self.rng.integers(1, 100)}"
             return GeneratedPacket(
                 timestamp=timestamp,
                 src_ip=dev.ip_address,
                 dst_ip=dst_ip,
-                src_port=src_port,
+                src_port=sess["src_port"],
                 dst_port=dst_port,
                 proto="tcp",
                 length=length,
@@ -270,14 +282,13 @@ class IoTSimulator:
             # Modbus TCP periodic query / response
             dst_ip = "192.168.1.1"
             dst_port = 502
-            src_port = int(self.rng.integers(40000, 45000))
             length = int(self.rng.integers(70, 120))
             payload = f"MBTCP_RESP unit={dev.metadata.get('unit_id', 1)} fc=3 reg_count=8"
             return GeneratedPacket(
                 timestamp=timestamp,
                 src_ip=dev.ip_address,
                 dst_ip=dst_ip,
-                src_port=src_port,
+                src_port=sess["src_port"],
                 dst_port=dst_port,
                 proto="tcp",
                 length=length,
@@ -290,17 +301,16 @@ class IoTSimulator:
             )
 
         else:
-            # Industrial Gateway: DNS or NTP background lookup
+            # Industrial Gateway: DNS background lookup
             dst_ip = "8.8.8.8"
             dst_port = 53
-            src_port = int(self.rng.integers(50000, 65000))
             length = int(self.rng.integers(60, 95))
             payload = "DNS_QUERY a.root-servers.net"
             return GeneratedPacket(
                 timestamp=timestamp,
                 src_ip=dev.ip_address,
                 dst_ip=dst_ip,
-                src_port=src_port,
+                src_port=sess["src_port"],
                 dst_port=dst_port,
                 proto="udp",
                 length=length,
@@ -353,24 +363,46 @@ class IoTSimulator:
                 )
 
         elif stype == ScenarioType.SLOWLORIS_DOS:
-            # Low-rate HTTP starvation
+            # Low-rate connection starvation
             attacker_ip = self.device_map.get("dev_cam_perimeter_01", self.devices[0]).ip_address
             target_ip = "192.168.1.1"
-            # Emit 2-4 slow header fragments per second
-            for _ in range(int(self.rng.integers(2, 5))):
-                t_pkt = t_start + float(self.rng.uniform(0.0, duration))
+            sport = int(self.rng.integers(58900, 58950))
+            t_syn = t_start + float(self.rng.uniform(0.0, 0.05))
+            attack_packets.append(
+                GeneratedPacket(
+                    timestamp=t_syn,
+                    src_ip=attacker_ip,
+                    dst_ip=target_ip,
+                    src_port=sport,
+                    dst_port=80,
+                    proto="tcp",
+                    length=60,
+                    syn=1,
+                    ack=0,
+                    fin=0,
+                    rst=0,
+                    payload="",
+                    ground_truth=1,
+                    scenario_name=stype.value,
+                    source_device_id="dev_cam_perimeter_01",
+                )
+            )
+            for h in range(int(self.rng.integers(2, 4))):
+                t_hdr = t_syn + 0.01 * (h + 1)
                 attack_packets.append(
                     GeneratedPacket(
-                        timestamp=t_pkt,
+                        timestamp=t_hdr,
                         src_ip=attacker_ip,
                         dst_ip=target_ip,
-                        src_port=58912,
+                        src_port=sport,
                         dst_port=80,
                         proto="tcp",
                         length=72,
                         syn=0,
                         ack=1,
-                        payload="X-a: b\r\n",  # Partial HTTP header fragment
+                        fin=0,
+                        rst=0,
+                        payload=f"X-a: {h}\r\n",
                         ground_truth=1,
                         scenario_name=stype.value,
                         source_device_id="dev_cam_perimeter_01",
@@ -381,53 +413,107 @@ class IoTSimulator:
             # Abnormal large chunk exfiltration to external IP
             attacker_ip = self.device_map.get("dev_gw_field_node_02", self.devices[0]).ip_address
             external_ip = self.scenario.parameters.get("external_destination", "198.51.100.77")
-            exfil_rate = 8.0 * self.traffic_intensity
-            num_pkts = int(self.rng.poisson(exfil_rate * duration))
+            sport = int(self.rng.integers(54000, 56000))
 
-            for _ in range(num_pkts):
-                t_pkt = t_start + float(self.rng.uniform(0.0, duration))
+            # Periodic exfiltration streams across the 1-second interval
+            burst_offsets = [float(self.rng.uniform(0.01, 0.05)), float(self.rng.uniform(0.35, 0.45))]
+            for b_idx, offset in enumerate(burst_offsets):
+                t_syn = t_start + offset
+                burst_sport = sport + b_idx * 10
                 attack_packets.append(
                     GeneratedPacket(
-                        timestamp=t_pkt,
+                        timestamp=t_syn,
                         src_ip=attacker_ip,
                         dst_ip=external_ip,
-                        src_port=int(self.rng.integers(49152, 65535)),
+                        src_port=burst_sport,
                         dst_port=443,
                         proto="tcp",
-                        length=1420,  # Max MTU payload chunk
-                        syn=0,
-                        ack=1,
-                        payload="EXFIL_RAW_SENSORY_ARCHIVE_CHUNK_ENCRYPTED",
+                        length=60,
+                        syn=1,
+                        ack=0,
+                        fin=0,
+                        rst=0,
+                        payload="",
                         ground_truth=1,
                         scenario_name=stype.value,
                         source_device_id="dev_gw_field_node_02",
                     )
                 )
+                num_chunks = int(self.rng.integers(3, 5))
+                for c in range(num_chunks):
+                    t_chunk = t_syn + 0.005 * (c + 1)
+                    attack_packets.append(
+                        GeneratedPacket(
+                            timestamp=t_chunk,
+                            src_ip=attacker_ip,
+                            dst_ip=external_ip,
+                            src_port=burst_sport,
+                            dst_port=443,
+                            proto="tcp",
+                            length=1420,  # Max MTU payload chunk
+                            syn=0,
+                            ack=1,
+                            fin=0,
+                            rst=0,
+                            payload="EXFIL_RAW_SENSORY_ARCHIVE_CHUNK_ENCRYPTED",
+                            ground_truth=1,
+                            scenario_name=stype.value,
+                            source_device_id="dev_gw_field_node_02",
+                        )
+                    )
 
         elif stype == ScenarioType.COMMAND_INJECTION:
             # Forged Modbus Function 16 Write Multiple Registers
             attacker_ip = self.device_map.get("dev_sensor_pressure_02", self.devices[0]).ip_address
             target_ip = self.device_map.get("dev_ctrl_water_pump_02", self.devices[0]).ip_address
-            # Injected command burst
-            for _ in range(3):
-                t_pkt = t_start + float(self.rng.uniform(0.0, duration))
+            sport = int(self.rng.integers(50200, 50300))
+
+            # Periodic command injection override bursts across the 1-second interval
+            burst_offsets = [float(self.rng.uniform(0.01, 0.05)), float(self.rng.uniform(0.35, 0.45))]
+            for b_idx, offset in enumerate(burst_offsets):
+                t_syn = t_start + offset
+                burst_sport = sport + b_idx * 10
                 attack_packets.append(
                     GeneratedPacket(
-                        timestamp=t_pkt,
+                        timestamp=t_syn,
                         src_ip=attacker_ip,
                         dst_ip=target_ip,
-                        src_port=50201,
+                        src_port=burst_sport,
                         dst_port=502,
                         proto="tcp",
-                        length=98,
-                        syn=0,
-                        ack=1,
-                        payload="MBTCP_FC16_PRESET_REGS:REG40102=0xDEAD_FORCE_VALVE_CLOSE",
+                        length=60,
+                        syn=1,
+                        ack=0,
+                        fin=0,
+                        rst=0,
+                        payload="",
                         ground_truth=1,
                         scenario_name=stype.value,
                         source_device_id="dev_sensor_pressure_02",
                     )
                 )
+                num_writes = int(self.rng.integers(2, 4))
+                for w in range(num_writes):
+                    t_w = t_syn + 0.005 * (w + 1)
+                    attack_packets.append(
+                        GeneratedPacket(
+                            timestamp=t_w,
+                            src_ip=attacker_ip,
+                            dst_ip=target_ip,
+                            src_port=burst_sport,
+                            dst_port=502,
+                            proto="tcp",
+                            length=98,
+                            syn=0,
+                            ack=1,
+                            fin=0,
+                            rst=0,
+                            payload="MBTCP_FC16_PRESET_REGS:REG40102=0xDEAD_FORCE_VALVE_CLOSE",
+                            ground_truth=1,
+                            scenario_name=stype.value,
+                            source_device_id="dev_sensor_pressure_02",
+                        )
+                    )
 
         return attack_packets
 

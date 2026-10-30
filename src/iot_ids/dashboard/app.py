@@ -189,13 +189,14 @@ def create_app(state: Optional[PlatformStateManager] = None) -> Starlette:
 
         if features is None and flow_id:
             with app_state._lock:
-                for f in reversed(app_state.recent_flows):
+                # Prioritize confirmed alerts if this flow triggered a security alert
+                for f in reversed(app_state.recent_alerts):
                     if f.get("flow_id") == flow_id:
                         flow_record = f
                         features = f.get("raw_features")
                         break
                 if flow_record is None:
-                    for f in reversed(app_state.recent_alerts):
+                    for f in reversed(app_state.recent_flows):
                         if f.get("flow_id") == flow_id:
                             flow_record = f
                             features = f.get("raw_features")
@@ -224,8 +225,11 @@ def create_app(state: Optional[PlatformStateManager] = None) -> Starlette:
             return JSONResponse({"error": "No features provided or available for explanation"}, status_code=400)
 
         try:
-            loop = asyncio.get_running_loop()
-            res = await loop.run_in_executor(None, app_state.explain_flow, features)
+            try:
+                loop = asyncio.get_running_loop()
+                res = await loop.run_in_executor(None, app_state.explain_flow, features)
+            except RuntimeError:
+                res = app_state.explain_flow(features)
         except Exception as e:
             return JSONResponse({"error": f"Explanation computation failed: {e}"}, status_code=500)
 

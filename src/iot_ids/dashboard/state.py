@@ -19,6 +19,7 @@ import torch
 
 from iot_ids.adversarial.attacks import fgsm_attack, pgd_attack
 from iot_ids.adversarial.evaluator import evaluate_adversarial_sample
+from iot_ids.data.flow_aggregator import normalize_5tuple
 from iot_ids.data.flow_object import CanonicalFlow
 from iot_ids.features.canonical.flow_builder import CANONICAL_21_FEATURE_NAMES
 from iot_ids.inference.predictor import IDSPredictor
@@ -140,6 +141,7 @@ class PlatformStateManager:
             if self._thread is not None and self._thread.is_alive():
                 self._thread.join(timeout=3.0)
             self._thread = None
+            self.finalize_pending_flows()
             return {"status": "STOPPED"}
 
     def reset_simulation(self) -> Dict[str, Any]:
@@ -168,6 +170,7 @@ class PlatformStateManager:
     def set_scenario(self, scenario_name: str) -> Dict[str, Any]:
         """Switches the active threat scenario in the simulator."""
         with self._lock:
+            self.finalize_pending_flows()
             scenario = self.simulator.set_scenario(scenario_name)
             self.predictor.reset_state()
             self._flow_metadata.clear()
@@ -240,7 +243,7 @@ class PlatformStateManager:
         """Generates and processes a discrete batch of packets synchronously."""
         with self._lock:
             packets = self.simulator.generate_batch(count=count)
-            return self._process_batch_of_packets(packets)
+            return self._process_batch_of_packets(packets, lookahead_buffer=self.simulator._packet_buffer)
 
     def _worker_loop(self) -> None:
         """Background thread target continuously feeding generated traffic to pipeline."""
@@ -251,19 +254,30 @@ class PlatformStateManager:
 
             try:
                 packets = self.simulator.generate_batch(count=12)
-                self._process_batch_of_packets(packets)
+                self._process_batch_of_packets(packets, lookahead_buffer=self.simulator._packet_buffer)
             except Exception as e:
                 logger.error(f"Error in simulator background loop: {e}", exc_info=True)
 
             time.sleep(self.traffic_interval)
 
-    def _process_batch_of_packets(self, packets: List[GeneratedPacket]) -> List[Dict[str, Any]]:
-        """Feeds packets into IDSPredictor and updates state records."""
+    def _process_batch_of_packets(
+        self,
+        packets: List[GeneratedPacket],
+        lookahead_buffer: Optional[List[GeneratedPacket]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Feeds packets into IDSPredictor and updates state records.
+
+        If a simulation-specific lookahead buffer is explicitly provided, active flows
+        with upcoming packets within burst proximity (<= 25ms) are preserved across step boundaries.
+        Otherwise, generic flow-aggregator inactivity-timeout and duration semantics are used.
+        """
         with self._lock:
             alerts_generated: List[Dict[str, Any]] = []
+            latest_timestamp = 0.0
             for pkt in packets:
                 self.total_packets += 1
                 pkt_dict = pkt.to_dict()
+                latest_timestamp = max(latest_timestamp, pkt.timestamp)
 
                 # Track flow-level ground truth and metadata
                 f_key = f"{pkt.src_ip}:{pkt.src_port}->{pkt.dst_ip}:{pkt.dst_port}"
@@ -277,12 +291,42 @@ class PlatformStateManager:
                     self._handle_new_alert(alert, pkt)
                     alerts_generated.append(alert)
 
-            # Flush completed or timed-out flows
+            fa = self.predictor.pipeline.flow_aggregator
+
+            # 1. Simulator-specific lookahead mode (only when lookahead buffer is explicitly supplied)
+            if lookahead_buffer is not None:
+                pending_keys = set()
+                for p in lookahead_buffer:
+                    k, _ = normalize_5tuple(p.src_ip, p.dst_ip, p.src_port, p.dst_port, p.proto)
+                    if k in fa.active_flows:
+                        flow = fa.active_flows[k]
+                        if p.timestamp - flow.timestamp_end <= 0.025:
+                            pending_keys.add(k)
+
+                keys_to_pop = [k for k in list(fa.active_flows.keys()) if k not in pending_keys]
+                for k in keys_to_pop:
+                    fl = fa.active_flows.pop(k).finalize()
+                    alert = self.predictor._predict_flow(fl, delivery_target=None)
+                    self._handle_new_alert(alert, None)
+                    alerts_generated.append(alert)
+            else:
+                # 2. Generic stream mode: uses flow aggregator's inactivity timeout and max duration
+                expired_flows = fa.pop_expired_flows(latest_timestamp)
+                for fl in expired_flows:
+                    alert = self.predictor._predict_flow(fl, delivery_target=None)
+                    self._handle_new_alert(alert, None)
+                    alerts_generated.append(alert)
+
+            return alerts_generated
+
+    def finalize_pending_flows(self) -> List[Dict[str, Any]]:
+        """Flushes and predicts any remaining pending flows at scenario/simulation completion."""
+        with self._lock:
             final_res = self.predictor.finalize_pending_flows()
+            alerts_generated = []
             for alert in final_res.alerts:
                 self._handle_new_alert(alert, None)
                 alerts_generated.append(alert)
-
             return alerts_generated
 
     def _handle_new_alert(self, alert: Dict[str, Any], source_packet: Optional[GeneratedPacket] = None) -> None:
@@ -311,6 +355,7 @@ class PlatformStateManager:
             "scenario": sc_name,
             "source_device": dev_id,
             "raw_features": alert["raw_features"],
+            "features": alert.get("raw_features"),
         }
 
         self.recent_flows.append(flow_record)

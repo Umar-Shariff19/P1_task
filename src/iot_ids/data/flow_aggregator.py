@@ -222,14 +222,35 @@ class FlowAggregator:
                         and dst_port == flow.dst_port
                     )
                     flow.update(timestamp, is_forward, length, syn, ack, rst)
+                    if rst > 0:
+                        expired_flow = self.active_flows.pop(key).finalize()
             else:
                 if len(self.active_flows) >= self.max_active_flows:
                     expired_flow = self._evict_oldest_flow_if_full()
                 flow = ActiveFlowState(key, timestamp, label, attack_category, initiator=frame_tuple)
-                self.active_flows[key] = flow
                 flow.update(timestamp, True, length, syn, ack, rst)
+                if rst > 0:
+                    expired_flow = flow.finalize()
+                else:
+                    self.active_flows[key] = flow
 
             return expired_flow
+
+    def pop_expired_flows(self, current_timestamp: float, idle_threshold: Optional[float] = None) -> List[CanonicalFlow]:
+        """Finalize and pop flows that have exceeded idle_threshold (defaults to inactivity_timeout)."""
+        with self._lock:
+            thresh = self.inactivity_timeout if idle_threshold is None else idle_threshold
+            keys_to_pop = []
+            for key, flow in self.active_flows.items():
+                idle = current_timestamp - flow.timestamp_end
+                active = current_timestamp - flow.timestamp_start
+                if idle >= thresh or active >= self.max_flow_duration:
+                    keys_to_pop.append(key)
+            expired = []
+            for key in keys_to_pop:
+                fl = self.active_flows.pop(key)
+                expired.append(fl.finalize())
+            return expired
 
     def flush(self) -> List[CanonicalFlow]:
         """Flushes all remaining active flows into finalized CanonicalFlow records."""

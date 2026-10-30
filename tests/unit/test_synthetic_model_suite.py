@@ -109,3 +109,126 @@ def test_synthetic_model_detects_mirai_botnet_flood():
         assert flow["prediction_prob"] >= 0.50
         assert flow["risk_score"] >= 0.50
 
+
+def test_synthetic_model_detects_slowloris_dos():
+    """Regression test ensuring synthetic reference models detect Slowloris DoS flows."""
+    from iot_ids.dashboard.state import PlatformStateManager
+    from iot_ids.simulator.scenarios import ScenarioType
+
+    manager = PlatformStateManager(seed=42)
+    manager.set_scenario(ScenarioType.SLOWLORIS_DOS)
+    for _ in range(3):
+        manager.step_simulation(count=20)
+
+    attack_flows = [f for f in manager.recent_flows if f["ground_truth"] == 1]
+    assert len(attack_flows) > 0, "No attack flows recorded from Slowloris scenario"
+
+    detected_alerts = [f for f in attack_flows if f["is_anomaly"]]
+    assert len(detected_alerts) > 0, "Slowloris attack flows not detected by active model suite"
+
+    for flow in detected_alerts:
+        assert flow["prediction_prob"] >= 0.50
+        assert flow["risk_score"] >= 0.50
+
+
+def test_synthetic_model_detects_data_exfiltration_mitm():
+    """Regression test ensuring synthetic reference models detect bulk data exfiltration flows."""
+    from iot_ids.dashboard.state import PlatformStateManager
+    from iot_ids.simulator.scenarios import ScenarioType
+
+    manager = PlatformStateManager(seed=42)
+    manager.set_scenario(ScenarioType.DATA_EXFILTRATION_MITM)
+    for _ in range(4):
+        manager.step_simulation(count=20)
+
+    attack_flows = [f for f in manager.recent_flows if f["ground_truth"] == 1]
+    assert len(attack_flows) > 0, "No attack flows recorded from Data Exfiltration scenario"
+
+    detected_alerts = [f for f in attack_flows if f["is_anomaly"]]
+    assert len(detected_alerts) > 0, "Data exfiltration flows not detected by active model suite"
+
+    for flow in detected_alerts:
+        assert flow["prediction_prob"] >= 0.50
+        assert flow["risk_score"] >= 0.50
+
+
+def test_synthetic_model_detects_command_injection():
+    """Regression test ensuring synthetic reference models detect Modbus command injection flows."""
+    from iot_ids.dashboard.state import PlatformStateManager
+    from iot_ids.simulator.scenarios import ScenarioType
+
+    manager = PlatformStateManager(seed=42)
+    manager.set_scenario(ScenarioType.COMMAND_INJECTION)
+    for _ in range(4):
+        manager.step_simulation(count=20)
+
+    attack_flows = [f for f in manager.recent_flows if f["ground_truth"] == 1]
+    assert len(attack_flows) > 0, "No attack flows recorded from Command Injection scenario"
+
+    detected_alerts = [f for f in attack_flows if f["is_anomaly"]]
+    assert len(detected_alerts) > 0, "Command injection flows not detected by active model suite"
+
+    for flow in detected_alerts:
+        assert flow["prediction_prob"] >= 0.50
+        assert flow["risk_score"] >= 0.50
+
+
+def test_synthetic_model_benign_normal_zero_false_positives():
+    """Ensures benign operational baseline produces zero high-confidence false positives."""
+    from iot_ids.dashboard.state import PlatformStateManager
+    from iot_ids.simulator.scenarios import ScenarioType
+
+    manager = PlatformStateManager(seed=42)
+    manager.set_scenario(ScenarioType.BENIGN_NORMAL)
+    for _ in range(5):
+        manager.step_simulation(count=15)
+
+    assert len(manager.recent_flows) > 0
+    fp_alerts = [f for f in manager.recent_flows if f["is_anomaly"]]
+    assert len(fp_alerts) == 0, f"Expected 0 false positives in benign baseline, got {len(fp_alerts)}"
+
+
+def test_scenario_name_alone_cannot_force_alert():
+    """Verifies that scenario name metadata cannot bypass feature-based inference or force alerts."""
+    import pandas as pd
+    from iot_ids.models.synthetic_models import get_default_model_suite
+    from iot_ids.features.canonical.flow_builder import CANONICAL_21_FEATURE_NAMES
+
+    suite = get_default_model_suite()
+    pipeline = suite.create_pipeline(model_name="option_c")
+
+    # Pure benign telemetry feature vector
+    benign_features = {
+        "flow_duration": 2.5,
+        "flow_bytes_per_sec": 450.0,
+        "flow_pkts_per_sec": 3.0,
+        "mean_pkt_size": 115.0,
+        "payload_byte_ratio": 0.55,
+        "pkt_count_ratio": 0.50,
+        "tcp_syn_ratio": 0.0,
+        "proto_tcp": 1.0,
+        "proto_udp": 0.0,
+        "proto_icmp": 0.0,
+        "proto_other": 0.0,
+        "temporal_iat_mean": 0.35,
+        "temporal_iat_cv": 0.8,
+        "temporal_flow_rate_ewma": 3.0,
+        "temporal_byte_rate_ewma": 450.0,
+        "temporal_syn_rate_ewma": 0.0,
+        "behavioral_dst_diversity": 1.0,
+        "behavioral_port_entropy": 0.0,
+        "behavioral_fanout_ratio": 0.1,
+        "behavioral_unanswered_ratio": 0.0,
+        "behavioral_src_activity_ewma": 0.25,
+    }
+    df = pd.DataFrame([benign_features])
+
+    # Run actual pipeline inference
+    results = pipeline.process_dataframe(df)
+    assert len(results) == 1
+    alert = results[0]
+
+    # Verify benign classification
+    assert alert["is_anomaly"] is False
+    assert alert["prediction_prob"] < 0.50
+

@@ -163,6 +163,7 @@ class IoTSimulator:
             self.flows_generated = 0
             self._active_sessions.clear()
             self.rng = np.random.default_rng(self.seed)
+            self.scenario = get_scenario(ScenarioType.BENIGN_NORMAL)
 
     def step(self, dt_seconds: float = 1.0) -> List[GeneratedPacket]:
         """Generates synthetic packets for a specified time step dt."""

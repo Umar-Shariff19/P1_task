@@ -1106,6 +1106,31 @@ def render_dashboard_html() -> str:
                     body: JSON.stringify({ count: 10, interval: 0.25 })
                 });
                 const data = await res.json();
+                if (action === 'reset') {
+                    document.getElementById('activeScenarioBadge').innerText = 'BENIGN_NORMAL';
+                    document.getElementById('overviewScenarioDesc').innerText = 'Standard operational traffic: periodic MQTT telemetry, RTSP video streaming, Modbus control polling, and DNS queries.';
+                    document.querySelectorAll('.scenario-box').forEach(box => {
+                        if (box.getAttribute('onclick').includes('BENIGN_NORMAL')) {
+                            box.classList.add('active');
+                        } else {
+                            box.classList.remove('active');
+                        }
+                    });
+                    recentFlowsList = [];
+                    recentAlertsList = [];
+                    renderOverviewFlows();
+                    if (currentTab === 'telemetry') renderTelemetryTable();
+                    if (currentTab === 'alerts') renderAlertsTable();
+                    resetXAIBreakdownPanel();
+                    const container = document.getElementById('xaiWaterfallContainer');
+                    if (container) {
+                        container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem;">Click 'Explain' on any flow in the Telemetry tab, or click the button below to inspect the latest flow.</p>`;
+                    }
+                    const narrativeEl = document.getElementById('xaiNarrative');
+                    if (narrativeEl) narrativeEl.innerText = '-';
+                    const refreshEl = document.getElementById('xaiLastRefreshed');
+                    if (refreshEl) refreshEl.innerText = '';
+                }
                 pollStatus();
             } catch (e) {
                 console.error('Control error:', e);
@@ -1286,6 +1311,28 @@ def render_dashboard_html() -> str:
             }
         }
 
+        function resetXAIBreakdownPanel() {
+            const decEl = document.getElementById('xaiDecision');
+            if (decEl) {
+                decEl.innerText = 'UNKNOWN';
+                decEl.style.color = 'var(--text-muted)';
+            }
+            const targetFlowEl = document.getElementById('xaiTargetFlow');
+            if (targetFlowEl) targetFlowEl.innerText = '-';
+            const badgeEl = document.getElementById('xaiFlowBadge');
+            if (badgeEl) badgeEl.style.display = 'none';
+            const metaEl = document.getElementById('xaiMetadata');
+            if (metaEl) metaEl.innerText = '-';
+            const provEl = document.getElementById('xaiProvenance');
+            if (provEl) provEl.innerText = '-';
+            const optC = document.getElementById('xaiOptCProb');
+            if (optC) optC.innerText = '-';
+            const rf = document.getElementById('xaiRFProb');
+            if (rf) rf.innerText = '-';
+            const mlp = document.getElementById('xaiMLPProb');
+            if (mlp) mlp.innerText = '-';
+        }
+
         async function requestLatestExplanation() {
             const btn = document.getElementById('btnExplainLatest');
             const container = document.getElementById('xaiWaterfallContainer');
@@ -1320,6 +1367,7 @@ def render_dashboard_html() -> str:
                         </div>
                     `;
                     if (narrativeEl) narrativeEl.innerText = xai.error || 'No flow available to explain.';
+                    resetXAIBreakdownPanel();
                     return;
                 }
                 renderXAIWaterfall(xai, xai.flow_id || 'Latest Flow');
@@ -1331,6 +1379,7 @@ def render_dashboard_html() -> str:
                     </div>
                 `;
                 if (narrativeEl) narrativeEl.innerText = 'Network error fetching explanation.';
+                resetXAIBreakdownPanel();
             } finally {
                 if (btn) {
                     btn.disabled = false;
@@ -1342,25 +1391,47 @@ def render_dashboard_html() -> str:
         async function requestLatestAlertExplanation() {
             const btn = document.getElementById('btnExplainLatestAlert');
             const container = document.getElementById('xaiWaterfallContainer');
+            const narrativeEl = document.getElementById('xaiNarrative');
+
             if (btn) {
                 btn.disabled = true;
                 btn.innerText = '⏳ Finding Latest Alert...';
             }
+            container.innerHTML = `
+                <div style="color: var(--text-muted); padding: 18px 0; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 16px; height: 16px; border: 2px solid var(--border-color); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                    <span>Locating and explaining the most recent security alert...</span>
+                </div>
+            `;
+            if (narrativeEl) narrativeEl.innerText = 'Retrieving latest security alert...';
+
             try {
                 const res = await fetch('/api/alerts?limit=1');
                 const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.error || ('Server returned HTTP ' + res.status));
+                }
                 if (!data.alerts || !data.alerts.length) {
                     container.innerHTML = `
                         <div style="color: var(--accent-yellow); padding: 14px; background: rgba(245, 158, 11, 0.1); border: 1px solid var(--accent-yellow); border-radius: 6px;">
                             ℹ️ <strong>No Alerts Recorded:</strong> No security alerts currently recorded in the triage buffer. Launch an attack scenario or step traffic to generate alerts.
                         </div>
                     `;
+                    if (narrativeEl) narrativeEl.innerText = 'No alert currently available in triage buffer.';
+                    resetXAIBreakdownPanel();
                     return;
                 }
                 const latestAlert = data.alerts[0];
                 await explainFlowObj(latestAlert.flow_id);
             } catch (e) {
                 console.error('Alert explain error:', e);
+                container.innerHTML = `
+                    <div style="color: var(--accent-red); padding: 14px; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--accent-red); border-radius: 6px;">
+                        ⚠️ <strong>Alert Fetch Error:</strong> ${e.message}
+                    </div>
+                `;
+                if (narrativeEl) narrativeEl.innerText = 'Error fetching latest alert.';
+                resetXAIBreakdownPanel();
             } finally {
                 if (btn) {
                     btn.disabled = false;

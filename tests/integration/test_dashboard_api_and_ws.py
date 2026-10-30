@@ -565,3 +565,103 @@ def test_xai_attribution_direction_consistency(test_app):
         else:
             assert direction == "PUSHES_BENIGN", f"Non-positive attribution {attr} must be PUSHES_BENIGN"
 
+
+def test_scenario_switch_clears_temporal_contamination_and_prevents_false_positives():
+    """Regression test: Temporal/behavioral state does not leak from attack to benign scenario."""
+    from iot_ids.dashboard.state import PlatformStateManager
+    state = PlatformStateManager(seed=42)
+
+    # 1. Run Mirai attack: dev_sensor_temp_01 (192.168.1.101) generates SYN flood & scans
+    state.simulator.set_scenario("MIRAI_BOTNET_FLOOD")
+    mirai_alerts = state.step_simulation(count=100)
+    assert len(mirai_alerts) > 0, "Mirai attack must produce alerts"
+    mirai_tp = [a for a in state.recent_alerts if a["ground_truth"] == 1]
+    assert len(mirai_tp) > 0, "Mirai true attacks must be detected"
+
+    # 2. Switch scenario to BENIGN_NORMAL via platform manager
+    res = state.set_scenario("BENIGN_NORMAL")
+    assert res["status"] == "SCENARIO_UPDATED"
+    assert res["scenario_name"] == "Benign Operational Baseline"
+
+    # 3. Simulate continuous benign traffic for 500 packets
+    for _ in range(50):
+        state.step_simulation(count=10)
+
+    # 4. Verify no high-confidence false positives on benign sensor traffic
+    benign_sensor_flows = [
+        f for f in state.recent_flows
+        if f["scenario"] == "BENIGN_NORMAL" and "192.168.1.101" in f["flow_id"]
+    ]
+    assert len(benign_sensor_flows) > 0, "Must have generated benign sensor flows"
+    for flow in benign_sensor_flows:
+        assert flow["prediction_prob"] < 0.50, (
+            f"Benign sensor flow {flow['flow_id']} was misclassified with prob {flow['prediction_prob']:.4f}"
+        )
+        assert flow["is_anomaly"] is False
+
+    # 5. Overall benign false positive rate bound
+    all_benign_flows = [f for f in state.recent_flows if f["scenario"] == "BENIGN_NORMAL"]
+    benign_fps = [f for f in all_benign_flows if f["prediction_prob"] >= 0.50]
+    high_fps = [f for f in all_benign_flows if f["prediction_prob"] >= 0.70]
+    assert len(high_fps) == 0, f"Expected 0 high-confidence FPs, got {len(high_fps)}"
+    fpr = len(benign_fps) / max(1, len(all_benign_flows))
+    assert fpr <= 0.01, f"Benign FPR after scenario switch must be <= 1.0%, got {fpr:.4f}"
+
+
+def test_simulator_reset_restores_benign_baseline():
+    """Regression test: Simulator reset restores benign scenario and clears session state."""
+    from iot_ids.simulator.generator import IoTSimulator
+    from iot_ids.simulator.scenarios import ScenarioType
+    sim = IoTSimulator(seed=42)
+    sim.set_scenario("MIRAI_BOTNET_FLOOD")
+    assert sim.scenario.scenario_type == ScenarioType.MIRAI_BOTNET_FLOOD
+
+    sim.reset()
+    assert sim.scenario.scenario_type == ScenarioType.BENIGN_NORMAL
+    assert sim.status == "IDLE"
+    assert len(sim._active_sessions) == 0
+
+
+def test_xai_explain_latest_flow_and_latest_alert_contracts():
+    """Regression test: /api/explain and /api/alerts correctly support latest-flow and latest-alert interactions."""
+    from iot_ids.dashboard.state import PlatformStateManager
+    # 1. Empty buffer returns 404 for latest flow
+    empty_state = PlatformStateManager(seed=42)
+    empty_app = create_app(state=empty_state)
+    resp_empty = invoke_endpoint(empty_app, "/api/explain", method="POST", json_body={})
+    assert resp_empty.status_code == 404
+    assert "error" in json.loads(resp_empty.body)
+
+    # 2. Step benign traffic
+    invoke_endpoint(empty_app, "/api/simulation/step", method="POST", json_body={"count": 10})
+    resp_latest_flow = invoke_endpoint(empty_app, "/api/explain", method="POST", json_body={})
+    assert resp_latest_flow.status_code == 200
+    flow_data = json.loads(resp_latest_flow.body)
+    assert flow_data["flow_id"] is not None
+    assert flow_data["scenario"] == "BENIGN_NORMAL"
+    assert flow_data["ground_truth"] == 0
+    assert "option_c_probability" in flow_data
+    assert "top_k_features" in flow_data
+    assert len(flow_data["top_k_features"]) > 0
+
+    # 3. Alerts endpoint returns newest first
+    invoke_endpoint(empty_app, "/api/simulation/scenario", method="POST", json_body={"scenario": "MIRAI_BOTNET_FLOOD"})
+    invoke_endpoint(empty_app, "/api/simulation/step", method="POST", json_body={"count": 20})
+    resp_alerts = invoke_endpoint(empty_app, "/api/alerts", method="GET", query_params={"limit": 5})
+    assert resp_alerts.status_code == 200
+    alerts = json.loads(resp_alerts.body)["alerts"]
+    assert len(alerts) > 0
+    latest_alert = alerts[0]
+
+    # 4. Explaining latest alert by flow_id returns matching context
+    resp_alert_explain = invoke_endpoint(
+        empty_app,
+        "/api/explain",
+        method="POST",
+        json_body={"flow_id": latest_alert["flow_id"]},
+    )
+    assert resp_alert_explain.status_code == 200
+    exp_data = json.loads(resp_alert_explain.body)
+    assert exp_data["flow_id"] == latest_alert["flow_id"]
+    assert exp_data["final_decision"] == "ATTACK"
+    assert exp_data["option_c_probability"] >= 0.50

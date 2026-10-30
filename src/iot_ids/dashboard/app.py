@@ -142,19 +142,19 @@ def create_app(state: Optional[PlatformStateManager] = None) -> Starlette:
         only_anomalies = params.get("only_anomalies", "false").lower() == "true"
 
         with app_state._lock:
-            flows = list(app_state.recent_flows)
+            flows = list(reversed(app_state.recent_flows))
 
         if only_anomalies:
             flows = [f for f in flows if f.get("is_anomaly", False)]
 
-        flows = flows[-limit:]
+        flows = flows[:limit]
         return JSONResponse({"count": len(flows), "flows": flows})
 
     async def api_alerts(request) -> JSONResponse:
         params = request.query_params
         limit = int(params.get("limit", 100))
         with app_state._lock:
-            alerts = list(app_state.recent_alerts)[-limit:]
+            alerts = list(reversed(app_state.recent_alerts))[:limit]
         return JSONResponse({"count": len(alerts), "alerts": alerts})
 
     async def api_adversarial_run(request) -> JSONResponse:
@@ -224,7 +224,8 @@ def create_app(state: Optional[PlatformStateManager] = None) -> Starlette:
             return JSONResponse({"error": "No features provided or available for explanation"}, status_code=400)
 
         try:
-            res = app_state.explain_flow(features)
+            loop = asyncio.get_running_loop()
+            res = await loop.run_in_executor(None, app_state.explain_flow, features)
         except Exception as e:
             return JSONResponse({"error": f"Explanation computation failed: {e}"}, status_code=500)
 

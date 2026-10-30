@@ -169,6 +169,8 @@ class PlatformStateManager:
         """Switches the active threat scenario in the simulator."""
         with self._lock:
             scenario = self.simulator.set_scenario(scenario_name)
+            self.predictor.reset_state()
+            self._flow_metadata.clear()
             return {
                 "status": "SCENARIO_UPDATED",
                 "scenario_name": scenario.name,
